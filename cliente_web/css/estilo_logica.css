@@ -1,0 +1,378 @@
+:root{
+  
+  /* --color-offcanvas-logica:     rgb(255, 239, 175); */
+   --color-offcanvas-logica:     rgb(253, 247, 223);
+
+   /* 
+   
+   --btn-guardar-bg
+   --btn-guardar-border
+   --btn-guardar-bg-hov 
+   
+   --btn-delete-bg
+   --btn-delete-border
+   --btn-delete-bg-hov
+   
+   --btn-parar-bg
+   --btn-parar-bg-border
+   --btn-parar-bg-hov
+   */
+}
+
+/* BOTONES (guardar / reset / eliminar / )
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+
+.btn.btn-guardar,
+.btn.btn-delete,
+.btn.btn-reset{
+  color: inherit;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+}
+
+.btn.btn-guardar{
+  background: var(--btn-guardar-bg);
+  border: 1px solid var(--btn-guardar-border);
+  
+}
+
+.btn.btn-delete{
+  background:       var(--btn-delete-bg);
+  border: 1px solid var(--btn-delete-border);
+}
+
+
+.btn.btn-reset{
+  background: var(--btn-reset-bg, rgba(148, 163, 184, 0.18));
+  border: 1px solid var(--btn-reset-border, rgba(100, 116, 139, 0.45));
+}
+
+.btn.btn-guardar:hover:not(:disabled){ background: var(--btn-guardar-bg-hov); }
+.btn.btn-delete:hover:not(:disabled){ background: var(--btn-delete-bg-hov); }
+.btn.btn-reset:hover:not(:disabled){ background: var(--btn-reset-bg-hov, rgba(148, 163, 184, 0.32)); }
+
+.btn.btn-guardar:hover:not(:disabled),
+.btn.btn-delete:hover:not(:disabled),
+.btn.btn-reset:hover:not(:disabled){
+  box-shadow: 0 0.4rem 0.9rem rgba(15, 23, 42, 0.18);
+  transform: translateY(-2px) scale(1.08);
+}
+
+.btn.btn-guardar:active:not(:disabled),
+.btn.btn-delete:active:not(:disabled),
+.btn.btn-reset:active:not(:disabled){
+  box-shadow: 0 0.2rem 0.45rem rgba(15, 23, 42, 0.14);
+  transform: translateY(0) scale(1.02);
+}
+
+.btn.btn-guardar.is-disabled,
+.btn.btn-delete.is-disabled,
+.btn.btn-reset.is-disabled{
+  filter: grayscale(0.35);
+  opacity: 0.45;
+  transform: scale(0.96);
+}
+
+
+/* Botón "parar" (solo dark; inofensivo en pastel) */
+.btn.btn-parar{
+  background: var(--btn-parar-bg);
+  color: var(--btn-parar-fg);
+}
+.btn.btn-parar:hover{
+  box-shadow: var(--btn-parar-glow);
+}
+
+/* ■ ■ ■ CÍRCULO INDICADOR DEL MENSAJE (común, color por tema) */
+.elemento_con_mensaje{ position: relative; }
+
+.markador_mensaje{
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    font-size: 0.82rem;
+    line-height: 1;
+    color: #353228;
+    /* color: #5727a5; */
+    
+    /* background-color: #0c5025; */
+    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
+    display: none;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* ■ ■ ■ ■ ■ 
+   ■ ■ ■ ■ ■ ALERGIAS: 
+   ■ ■ ■ ■ ■  
+   */
+.w-alergias-inline {
+  width: 100%;
+}
+.w-alergias-grid {
+  display: grid;   grid-template-columns: repeat(auto-fit, 58px);
+  justify-content: center;   gap: 0.45rem;   max-height: 48vh;   overflow-y: auto;
+}
+.w-alergeno-btn {
+  border: 1px solid rgba(255, 255, 255, 0.22);   border-radius: 10px;   background: rgba(255, 255, 255, 0.08);
+  color: #fff;   display: inline-flex;   align-items: center;   justify-content: center;   min-height: 3.5rem;
+  padding: 0.45rem;
+}
+.w-alergeno-btn img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+.w-alergeno-btn.is-active {
+  border-color: #000000; background: rgba(34, 186, 197, 0.333);
+}
+/* .w-alergeno-text { font-size: 0.72rem; text-transform: capitalize; } 
+*/
+/* Alerta visual persistente para elementos del salón con alergias. */
+.elemento_con_alergia {  
+  background: rgba(239, 68, 68, 0.22) !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.28);
+}
+.contenedor_motor_alergias .labels-alergias-pop {
+  display: flex; flex-wrap: wrap; gap: 0.35rem; 
+}
+.contenedor_motor_alergias .labels-alergias-pop.is-empty {
+  color: #6b7280; font-size: 0.82rem; margin: 0;
+}
+.contenedor_motor_alergias .alergia-tag-pop {
+  display: inline-flex;   align-items: center; border-radius: 999px; padding: 0.12rem 0.5rem;
+  font-size: 0.68rem; line-height: 1.1; text-transform: capitalize; 
+  border: 1px solid #86efac; background: #dcfce7; color: #b83d93;
+}
+/* ■ ■ ■ ■
+  ■ ■ ■ ■ Cabecera del offcanvas de lógica: línea de identidad + línea de noticias. 
+  ■ ■ ■ ■ */
+.offcanvas-logica {
+  background: var(--color-offcanvas-logica);
+  height: auto;   min-height: 20vh;   max-height: 'auto'; 
+}
+.offcanvas-logica .offcanvas-header {
+  align-items: center;   gap: 0.45rem;   padding-top: 0.3rem;   padding-bottom: 0.2rem;
+}
+.offcanvas-logica .nav-tabs {
+  margin-bottom: 0.15rem !important;
+}
+.offcanvas-logica .nav-link {
+  padding: 0.35rem 0.85rem;   font-family: "Verdana", "Trebuchet MS", "Segoe UI", system-ui, sans-serif; 
+  font-size: 0.7rem;   font-weight: 600;   letter-spacing: 0.1em;
+}
+/* Pestaña activa: línea inferior naranja */
+/* .offcanvas-logica .nav-link.active {
+    border-bottom: 2px solid #ffa500; } 
+  */
+.offcanvas-logica .nav-link.active {
+    border-bottom: 4px solid #422f0a; 
+}
+/* Pestaña inactiva: cambiar el texto azul por verde */
+.offcanvas-logica .nav-link:not(.active) {
+  border: 2px solid #ffa60000;     color: #008000; 
+}
+.offcanvas-logica-title {
+  font-family: "Verdana", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  display: grid;   grid-template-columns: 1fr auto 1fr;   align-items: center;   flex: 1 1 auto;
+  gap: 0.42rem;   margin: 0;   min-width: 0;
+}
+.offcanvas-logica-title-left {
+  display: inline-flex;   align-items: center;   gap: 0.35rem;   justify-self: start;
+}
+.offcanvas-logica-title-role {
+  color: #334155;   font-size: 0.72rem;   font-weight: 700;   letter-spacing: 0.04em;
+}
+.offcanvas-logica-title-text {
+  color: #111827;   font-weight: 700;   justify-self: center;
+}
+.offcanvas-logica-title-icon {
+  display: inline-flex;   width: 1rem;   height: 1rem;   color: #334155;   flex: 0 0 auto; 
+}
+.offcanvas-logica-title-icon svg,
+.offcanvas-logica-title-icon img {
+  width: 100%;   height: 100%;   object-fit: contain;
+}
+
+
+.alergia-tag-close {
+  display: inline-flex; align-items: center;justify-content: center;
+  width: 0.8rem;height: 0.8rem; border: 0;border-radius: 999px;
+  padding: 0; 
+  background: rgba(127, 29, 29, 0.14);  color: inherit; font-size: 0.78rem; line-height: 1;
+}
+
+
+/* Zona de estado del offcanvas de lógica. */
+.offcanvas-logica-news {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-height: 3rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid transparent;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.offcanvas-logica-news.is-ok {
+  background: #d9f7e5;
+  border-color: #86efac;
+  color: #14532d;
+}
+
+.offcanvas-logica-news.is-alert {
+  background: #f83f3f;
+  border-color: #ff9e20;
+  color: #7f1d1d;
+}
+
+.offcanvas-logica-news .alergia-tag-pop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid #fca5a5;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #7f1d1d;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.62rem;
+  line-height: 1.1;
+  text-transform: capitalize;
+}
+
+.offcanvas-logica-news .alergia-tag-close {
+  width: 0.75rem;
+  height: 0.75rem;
+  background: rgba(127, 29, 29, 0.12);
+  font-size: 0.7rem;
+}
+
+/* ■■ Logica Arriba */
+.offcanvas-logica.offcanvas-top {
+  height: auto !important;
+  max-height: 'auto'; 
+  bottom: auto !important; /* Rompe el estiramiento vertical de Bootstrap */
+}
+/* ■■ Logica Abajo */
+.offcanvas-logica.offcanvas-bottom {
+  height: auto !important;
+  max-height: 'auto'; 
+  
+  /* Si prefieres que mida menos de 35vh si hay poco texto, usa esto en su lugar: */
+  /*
+  height: auto !important;
+  max-height: 35vh;
+  top: auto !important;
+  */
+}
+
+.offcanvas-logica .offcanvas-header,
+.offcanvas-logica .offcanvas-body {
+  width: 100%;
+}
+
+.offcanvas-logica .offcanvas-body {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.offcanvas-logica .tab-content,
+.offcanvas-logica .tab-pane,
+.offcanvas-logica .area-de-contenido {
+  width: 100%;
+  /* border: 1px solid #ffa500;  */
+}
+
+.offcanvas-logica .area-de-contenido {
+  padding: 0.5rem !important;
+}
+
+/* .offcanvas-logica-title-info {
+  font-size: 0.9rem;
+} */
+
+.offcanvas-logica .contenedor_motor_mensajes,
+.offcanvas-logica .sumatorio {
+  font-size: 0.76rem;
+}
+
+.offcanvas-logica .contenedor_motor_mensajes textarea {
+  font-size: 1rem;
+  min-height: 4.2rem;
+  color: #5c4403;
+}
+.offcanvas-logica .contenedor_motor_mensajes textarea::placeholder {
+  color: #a0a0a0;     /* Un gris más claro */
+  opacity: 0.6;       /* Controla la transparencia */
+}
+
+.offcanvas-logica .motor-mensajes-botonera {
+  justify-content: flex-end;
+}
+
+/* Contenedor principal que envuelve todas las reservas 
+Los elementos se van  a mostrar en la disposicion:  icono + id_elemento : mensaje_elemento
+uno detras de otro con un espacio 
+*/
+.sumatorio {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos salten a la siguiente línea si no caben */
+    gap: 1rem; /* Espacio horizontal y vertical entre cada bloque de reserva */
+    padding: 0.5rem 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+
+/* Fila individual (ahora se comporta como un bloque en línea) */
+.sumatorio-row {
+    display: inline-flex; /* ¡La clave! Permite que se coloquen uno al lado del otro */
+    align-items: flex-start;
+    gap: 0.3rem; /* Espacio interno entre el icono, el ID y el mensaje */
+    max-width: 100%;
+    min-width: 0;
+    padding: 0px;
+    
+}
+
+/* Contenedor del icono */
+.sumatorio-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Regla para el SVG inyectado dentro de col_ico */
+.sumatorio-ico svg {
+    width: 1.1em; /* Hace que el ancho sea proporcional al tamaño de la fuente */
+    height: 1.1em; /* Hace que el alto sea proporcional al tamaño de la fuente */
+    fill: currentColor; /* Permite que el SVG herede el color del texto si aplica */
+}
+
+/* Estilo para el ID de la mesa/elemento */
+.sumatorio-id {
+    font-weight: 600; /* Pone el texto en negrita para resaltarlo */
+    color: #495057; /* Un gris oscuro (puedes ajustarlo a tu paleta) */
+    white-space: nowrap; /* Evita que el ID salte de línea */
+}
+
+/* Estilo para el mensaje */
+.sumatorio-msg {
+  flex: 1; 
+  
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word; 
+  
+  border: 1px solid rgb(65, 40, 11);
+  border-radius: 10px;
+  /* background: rgb(255, 255, 255); */
+  /* padding: 4px; */
+  padding: 0px 4px;
+
+  color: #687f94; 
+
+}

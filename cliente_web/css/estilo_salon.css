@@ -1,0 +1,374 @@
+/* Raíz: variables para mantener paleta consistente y fácil mantenimiento 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+:root {
+  --surface: 24 26 40; /* superficie/panel */
+  --accent-rgb: 124 140 255; /* color de acento (RGB) */
+  --accent: rgba(var(--accent-rgb), 1); /* color de acento url(estilo_salon.css)en rgba(1) */
+  --color-texto: rgba(98, 4, 4, 0.9); /* texto claro */
+  --glass-opacity: 0.65; /* opacidad base para fondos translúcidos */
+
+  --navbar-icon-rgb: 60 60 60;
+  --metal-light: #eef2f6;
+  --metal-mid: #d7dee7;
+  --pastel-blue: #8fb4e8;
+  --pastel-blue-deep: #5b8fd6;
+}
+
+/* TABS DEL OFFCANVAS de Configuracion 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+.custom-tabs { width: 100%; }
+.config-tabs { border-bottom: 1px solid #d8d0ad; margin-bottom: 0.6rem; }
+.config-tabs .nav-link { color: #2f7a3a; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.35rem 0.85rem; border: 2px solid transparent; background: transparent; }
+.config-tabs .nav-link.active { color: #353228; background: transparent; 
+            border-color: transparent; border-bottom: 4px solid #422f0a; }
+.config-tab-content { min-height: 0; }
+
+[data-tipo-bs="offcanvas-configuracion"] .config-tab-content > .tab-pane { display: none; }
+[data-tipo-bs="offcanvas-configuracion"] .config-tab-content > .tab-pane.active { display: block; }
+
+.tab-content-custom { padding: 0; background: transparent; border: 0; }
+
+/* Alinea el texto a la izquierda en TODOS los TOOLTIP's 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+.tooltip-inner {   max-width: none !important;   text-align: left; }
+
+/* ■■■■■ Offcanvas Configuración: plano, limpio y mantenible ■■■■■ */
+[data-tipo-bs="offcanvas-configuracion"] { background: #fdf7df !important; border-left: 1px solid #d8d0ad; color: #353228; }
+[data-tipo-bs="offcanvas-configuracion"] .offcanvas-header { align-items: center; gap: 0.45rem; padding-top: 0.45rem; padding-bottom: 0.35rem; border-bottom: 1px solid #d8d0ad; }
+[data-tipo-bs="offcanvas-configuracion"] .offcanvas-body { display: flex; flex-direction: column; }
+[data-tipo-bs="offcanvas-configuracion"] .btn-close { filter: none; opacity: 0.55; }
+[data-tipo-bs="offcanvas-configuracion"] .btn-close:hover { opacity: 0.85; }
+[data-tipo-bs="offcanvas-configuracion"] label,
+[data-tipo-bs="offcanvas-configuracion"] .options-bar__label { display: block; margin-bottom: 0.35rem; color: #5b563f; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+[data-tipo-bs="offcanvas-configuracion"] input { width: 100%; padding: 0.55rem 0.7rem; margin-bottom: 0.9rem; color: #353228; background: #fffdf3; border: 1px solid #d8d0ad; border-radius: 8px; font-size: 0.9rem; }
+[data-tipo-bs="offcanvas-configuracion"] input[readonly] { color: #6d674f; background: #f7efcf; cursor: not-allowed; pointer-events: none; }
+[data-tipo-bs="offcanvas-configuracion"] .config-section { padding: 0.85rem; margin-bottom: 0.85rem; background: #fff8dc; border: 1px solid #d8d0ad; border-radius: 10px; }
+[data-tipo-bs="offcanvas-configuracion"] .config-section--sidebar { padding: 0.65rem 0.85rem; }
+[data-tipo-bs="offcanvas-configuracion"] .config-section__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+[data-tipo-bs="offcanvas-configuracion"] .sidebar-position-switch { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.4rem; margin: 0; color: #6d674f; font-size: 0.62rem; letter-spacing: 0.04em; }
+[data-tipo-bs="offcanvas-configuracion"] .sidebar-position-switch input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
+[data-tipo-bs="offcanvas-configuracion"] .sidebar-position-switch__slider { position: relative; width: 42px; height: 20px; background: #d8d0ad; border: 1px solid #bfb584; border-radius: 999px; }
+[data-tipo-bs="offcanvas-configuracion"] .sidebar-position-switch__slider::after { content: ''; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; background: #2f7a3a; border-radius: 50%; transition: transform 0.18s ease; }
+[data-tipo-bs="offcanvas-configuracion"] .sidebar-position-switch input:checked + .sidebar-position-switch__slider::after { transform: translateX(21px); }
+[data-tipo-bs="offcanvas-configuracion"] .form-group-header { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+[data-tipo-bs="offcanvas-configuracion"] .config-info { color: #8a5d00; font-size: 0.65rem; font-weight: 700; }
+[data-tipo-bs="offcanvas-configuracion"] .config-actions { display: flex; justify-content: center; margin-top: auto; padding-top: 1rem; }
+[data-tipo-bs="offcanvas-configuracion"] button[type="submit"] { min-width: 8rem; padding: 0.55rem 1.2rem; color: #6d674f; background: #e8dfb8; border: 1px solid #d8d0ad; border-radius: 8px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; display:none;}
+[data-tipo-bs="offcanvas-configuracion"] button[type="submit"]:disabled { opacity: 0.65; cursor: not-allowed; }
+[data-tipo-bs="offcanvas-configuracion"] .config-empty-section { min-height: 9rem; display: grid; place-items: center; color: #6d674f; }
+[data-tipo-bs="offcanvas-configuracion"] .config-section__title { margin: 0 0 0.75rem; color: #5b563f; font-size: 0.82rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+[data-tipo-bs="offcanvas-configuracion"] .config-catalog-table-wrapper { overflow-x: auto; }
+[data-tipo-bs="offcanvas-configuracion"] .config-catalog-table { width: 100%; border-collapse: collapse; color: #353228; font-size: 0.82rem; }
+[data-tipo-bs="offcanvas-configuracion"] .config-catalog-table th,
+[data-tipo-bs="offcanvas-configuracion"] .config-catalog-table td { padding: 0.55rem 0.65rem; text-align: left; vertical-align: top; border-bottom: 1px solid #d8d0ad; }
+[data-tipo-bs="offcanvas-configuracion"] .config-catalog-table th { color: #5b563f; background: #f7efcf; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+[data-tipo-bs="offcanvas-configuracion"] .config-catalog-table tbody tr:hover { background: #fffdf3; }
+[data-tipo-bs="offcanvas-configuracion"] .social-icons-container { display: flex; gap: 12px; justify-content: center; border-top: 1px solid #d8d0ad; padding-top: 1.2rem; margin-top: 1.2rem; }
+
+/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+Iconos ( clase .bi de bootstrap icons) 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+.bi {   font-size: 0.8rem !important;   opacity: 0.92;   transition: transform 0.12s ease, opacity 0.12s ease; }
+.bi:hover {   transform: translateY(-3px); transform: scale(1.15);  opacity: 1; }
+
+[data-action-nav="elementos"].bi {
+  font-size: 1.5rem !important;
+  line-height: 1;
+}
+
+/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+Fullscreen en MOVILES 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+@media (max-width: 576px) {
+    .off-config { width: 100% !important;  height: 100% !important; max-width: 100% !important; top: 0; left: 0; border-radius: 0; background: linear-gradient(135deg, var(--metal-light) 0%, #f8fafc 45%, #e7edf4 100%) !important; }
+    .off-config .tab-buttons { flex-direction: column;  }
+    .off-config form input, form textarea , form label { font-size: 12px; }
+}
+
+/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+• • • • • INFO (LLAMADA DESDE EL NAVBAR)​     
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+.pre-wrap {
+  white-space: pre-wrap;     /* respeta saltos pero permite envolver */
+  overflow-wrap: anywhere;   /* rompe palabras/líneas largas */
+  word-break: break-word;    /* fallback */
+  max-width: 100%;
+}
+
+/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+• • • • • LISTA DE SALONES (OFFCANVAS) RUD
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+/* Contenedor principal con scroll automático */
+[data-rud="contenedor_lista"] { 
+  display: flex; flex-direction: column; gap: 8px; margin-top: 1rem; 
+  max-height: calc(100vh - 180px);      /* Altura dinámica restando header/tabs */
+  overflow-y: auto; padding-right: 5px; /* Evita que el scroll tape contenido */   }
+
+/* Scrollbar personalizado sutil para integrarse con el diseño */
+[data-rud="contenedor_lista"]::-webkit-scrollbar{   
+  width: 6px; 
+} 
+[data-rud="contenedor_lista"]::-webkit-scrollbar-thumb {  
+  background-color: rgba(var(--accent-rgb), 0.6); border-radius: 4px; 
+}
+
+/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+/* CADA REGISTRO DE OFFCANVAS-RUD                          */
+/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+.photo-registro-rud {
+  background-color: rgba(255, 255, 255, 0.05); /* Muy sutil sobre fondo oscuro */
+  border: 1px solid rgba(var(--navbar-icon-rgb), 0.35);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+.clase_match_open{
+  font-size: 2rem; color: rgb(148, 33, 86); 
+}
+
+.photo-registro-rud:hover { background-color: rgba(var(--navbar-icon-rgb), 0.08); border-color: rgba(var(--navbar-icon-rgb), 0.6); transform: translateX(2px); }
+/* Texto e información */
+.photo-info-section { display: flex; flex-direction: column; overflow: hidden; cursor:pointer; }
+.photo-titulo-rud { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgb(var(--navbar-icon-rgb)); }
+.clase_match_open{ font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color:rgb(148, 33, 86); font-weight: bold;}
+.photo-fecha-rud {  font-size: 0.75rem;   color: rgba(var(--navbar-icon-rgb), 0.75); }
+/* Botonera de acciones */
+.photo-actions-section {   display: flex;   gap: 12px;   align-items: center; }
+.photo-btn-accion-rud { background: transparent; border: none; cursor: pointer; font-size: 1.6rem; transition: transform 0.1s; color: rgb(var(--navbar-icon-rgb));   padding: 0; }
+.photo-btn-accion-rud i { font-size: 3rem; }
+.photo-btn-accion-rud:hover { color:rgb(16, 185, 129); transform: scale(1.55);  }
+
+
+/* DEL OFFCANVAS RUD Zona de Tabs de Visibilidad... Filtros
+   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+/* Estilos Base y Contenedor */
+.visibilidad-card-rud {
+    border-radius: 1rem; border: 1px solid #dee2e6; background: #fff; width: 100%; margin-bottom: 0.7rem; }
+/* Control Segmentado (Radios): TODOS / PERSONALIZADO*/
+.segmented-control-rud { background: #f1f3f5; padding: 4px; border-radius: 12px; display: inline-flex; }
+/* PLANTILLA / PUBLICA */
+.segmented-control-rud .btn-check + .btn { 
+    border: none; border-radius: 9px; font-size: 0.75rem; font-weight: 600;
+    padding: 6px 10px; color: #6c757d; transition: 0.2s;
+}
+.segmented-control-rud .btn-check:checked + .btn { background: #fff; color: #0d6efd; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+/* Chips (Checkboxes) */
+.chip-rud .btn-check + .btn {
+    border-radius: 50px; border: 1px solid #dee2e6; font-size: 0.85rem;
+    padding: 6px 10px; color: #495057; background: #fff;
+    display: flex; align-items: center; gap: 8px; transition: 0.2s;
+}
+
+/* Colores de Estado Activo */
+.chip-plantilla-rud .btn-check:checked + .btn{ background: #eef2ff !important; border-color: #c7d2fe !important; color: #4338ca !important;}
+.chip-publica-rud .btn-check:checked + .btn{ background: #ecfdf5 !important; border-color: #a7f3d0 !important; color: #047857 !important;}
+.text-tracking { letter-spacing: 0.08em; font-size: 0.7rem; line-height: 1; /* Forzamos a que no tenga aire extra arriba/abajo */ }
+/* Pie de estado más compacto */
+.pt-1.border-top.mt-1 { margin-top: 0.3rem !important; padding-top: 0.2rem !important; }
+
+/* Reducción de márgenes inferiores de los bloques */
+.mb-2 { margin-bottom: 0.4rem !important; }
+.mb-1 { margin-bottom: 0.2rem !important; }
+
+/* Objeto Modal de BootStrap para Actualizacion de Ficha de Foto-Salon
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+:general{
+  --backg-boton: linear-gradient(135deg, rgb(99, 179, 237) 0%, rgb(66, 153, 225) 100%);
+}
+/* ■■■ Contenedor Principal del Modal */
+[data-updt="update"] .modal-content {
+    border: none;  border-radius: 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05); background-color: #ffffff;
+    overflow: hidden; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+/* ■■■ Encabezado */
+[data-updt="header"] { background: linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%); border-bottom: 1px solid rgba(0,0,0,0.03); padding: 1.5rem 2rem; }
+[data-updt="header"] .modal-title { color: #4a6a66;font-weight: 700;letter-spacing: -0.5px;font-size: 1.25rem;}
+/* ■■■ Cuerpo y Formulario  */
+.update-body {    padding: 2rem;    background-color: #ffffff;}
+/* ■■■ Inputs de Texto y Textarea */
+[data-updt="titulo"], 
+[data-updt="slug"], 
+[data-updt="mensaje"] { 
+  border: 2px solid #f0f0f0;border-radius: 12px; padding: 10px 15px; transition: all 0.3s ease; background-color: #fafafa;
+}
+[data-updt="titulo"]:focus, 
+[data-updt="slug"]:focus, 
+[data-updt="mensaje"]:focus { 
+  border-color: #b3e5fc; background-color: #fff; box-shadow: 0 0 0 4px rgba(179, 229, 252, 0.25); outline: none;
+}
+.form-label { 
+  font-weight: 600;    color: #7d8b99 !important;    margin-left: 4px;    font-size: 0.85rem;
+}
+/* ■■■ Checkboxes Personalizados */
+[data-updt="plantilla"], 
+[data-updt="publica"] {width: 1.2em; height: 1.2em; margin-top: 0.25em; border-radius: 6px !important; border: 2px solid #d1d9e6; cursor: pointer;}
+[data-updt="plantilla"]:checked, 
+[data-updt="publica"]:checked {    background-color: #a5d6a7; border-color: #a5d6a7;}
+/* ■■■ Feedback de Error */
+[data-updt="feedback"] { border-radius: 12px;background-color: #fff5f5;border: 1px solid #feb2b2;color: #c53030;font-weight: 500;transition: all 0.3s ease;}
+/* ┌••• Tipo: Success (Verde Pastel) Menta muy suave --- */
+[data-updt="feedback"].alert-success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;}
+/* ┌••• Tipo: Warning (Naranja/Ámbar Pastel) --- */  /* Naranja crema */    
+[data-updt="feedback"].alert-warning { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2;}
+/* ┌••• Tipo: Danger (Rojo/Rosa Pastel) --- */ /* Rosa palo / Rojo nube */
+[data-updt="feedback"].alert-danger { background-color: #ffebee; color: #c62828;border: 1px solid #ffcdd2;}
+/* ■■■ Botón de Acción */
+[data-updt="submit"] {
+    background: linear-gradient(135deg, #90cdf4 0%, #63b3ed 100%); /* Azul suave */
+    border: none; border-radius: 15px;padding: 14px;font-weight: 700;text-transform: uppercase;letter-spacing: 1px;
+    transition: all 0.3s transform; box-shadow: 0 4px 15px rgba(144, 205, 244, 0.4); width: auto;
+}
+[data-updt="submit"]:hover {
+    background: linear-gradient(135deg, rgb(99, 179, 237) 0%, rgb(66, 153, 225) 100%);
+    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(144, 205, 244, 0.6);
+}
+[data-updt="submit"]:active { transform: translateY(0); }
+
+/* ■■■ Botón Cerrar (X) */
+[data-updt="update"] .btn-close { background-color: #fff; border-radius: 50%;opacity: 0.8;padding: 0.6rem;box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+
+
+/* Objeto Modal de BootStrap para CREACIÓN (data-creat)
+Estilo: Soft Lavender Corporate (Referencia CSS1)
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+/* ┌•• Contenedor Principal del Modal --- */
+[data-creat="modal"] .modal-content { border: none; border-radius: 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+    background-color: #ffffff;  overflow: hidden;font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+[data-creat="titulares"] { color: #b2a3d4; font-weight: 700; letter-spacing: -0.5px; font-size: 1.25rem; }
+/* ┌•• Cuerpo y Formulario --- */
+[data-creat="contenedor-formulario"] { padding: 2rem; background-color: #ffffff; }
+/* ┌•• Inputs de Texto y Textarea */
+[data-creat="titulo"], 
+[data-creat="slug"], 
+[data-creat="mensaje"] { border: 2px solid #f5f5f7; border-radius: 12px; padding: 10px 12px; transition: all 0.3s ease; background-color: #fafafb; }
+[data-creat="titulo"]:focus, 
+[data-creat="slug"]:focus, 
+[data-creat="mensaje"]:focus { border-color: #d1c4e9; background-color: #fff; box-shadow: 0 0 0 4px rgba(209, 196, 233, 0.25); outline: none; }
+[data-creat="formulario"] .form-label { font-weight: 600; color: #8e94a5 !important; margin-left: 4px; font-size: 0.85rem; }
+
+/* ┌•• Checkboxes Personalizados --- */
+[data-creat="plantilla"], 
+[data-creat="publica"] { width: 1.2em; height: 1.2em; margin-top: 0.25em; border-radius: 6px !important; border: 2px solid #e0e0e0; cursor: pointer;}
+[data-creat="plantilla"]:checked, 
+[data-creat="publica"]:checked { background-color: #b39ddb; border-color: #b39ddb; }
+/* ┌•• Feedback de Error --- */
+[data-creat="feedback"] {border-radius: 10px;background-color: #fff5f5;border: 1px solid #feb2b2;color: #c53030;font-weight: 500;transition: all 0.3s ease;}
+/* ┌•• Tipo: Success (Verde Pastel) Menta muy suave --- */
+[data-creat="feedback"].alert-success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;}
+/* ┌•• Tipo: Warning (Naranja/Ámbar Pastel) --- */  /* Naranja crema */    
+[data-creat="feedback"].alert-warning { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2;}
+/* ┌•• Tipo: Danger (Rojo/Rosa Pastel) --- */ /* Rosa palo / Rojo nube */
+[data-creat="feedback"].alert-danger { background-color: #ffebee; color: #c62828;border: 1px solid #ffcdd2;}
+
+/* ┌•• Acordeón Informativo de Guardar Foto --- */
+[data-creat="acordeon"] { margin-bottom: 0.75rem; border-radius: 10px; overflow: hidden; border: 1px solid rgba(179, 157, 219, 0.25);
+  box-shadow: 0 12px 24px rgba(94, 75, 138, 0.12); background: linear-gradient(140deg, rgba(248, 245, 255, 0.8), rgba(255, 255, 255, 0.95)); box-sizing: border-box; }
+[data-creat="acordeon"] .accordion-item { border: 0; background: transparent; }
+[data-creat="acordeon"] .accordion-button {  font-size: 0.8rem; background: transparent; color: #5a4a78; font-weight: 500; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+[data-creat="acordeon"] .accordion-button:focus { box-shadow: 0 0 0 3px rgba(179, 157, 219, 0.3); }
+[data-creat="acordeon"] .accordion-button:not(.collapsed) { color: #4b3f63; background: rgba(179, 157, 219, 0.12); }
+[data-creat="acordeon"] .accordion-body {   font-size: 0.75rem;   color: #6a6478;  padding-top: 0.4rem; padding-bottom: 0.5rem;}
+[data-creat="acordeon-reservas"],
+[data-creat="acordeon-mensajes"] {   line-height: 1.15;   white-space: normal;  word-break: break-word; }
+
+/* ┌•• Botón de Acción (Submit) --- */
+[data-creat="submit"] { background: linear-gradient(135deg, #90cdf4 0%, #63b3ed 100%); 
+    border: none; border-radius: 15px;padding: 14px;font-weight: 700;text-transform: uppercase;letter-spacing: 1px;
+    transition: all 0.3s transform; box-shadow: 0 4px 15px rgba(144, 205, 244, 0.4); width: auto;}
+[data-creat="submit"]:hover { background: linear-gradient(135deg, rgb(99, 179, 237) 0%, rgb(66, 153, 225) 100%);
+                              transform: translateY(-2px); box-shadow: 0 6px 20px rgba(144, 205, 244, 0.6);}
+[data-creat="submit"]:active {    transform: translateY(0);}
+/* ┌•• Botón Cerrar (X) --- */
+[data-creat="modal"] .btn-close {background-color: #ffffff; border-radius: 50%; opacity: 0.8; padding: 0.6rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+Side_Elementos: SIDE-BAR de elementos (mesa/silla)
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+[data-action-nav="elementos"][data-side-active="true"] {
+  color: rgb(56, 189, 149);  text-shadow: 0 0 12px rgba(56, 189, 149, 0.45); 
+}
+
+[data-side-elementos] {
+  --side-gap: 0.65rem;
+  --side-padding: 0.75rem 0.9rem 1.2rem;
+  --side-padding-bottom: 1.5rem;
+  --side-drag-space: 0.55rem;
+  --side-radius: 16px;
+  --side-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+  --side-border: rgba(255, 255, 255, 0.08);
+  --side-bg: linear-gradient(150deg, rgba(170, 176, 183, 0.35), rgba(110, 116, 122, 0.4));
+  --side-transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+  --side-base-translate-x: 0%;
+  --side-base-translate-y: 0%;
+  --side-offset-x: 0px;
+  --side-offset-y: 0px;
+  --side-drag-x: 0px;
+  --side-drag-y: 0px;
+  position: fixed;
+  z-index: 1045;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding:var(--side-padding) ;
+  /* padding-top: var(--side-padding);
+  padding-bottom: var(--side-padding-bottom); */
+  border-radius: var(--side-radius);
+  background: var(--side-bg);
+  border: 1px solid var(--side-border);
+  box-shadow: var(--side-shadow);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  opacity: 1;
+  transform: translateX(calc(var(--side-base-translate-x) + var(--side-offset-x) + var(--side-drag-x)))
+             translateY(calc(var(--side-base-translate-y) + var(--side-offset-y) + var(--side-drag-y)));
+  transition: var(--side-transition);
+}
+
+[data-side-elementos][data-side-dragging="true"] {transition: none;}
+[data-side-elementos][data-side-position="right"] {top: 86px;  right: 18px;  max-height: calc(100vh - 120px);}
+[data-side-elementos][data-side-position="left"] {top: 86px;  left: 18px;  max-height: calc(100vh - 120px);}
+[data-side-elementos][data-side-position="bottom"] {bottom: 18px;  right: 18px;  max-width: calc(100vw - 36px);}
+[data-side-elementos][data-side-position="right"][data-side-state="closed"] {  --side-base-translate-x: 110%;  opacity: 0;  pointer-events: none;}
+[data-side-elementos][data-side-position="right"][data-side-state="open"] {  --side-base-translate-x: 0%;  opacity: 1;  pointer-events: auto;}
+[data-side-elementos][data-side-position="left"][data-side-state="closed"] {  --side-base-translate-x: -110%;  opacity: 0;  pointer-events: none;}
+[data-side-elementos][data-side-position="left"][data-side-state="open"] {  --side-base-translate-x: 0%;  opacity: 1;  pointer-events: auto;}
+[data-side-elementos][data-side-position="bottom"][data-side-state="closed"] {  --side-base-translate-y: 110%;  opacity: 0;  pointer-events: none;}
+[data-side-elementos][data-side-position="bottom"][data-side-state="open"] {  --side-base-translate-y: 0%;  opacity: 1;  pointer-events: auto;}
+[data-side-elementos][data-side-size-mode="content"] {  width: fit-content;  height: fit-content;}
+[data-side-elementos][data-side-size-mode="fixed"] {  width: 180px;  height: 220px;}
+[data-side-elementos][data-side-size-mode="full"] {  width: min(280px, 90vw);  height: calc(100vh - 120px);}
+[data-side-content="lista"] {  display: flex;  flex-direction: column;  align-items: center;  gap: var(--side-gap);  padding-block: var(--side-drag-space);  flex: 1;}
+[data-side-elementos][data-side-position="bottom"] [data-side-content="lista"] {  flex-direction: row;}
+[data-side-item] {  width: 42px;  height: 42px;  display: flex;  align-items: center;  justify-content: center;  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);  border: 1px solid rgba(255, 255, 255, 0.08);  transition: transform 0.2s ease, background 0.2s ease;}
+[data-side-item] svg {  width: 28px;  height: 28px;  fill: rgb(var(--navbar-icon-rgb));}
+[data-side-item]:hover {  transform: scale(1.35);  background: rgba(56, 189, 149, 0.12);}
+[data-side-handle] {display: flex;  align-items: center;  justify-content: center;  width: 100%;  padding-top: 2.5rem;
+                    background: transparent;  border: 0;  font-size: 1rem;  color: rgba(255, 255, 255, 0.7);  cursor: grab;}
+[data-side-handle] i {  font-size: 1.5rem;}
+[data-side-elementos][data-side-locked="true"] [data-side-handle] {  cursor: not-allowed;  opacity: 0.45;  pointer-events: none;}
+
+/* ESPACIADO: Contenedor que agrupa todos los elementos */
+.side_lista_elementos {
+    display: flex; flex-direction: column; align-items: center; gap: var(--side-gap, 15px); 
+    padding: 15px 0; width: 100%;                
+}
+/* PROPORCIÓN Y ESTILO VISUAL DE LA CAJA */
+.menu_to_clone {
+    width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;
+    cursor: grab; border-radius: 12px; background: rgba(255, 255, 255, 0.04); 
+    border: 1px solid rgba(255, 255, 255, 0.08); transition: transform 0.2s ease, background 0.2s ease;
+}
+.menu_to_clone:hover { 
+    transform: scale(1.15);     background: rgba(56, 189, 149, 0.12);
+}
+.menu_to_clone:active {
+    cursor: grabbing;
+}
+/* PROPORCIÓN DEL SVG: Adapatado a su caja */
+.menu_to_clone svg {
+    width: 75%; height: 75%; object-fit: contain; pointer-events: none;  
+}
