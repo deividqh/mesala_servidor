@@ -289,7 +289,7 @@ class Motor_Mensajes extends Interfaz_Custom_Motores{
 		if (!reservas) return [];
 
 		const index_en_reserva = this.Salon._get_indice_en_reserva_s(id_elemento);
-		if(!index_en_reserva) return [];
+		if(index_en_reserva === -1) return [];
 
 		const reservadores = reservas[index_en_reserva].reservadores;
 		if(!reservadores) return [];
@@ -309,13 +309,13 @@ class Motor_Mensajes extends Interfaz_Custom_Motores{
 			if(elemento_dom.id === id){
 				return;				
 			}
-			// • una row y 3 cols por fila(icono, id_elemento, mensaje elemento)
-			const row = document.createElement('div');
+			// •  3 cols por elemento(icono, id_elemento, mensaje elemento)
+			const contenido_elemento = document.createElement('div');
 			const col_ico = document.createElement('span');
 			const col_id = document.createElement('span');
 			const col_mensaje = document.createElement('span');
 			// • asigno las clases identificativas css
-			row.className = 'sumatorio-row';			
+			contenido_elemento.className = 'sumatorio-contenido_elemento';			
 			col_ico.className = 'sumatorio-ico';
 			col_id.className = 'sumatorio-id';
 			col_mensaje.className = 'sumatorio-msg';
@@ -328,11 +328,11 @@ class Motor_Mensajes extends Interfaz_Custom_Motores{
 			const msg = this.get_mensaje(id);
 			col_mensaje.textContent = msg ? msg : "•";
 			// • Asingno las columnas a la Fila primero
-			row.appendChild(col_ico);
-			row.appendChild(col_id);
-			row.appendChild(col_mensaje);
+			contenido_elemento.appendChild(col_ico);
+			contenido_elemento.appendChild(col_id);
+			contenido_elemento.appendChild(col_mensaje);
 			// ... y la fila al sumatorio y vamos a por otra fila
-			$sumatorio.appendChild(row);
+			$sumatorio.appendChild(contenido_elemento);
 		});
 
 		return $sumatorio;

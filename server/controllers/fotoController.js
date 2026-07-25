@@ -27,10 +27,10 @@ async function createFoto(req, res) {
       // ■■■■■■■■ 
       const clasesJson = JSON.stringify(salon.clases_json || {});
       const rutasJson = JSON.stringify(salon.rutas_json || {});
-      const tiposJson = JSON.stringify(salon.tipos_json || {});
       const configuracionJson = JSON.stringify(salon.configuracion_json || {});
+      const rangosJson = JSON.stringify(foto.rangos || []);
       
-      const rangosJson = JSON.stringify(foto.rangos || [])
+      const tiposJson = JSON.stringify(salon.tipos_json || {});
 
       // ■■■■■■■■ Verificar si el slug público ya existe para este usuario
       const [slugRows] = await connection.query(
@@ -60,12 +60,11 @@ async function createFoto(req, res) {
         ]
       );
       
-      // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+      // ■■■■■■■■■■■4■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
       // Guardo el ID del salón (nuevo o existente)
       let salon_id = null;
       //    • Si existe (existingSalonRows)    ► Update fecha de la tabla Salon 
       //    • si no existe (existingSalonRows) ► Insert un NUEVO SALON
-      // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
       if (existingSalonRows.length > 0) {
           salon_id = existingSalonRows[0].id;
           await connection.query(

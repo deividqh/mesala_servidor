@@ -2191,8 +2191,8 @@ class e_Salon extends Tablero_Drop {
 		// ┌•• Determinar DIMENSIONES INICIALES dependiendo del tipo/ancho de la pantalla. 
 		// 	   limites = { columnas:{min:8, max:30}, filas: {min:8, max:100} }
 		// ┌•• Determinar LIMITES MAX MIN de columnas y filas dependiendo del tipo/ancho de la pantalla. 
-		// 	   dimesion_inicial = {filas, columnas}
-		const [entorno, dimesion_inicial, limites] = e_Salon._quien_soy();
+		// 	   dimension_inicial = {filas, columnas}
+		const [entorno, dimension_inicial, limites] = e_Salon._quien_soy();
 
 		// ┌•• Esto tiene que estar antes de super para definir cuantas columnas tiene nuestro salon.
 		// • limitado: Según el ancho del dispositivo se muestran 8,14,20 columnas. dicc_config no tiene que poner columnas...necesita re-posicionar
@@ -2203,7 +2203,7 @@ class e_Salon extends Tablero_Drop {
 		
 		// ⚠️⚠️ Estamos en modelo 'limitado' de momento. ⚠️⚠️
 		if(modelo_salon==='limitado'){
-			columnas_aplicadas = dimesion_inicial.columnas;
+			columnas_aplicadas = dimension_inicial.columnas;
 			b_scroll = false;
 		}else if(modelo_salon === 'scrolado'){
 			columnas_aplicadas = dicc_config.columnas;
@@ -2248,7 +2248,7 @@ class e_Salon extends Tablero_Drop {
 		// ┌•• ENTORNO - DIMENSIONES - LIMITES
 		// ┌•••••••••••••••••••••••••••••••••••
 		this.entorno = entorno;
-		this.dimension = dimesion_inicial;
+		this.dimension = dimension_inicial;
 		this.limites = limites;
 		
 		// Botones de Accion: 
@@ -2358,7 +2358,7 @@ class e_Salon extends Tablero_Drop {
 
 	/** 
 	 entorno:{tipo='MOVIL', es_tactil=false, ancho_ventana=558}
-	 dimesion:{filas=12, columnas=8}
+	 dimension:{filas=12, columnas=8}
 	 limites:{ columnas:{min:8, max:30}, filas: {min:8, max:100} } 
 	 *### ■ STATIC METHOD 🧍‍♂️ ■ Calcula el entorno, dimensiones y limites dependiendo del ancho de pantalla.
 	  				Llamada desde resize
@@ -3909,7 +3909,7 @@ class Configuracion_Salon {
 		this.entorno = Compatibilidad._detectar_entorno();
 		
 		// ┌■ Determinar DIMENSIONES INICIALES dependiendo del tipo/ancho de la pantalla. 
-		// ┌• dimesion_inicial = {filas, columnas} 
+		// ┌• dimension_inicial = {filas, columnas} 
 		this.dimension_inicial = Compatibilidad._get_dimension_inicial(this.entorno.tipo);
 		
 		// ┌■ Determinar LIMITES MAX MIN de columnas y filas dependiendo del tipo/ancho de la pantalla. 
@@ -7717,7 +7717,7 @@ class Foto_CRUD{
 		
 		// ┌•• Le hace una foto al salón en este momento
 		const dicc_api_foto = this.Salon?.api_foto();
-		const dimension = this.Salon.dimesion;		
+		const dimension = this.Salon.dimension;		
 		// ┌•• Cacho los rangos de las reservas de la foto.
 		const rangos_reservas = RnG._reservas_a_rangos(dicc_api_foto.reservas || [], dicc_api_foto.indices, dimension || null);
 		// ┌•• Cacho el Rango Matriz.
@@ -7806,7 +7806,7 @@ class Foto_CRUD{
 
 	/**
 	 * ## Valida la carga de la foto en el salon:
-	 * ### Hay que validar que las dimensiones de Salon y las dimesiones de la foto a cargar de la bdd sean iguales o distintas
+	 * ### Hay que validar que las dimensiones de Salon y las dimensiones de la foto a cargar de la bdd sean iguales o distintas
 	 */
 	async __validar_carga(foto_id){
 		const Salon = this.Salon || null;

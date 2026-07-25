@@ -129,7 +129,7 @@
 */
 /* Alerta visual persistente para elementos del salón con alergias. */
 .elemento_con_alergia {  
-  background: rgba(239, 68, 68, 0.22) !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.28);
+  background: rgba(235, 49, 49, 0.171) !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.28);
 }
 .contenedor_motor_alergias .labels-alergias-pop {
   display: flex; flex-wrap: wrap; gap: 0.35rem; 
