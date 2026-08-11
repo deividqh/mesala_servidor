@@ -56,19 +56,17 @@ class Working_Celdas {
 	// ■■
 	/**
 	 * ## Normaliza un valor para que sea un ENTERO POSITIVO (índice válido).
-	 * ### Si introduce un valor no válido, devuelve 0.
+	 * ### Si introduce un valor no válido, devuelve null.
 	 * ### Si introduce un valor negativo, devuelve su valor absoluto.
 	 * @param {number} valor el numero a normalizar, pej 5, '10', -3	 
 	 */
 	_entero_positivo(valor) {
-		try {
-			if (Number.isInteger(valor) && valor >= 0) 
-				return valor;
-			const numero = Number.parseInt(valor, 10);
-			return Number.isInteger(numero) && numero >= 0 ? numero : -numero;			
-		} catch (error) {
-			return null;
-		}
+		if (Number.isInteger(valor) && valor >= 0) return valor;
+
+		const numero = Number.parseInt(valor, 10);
+		if (!Number.isInteger(numero)) return null;
+
+		return Math.abs(numero);		
 	}
 	
 	// ■■ CONVERSION
@@ -272,7 +270,7 @@ class Working_Celdas {
 			const coordenada = this.X_to_fc(indice);
 			// Lo pone en formato celda y retorna.... _fc_to_celda también valida is_OK ;)
 			const celda = this._fc_to_celda(coordenada.fila, coordenada.columna);
-			return (celda) ? celda : false;			
+			return celda || null;			
 		} catch (error) {
 			console.log(error);
 			return null;
@@ -380,15 +378,26 @@ class Working_Celdas {
 
 
 	_dimension_OK(dimension){
-		if(!dimension || !dimension.filas || !dimension.columnas) 
-			return false;
-		const MatriZ = this.ref_Salon.matriz_plana;
-		const filas = dimension.filas;
-		const columnas = dimension.columnas;
-		const indice_en_matriz = this.X_to_indice({filas, columnas});
-		if(indice_en_matriz) return true;		
-		return false;
+		// if(!dimension || !dimension.filas || !dimension.columnas) 
+		// 	return false;
+		// const MatriZ = this.ref_Salon.matriz_plana;
+		// const filas = dimension.filas;
+		// const columnas = dimension.columnas;
+		// const indice_en_matriz = this.X_to_indice({filas, columnas});
+		// if(indice_en_matriz) return true;		
+		// return false;
+		
+		if (!dimension || typeof dimension !== 'object') return false;
+		if(!dimension.filas || !dimension.columnas) return false;
 
+		const { filas, columnas } = dimension;
+		if (!Number.isInteger(filas) || filas <= 0) return false;
+		if (!Number.isInteger(columnas) || columnas <= 0) return false;
+
+		const limites = this.ref_Salon?._limites_matriz?.();
+		if (!limites) return false;
+
+		return filas <= limites.filas && columnas <= limites.columnas;
 	}
 
 	/**
@@ -621,6 +630,9 @@ class Working_Rangos  extends Working_Celdas{
 			
 			return null;
 
+			// const dimension = this._dimension_to_f_x_c(texto);
+			// return this._dimension_OK(dimension) ? dimension : null;
+
 		}
 		/**
 		 * 
@@ -636,9 +648,11 @@ class Working_Rangos  extends Working_Celdas{
 					return null;
 				}
 			}
-			if (typeof dimension !== 'string') return null;
-			if (dimension.trim() === '') return null;
-			// ■ PROCESO SOBRE CADENA
+			if (typeof dimension !== 'string') 
+				return null;
+			if (dimension.trim() === '') 
+				return null;
+			// ┌■ PROCESO SOBRE CADENA
 			const match = dimension.toLowerCase().match(/^(\d+)x(\d+)$/);
 			if (!match) return null;
 			const filas = parseInt(match[1], 10);
@@ -694,7 +708,8 @@ class Working_Rangos  extends Working_Celdas{
 					indice += 1;
 					candidato = `${nombre_rango}_${indice}`;
 				}
-				return nombres_existentes.includes(nombre_rango) ? false : candidato;
+				// return nombres_existentes.includes(nombre_rango) ? false : candidato;
+				return candidato;
 			}
 
 			// ■ ■ ■ 
@@ -863,7 +878,7 @@ class Working_Rangos  extends Working_Celdas{
 		 * NO USADA
 		 */
 		api_update(nombre_rango, dimension = '1x1', celda_inicio = 'A0', dicc_to_update=null) {
-			if(!nombre_rango) return;
+			if(!nombre_rango) return null;
 			nombre_rango = nombre_rango.trim();
 			if (dicc_to_update == null) {
 					dicc_to_update = this.d_rangos;			
@@ -872,14 +887,14 @@ class Working_Rangos  extends Working_Celdas{
 			const ficha_rango = this.api_read(nombre_rango, dicc_to_update);
 			if(!ficha_rango){
 				console.log(`❌ Error: Rango ${nombre_rango} no existe en diccionario.`);
-				return false;
+				return null;
 			}
 
 			// INICIO - FIN en coordenadas.
 			const inicio = this._celda_to_fc(celda_inicio);
 			const fin 	= this._get_celda_fin(celda_inicio, dimension);
-			if (!inicio || !fin) return false;
-			if (!this._celda_OK(inicio) || !this._celda_OK(fin)) return false;
+			if (!inicio || !fin) return null;
+			if (!this._celda_OK(inicio) || !this._celda_OK(fin)) return null;
 			
 			dicc_to_update[nombre_rango] = {
 				celda_inicio: this._fc_to_celda(inicio.fila, inicio.columna),
@@ -890,7 +905,7 @@ class Working_Rangos  extends Working_Celdas{
 			
 		/**
 		 * ### Elimina un rango de this.dicc_rangos_	 
-		 * ### Retorna el rango eliminado o false si hay error*/
+		 * ### Retorna el rango eliminado o null si hay error*/
 		api_delete(nombre_rango, dicc_to_delete = null) {
 			try {
 				if(!nombre_rango) throw Error(`Falta 'nombre_rango' (Parametro Entrada)  `)
@@ -906,7 +921,7 @@ class Working_Rangos  extends Working_Celdas{
 				
 			} catch (error) {
 				console.log(`❌Error ::: api_delete() :::`, error);
-				return false;
+				return null;
 			}
         }		
 		/**
@@ -1125,11 +1140,11 @@ class Working_Rangos  extends Working_Celdas{
 				
 				// if (pares) this.d_rangos['rango_pares'] = coleccion_pares;
 				const rangos_pares = coleccion_pares.map( (celda, index) => { return this.api_crear(`pares_${index}`, celda, {filas:1, columnas:1}, true) });
-				if (rangos_pares) this.d_rangos['rango_nones'] = rangos_pares;
+				if (rangos_pares) this.d_rangos['rango_pares'] = rangos_pares;
 				
 				// if (nones) this.d_rangos['rango_nones'] = coleccion_nones;
 				const rangos_nones = coleccion_nones.map( (celda, index) => { return this.api_crear(`nones_${index}`, celda, {filas:1, columnas:1} , true) });
-				if (rangos_nones) this.d_rangos['rango_pares'] = rangos_nones;
+				if (rangos_nones) this.d_rangos['rango_nones'] = rangos_nones;
 
 				coleccion_pares.forEach( (par, i) =>{ this.api_delete(`pares_${i}`); });
 				coleccion_nones.forEach( (impar, i) =>{ this.api_delete(`nones_${i}`); });
@@ -1910,7 +1925,7 @@ class Rango_Ghost extends Working_Rangos{
 					this.to_pull(argumento, false);	
 					this.d_ghost = rango_ori;
 
-					// 💦 💦 💦 💦 argumento es una Dimension {filas:3, columnas:4}
+					// argumento es una Dimension {filas:3, columnas:4}
 					// this._crear_ghost_desde_dimension(filas, columnas);
 				}else{
 					return this._get_ficha_vacia() || null;
@@ -2919,10 +2934,12 @@ class Wedding_Rangos extends Rango_Ghost{
         const a = this.api_read_diccionarios(rango_a);
         const b = this.api_read_diccionarios(rango_b);
 
-        if (!a && !b) return null;
+        if (!a || !b) return null;
 
-        const celdas_rango_a = rango_a?.geo ? Object.keys(rango_a.geo) : [];
-        const celdas_rango_b = rango_b?.geo ? Object.keys(rango_b.geo) : [];
+        // const celdas_rango_a = rango_a?.geo ? Object.keys(rango_a.geo) : [];
+        // const celdas_rango_b = rango_b?.geo ? Object.keys(rango_b.geo) : [];
+		const celdas_rango_a = Object.keys(a.geo || {});
+        const celdas_rango_b = Object.keys(b.geo || {});
 
         // Casos base: si un rango no tiene celdas, el resultado es el otro rango
         if (celdas_rango_a.length > 0 && celdas_rango_b.length === 0) {
@@ -2965,12 +2982,18 @@ class Wedding_Rangos extends Rango_Ghost{
 	 * ```
 	*/
     _get_tipo_relacion(rango_a, rango_b) {
-        const analisis = this._celdas_comunes(rango_a, rango_b);
+        // const analisis = this._celdas_comunes(rango_a, rango_b);
+		
+		const a = this.api_read_diccionarios(rango_a);
+		const b = this.api_read_diccionarios(rango_b);
+		if (!a || !b) return null;
+		
+		const analisis = this._celdas_comunes(rango_a, rango_b);
         if (!analisis) return null;
 
         const { comunes } = analisis;
-        const celdas_a = Object.keys(rango_a?.geo || {});
-        const celdas_b = Object.keys(rango_b?.geo || {});
+        const celdas_a = Object.keys(a.geo || {});
+        const celdas_b = Object.keys(b.geo || {});
 
         // CASO 1: Hay celdas compartidas (Contenido o Solapado)
         if (comunes.length > 0) {
@@ -2988,12 +3011,26 @@ class Wedding_Rangos extends Rango_Ghost{
 
         // CASO 2: No hay celdas compartidas (Adyacentes o Separados)
         // Verificamos si alguna celda de A toca el borde de alguna de B
-        const son_adyacentes = celdas_a.some(key_a => {
-            const [y, x] = key_a.split('_').map(Number);
-            // Definimos los 4 vecinos ortogonales (arriba, abajo, izquierda, derecha)
-            const vecinos = [`${y - 1}_${x}`, `${y + 1}_${x}`, `${y}_${x - 1}`, `${y}_${x + 1}`];
-            return vecinos.some(v => rango_b.geo[v]);
-        });
+        // const son_adyacentes = celdas_a.some(key_a => {
+        //     const [y, x] = key_a.split('_').map(Number);
+        //     // Definimos los 4 vecinos ortogonales (arriba, abajo, izquierda, derecha)
+        //     const vecinos = [`${y - 1}_${x}`, `${y + 1}_${x}`, `${y}_${x - 1}`, `${y}_${x + 1}`];
+        //     return vecinos.some(v => rango_b.geo[v]);
+        // });
+		const celdas_b_set = new Set(celdas_b);
+		const son_adyacentes = celdas_a.some(celda => {
+			const coordenada = this._celda_to_fc(celda);
+			if (!coordenada) return false;
+
+			const vecinos = [
+				this._fc_to_celda(coordenada.fila - 1, coordenada.columna),
+				this._fc_to_celda(coordenada.fila + 1, coordenada.columna),
+				this._fc_to_celda(coordenada.fila, coordenada.columna - 1),
+				this._fc_to_celda(coordenada.fila, coordenada.columna + 1)
+			].filter(Boolean);
+
+			return vecinos.some(vecino => celdas_b_set.has(vecino));
+		});
 
         return {
             type: son_adyacentes ? "ADYACENTES" : "SEPARADOS"
@@ -3168,8 +3205,10 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 	_reservas_a_rangos(arr_reservas = [], dicc_indices={} , dimension_aplicada=null) {
 		try {			
 			const Salon = this.ref_Salon;
-			if (!Array.isArray(arr_reservas) || arr_reservas.length === 0) {throw('Array reservas de entrada Nulo o Sin Datos. Abort');}
-			if (!dicc_indices || dicc_indices == {}) {throw('Diccionario de celda:indice Nulo o Sin Datos. Abort');}
+			if (!Array.isArray(arr_reservas) || arr_reservas.length === 0) 
+				return [];
+			if (!dicc_indices || typeof dicc_indices !== 'object' || Object.keys(dicc_indices).length === 0) 
+				return [];
 
 			// 💡 La indea es que con la 'dimension' y el 'indice' se puede saber la celda de cada elemento.
 			// Las dimensiones del Salon Actualmente
@@ -3223,7 +3262,7 @@ class El_Rango_del_Salon extends Wedding_Rangos{
                         this.api_delete(nombre_temp);
                     });
 					// Si tenemos datos, insertamos el array en array_rangos
-					if(array_ronin) array_rangos.push(array_ronin);                    
+					if(array_ronin.length > 0) array_rangos.push(array_ronin);                    
                     return; // (continue) salta a la siguiente reserva en el forEach
                 }
 				// ┌■■■ PREPARO EL DICC VALUES 
@@ -3256,11 +3295,11 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 			});
 			
 			// Retorno:
-			return array_rangos.length > 0 ? array_rangos : false;
+			return array_rangos;
 
 		} catch (error) {
 			console.log(`❌ Error :::  reservas_a_rangos() ::: ${error}`);
-			return null;	
+			return [];	
 		}
 	}
 
@@ -3330,8 +3369,10 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 	}
 	/** ### SOBRE-ESCRIBE de Working_Rangos Hace pull a todos los Rangos Registrados */
 	pull_all(){
-		this.super();
+		// this.super();
+		super.pull_all();
 		Object.keys(this.d_reservas).forEach(nombre_rango => { this.to_pull(nombre_rango); });
+		return true;
 	}	
 	
 }
