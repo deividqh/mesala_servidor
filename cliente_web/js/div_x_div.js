@@ -1717,32 +1717,6 @@ class Tablero_Drop extends Matriz_to_MyDiv{
 	}
 
 	/**
-	 * ### KISS: Detecta si el tipo es mesa o silla.  Sirve para validar
-	 */
-	// _es_mesa_silla(tipo = '') {
-	// 	const tipo_normalizado = `${tipo}`.toLowerCase();
-	// 	return tipo_normalizado === 'mesa' || tipo_normalizado === 'silla';
-	// }
-
-	/**
-	 * ### KISS: Bloquea o desbloquea el movimiento del sidebar.
-	 */
-	// _set_bloqueo_sidebar(bloqueado = false) {
-	// 	if (!this.Side_Elementos?.set_bloqueo_movimiento) return;
-	// 	this.Side_Elementos.set_bloqueo_movimiento(bloqueado);
-	// }
-
-	/**
-	 * ### KISS: Inicia el bloqueo del sidebar durante un drag de mesa/silla.
-	 */
-	// _iniciar_bloqueo_sidebar(objeto_drag = null) {
-	// 	if (!this._es_mesa_silla(this.data__tipo)) return;
-	// 	this._set_bloqueo_sidebar(true);
-	// 	if (objeto_drag) {
-	// 		objeto_drag.addEventListener('dragend', () => this._set_bloqueo_sidebar(false), { once: true });
-	// 	}
-	// }
-	/**
 	 * ### SE PRODUCE CUANDO EMPIEZA EL MOVIMIENTO DE UN OBJETO DRAG ( draggable = true )
 	 *              • Se trata de guardar el objeto que se mueve mediante ev.dataTransfer._setData("text", id_objeto_drag) 
 	 *              • Cuando este objeto_drag caiga en un objeto drop se tiene que recuperar con ev.dataTransfer.getData_("text")
@@ -1761,9 +1735,6 @@ class Tablero_Drop extends Matriz_to_MyDiv{
 		this.objeto_drag = new_obj_drag;
 		this.id_key = new_obj_drag.dataset.id_key;
 
-		// ■■ Bloquea el movimiento del sidebar si movemos una mesa o silla.
-		// this._iniciar_bloqueo_sidebar(new_obj_drag);
-		
 		// ■■ ESTABLECE/GUARDA EL ID DEL OBJETO DRAG
 		ev.dataTransfer.setData("drag_id", this.objeto_drag.id);      	// ■ dataTransfer guarda en la transacción d&d un dato "text" con el id del drag.
 		// ■■ GUARDA EL id_key ('mesa', 'silla', 'taburete') en catalogo.
@@ -1798,7 +1769,6 @@ class Tablero_Drop extends Matriz_to_MyDiv{
 			// ■■ No permite ir a una CELDA OCUPADA.
 			if (this.is_baldosa_vacia(objDrop) == false) {
 				console.log(`⚠️ ${objDrop.id} está OCUPADA. `); 
-				// this._set_bloqueo_sidebar(false);
 				return false; 
 			}
 			
@@ -1817,14 +1787,12 @@ class Tablero_Drop extends Matriz_to_MyDiv{
 	
 			// ■■■■■■■■■■■■■■■■■■■■■■■■ GENERA EL N-S-E-W  DEL SALON.
 			this._onplay_scan_salon();      
-			// this._set_bloqueo_sidebar(false);
 			return true;
 
 		} catch (error) {
 			console.log(error);
 			return false;			
 		}finally{
-			// this._set_bloqueo_sidebar(false);
 		}
 		
 	}
@@ -1874,7 +1842,6 @@ class Tablero_Drop extends Matriz_to_MyDiv{
 		objDrop.appendChild(objDrag);
 		objDrop.removeChild(objDrag);		
 
-		// this._set_bloqueo_sidebar(false);
 		
 		// ■■ PUEDO ACTUALIZAR O NO LA LISTA-ONPLAY.
 		this._onplay_scan_salon(); 
@@ -2183,7 +2150,6 @@ class Tablero_Touch extends Tablero_Drop {
 	finalizarArrastre() {
 		this._cleanup_touch_preview();
 		this._reset_touch_state();
-		// this._set_bloqueo_sidebar(false);
 	}
 
 	/** ### Crea una vista previa del elemento arrastrado. */
@@ -2261,7 +2227,6 @@ class Tablero_Touch extends Tablero_Drop {
 		this.objeto_drag = objeto_drag;
 		this.id_key = objeto_drag.getAttribute('data-id_key') || objeto_drag.dataset.id_key || '';
 		
-		// if (this._es_mesa_silla?.(this.data__tipo)) this._set_bloqueo_sidebar(true);
 		
 		const previousVisibility = objeto_drag.style.visibility;
 		objeto_drag.style.visibility = 'hidden';
@@ -2318,7 +2283,6 @@ class Tablero_Touch extends Tablero_Drop {
 			this._cleanup_touch_preview();
 			this._reset_touch_state();
 			queueMicrotask(() => el.click());
-			// this._set_bloqueo_sidebar(false);
 			return;
 		}
 		const syntheticEvent = this._buildSyntheticDropEvent(targetReal, el, { x, y });
@@ -2339,7 +2303,6 @@ class Tablero_Touch extends Tablero_Drop {
 		this._cleanup_touch_preview();
 		if (dropExitoso) el.style.visibility = 'visible';
 		this._reset_touch_state();
-		// this._set_bloqueo_sidebar(false);
 	}
 
 	_reset_touch_state(){

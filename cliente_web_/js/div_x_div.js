@@ -9913,7 +9913,7 @@ class Working_Celdas {
 	/**
 	 * ### fila y columna OK? ✔️
 	 */
-	_fc_OK({ fila, columna } = {}) {
+	_fila_columna_OK({ fila, columna } = {}) {
 		if (!Number.isInteger(fila) || fila < 0) return false;
 		if (!Number.isInteger(columna) || columna < 0) return false;
 
@@ -9929,7 +9929,7 @@ class Working_Celdas {
 	_celda_OK(celda = null) {
 		const coordenada = this._celda_to_fc(celda);
 		if (!coordenada) return false;                
-		return this._fc_OK(coordenada);
+		return this._fila_columna_OK(coordenada);
 	}
 
 
@@ -9961,7 +9961,7 @@ class Working_Celdas {
 		}
 		// ■ CASO 3: Coordenadas (fila, columna)
 		if (typeof arg1 === 'number' && typeof arg2 === 'number') {
-				return this._fc_OK({ fila: arg1, columna: arg2 });
+				return this._fila_columna_OK({ fila: arg1, columna: arg2 });
 		}
 		// ■ CASO 4: arg1 es un objeto {fila, columna}
 		if (arg1 && typeof arg1 === 'object' && arg2 === null) {
@@ -9969,7 +9969,7 @@ class Working_Celdas {
 				let columna = arg1.columna;
 				if (typeof columna === 'string') columna = this._AZ_to_numcol(columna);
 				columna = this._entero_positivo(columna);
-				return this._fc_OK({ fila, columna });
+				return this._fila_columna_OK({ fila, columna });
 		}
 		// ■ CASO 5: Ninguno de los anteriores
 		return false;

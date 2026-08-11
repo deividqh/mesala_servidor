@@ -259,24 +259,32 @@ class e_Salon extends Tablero_Touch {
 								silla_18:['gluten']
 		};
 		
+		// ┌■■ CARGA LOS ELEMENTOS EN EL SALON (UI)
 		const ok_elements = this._load_elementos_en_Salon(d_indices_mock);
+		// ┌■■ REGISTRA LOS ELEMNTOS RECIEN CARGADOS
 		this.RegisteR();
 
+		// ┌■■ REGISTRA EL MOTOR DE ALERGIAS  (PESTAÑA DE LOGICA) 
 		const MA = Catalogo.get_motor('motor_alergias');
 		// this.CFG.api_re_posicionar();				
 		const ok_alerg = this._load_alergias_en_Salon(d_alergias_mock);		
 		console.log(JSON.stringify(MA.d_data, null, 2)); 
-		const ok_api_a = this.api_alergias();
 		
+		// ┌■■ REGISTRA EL MOTOR DE MENSAJES (PESTAÑA DE LOGICA)
 		const MM = Catalogo.get_motor('motor_mensajes');
 		const ok_msg = this._load_mensajes_en_Salon(d_mensajs_mock);
 		console.log(JSON.stringify(MM.d_data, null, 2)); 
-		const ok_api_m = this.api_mensajes();
 		
-
-
-		Alertas_UI._NotA('App Cargada con Exito', 'Listo para empezar!', 'success', 1500);
-
+		// ┌■■ VALIDA E INFORMA:
+		if( !ok_elements || !ok_alerg || !ok_msg ){
+			Alertas_UI._NotA('❌ Error al Cargar App', 'Reiniciar o Cerrar!', 'danger', 3000);
+		}else{
+			Alertas_UI._NotA('✅ App Cargada con Exito', 'Listo para empezar!', 'success', 1500);
+		}
+		
+		// ┌■■ USA(BORRAR)
+		// const ok_api_a = this.api_alergias();
+		// const ok_api_m = this.api_mensajes();
 	}
 
 	/** 
@@ -451,7 +459,6 @@ class e_Salon extends Tablero_Touch {
 	/** ✒️✒️
 	 * #### SOBRE-ESCRIBE ✒️ EL MÉTODO elemento_nuevo_to__Salon DE DRAG_X_DROP 
 	 * 	* Añade un Event Listener ​👂​👂 para el click en el nuevo elemento.
-	 * @see {@link Tablero_Drop.drop_over_matriz}
 	 * ```javascript
 	 * this.elemento_nuevo_to_Salon_(objDrag, objDrop, data__tipo);			
 	 * ```
@@ -2118,24 +2125,12 @@ class Configuracion_Salon {
 	/**
 	 * ### Conecta la UI de posiciones del sidebar con el sidebar real.	 */
 	_sincronizar_sidebar_UI() {
-		// const botones = Array.from(this.$sidebar_posiciones || []);
-		// if (botones.length === 0) return;
 		const toggle = this.$sidebar_posicion_toggle;
 		if (!toggle) return;
 
 		const posicion_inicial = this.Salon?.Side_Elementos?.posicion ?? 'right';
-		// this.__marcar_boton_posicion_sidebar(posicion_inicial, botones);
 		this.__marcar_toggle_posicion_sidebar(posicion_inicial, toggle);
 
-		// botones.forEach((boton) => {
-		// 	boton.addEventListener('click', () => {
-		// 		const nueva_posicion = boton.dataset.sidePosition;
-		// 		if (!nueva_posicion) return;
-		// 		this.Salon?.Side_Elementos?.set_posicion(nueva_posicion);
-		// 		this.__marcar_boton_posicion_sidebar(nueva_posicion, botones);
-
-		// 	});
-		// });
 		toggle.addEventListener('change', () => {
 			const nueva_posicion = toggle.checked ? 'right' : 'left';
 			this.Salon?.Side_Elementos?.set_posicion(nueva_posicion);
@@ -2147,13 +2142,6 @@ class Configuracion_Salon {
 	/**
 	 * ### Refresca el estado visual del selector de posición.
 	 */
-	// __marcar_boton_posicion_sidebar(posicion, botones) {
-	// 	botones.forEach((boton) => {
-	// 		const es_activo = boton.dataset.sidePosition === posicion;
-	// 		boton.classList.toggle('active', es_activo);
-	// 		boton.setAttribute('aria-pressed', es_activo ? 'true' : 'false');
-	// 	});
-	// }
 	__marcar_toggle_posicion_sidebar(posicion, toggle) {
 		toggle.checked = posicion === 'right';
 		toggle.setAttribute('aria-checked', toggle.checked ? 'true' : 'false');
@@ -5927,7 +5915,6 @@ class Side_Elementos {
 
 	/**
 	 * ### Conecta eventos de icono y drag para abrir/cerrar y mover el sidebar.
-	 * {@link Side_Elementos}
 	 */
 	_vincular_eventos() {
 		this.icono_disparador.addEventListener('pointerdown', () => {

@@ -359,7 +359,7 @@ class Working_Celdas {
 	/**
 	 * ### fila y columna OK? ✔️
 	 */
-	_fc_OK({ fila, columna } = {}) {
+	_fila_columna_OK({ fila, columna } = {}) {
 		if (!Number.isInteger(fila) || fila < 0) return false;
 		if (!Number.isInteger(columna) || columna < 0) return false;
 
@@ -375,11 +375,13 @@ class Working_Celdas {
 	_celda_OK(celda = null) {
 		const coordenada = this._celda_to_fc(celda);
 		if (!coordenada) return false;                
-		return this._fc_OK(coordenada);
+		return this._fila_columna_OK(coordenada);
 	}
 
 
 	_dimension_OK(dimension){
+		if(!dimension || !dimension.filas || !dimension.columnas) 
+			return false;
 		const MatriZ = this.ref_Salon.matriz_plana;
 		const filas = dimension.filas;
 		const columnas = dimension.columnas;
@@ -394,7 +396,7 @@ class Working_Celdas {
 	 * @param {number|string|Working_Celdas} arg1 - Puede ser: índice directo (int), fila (int), "A1" (string) o objeto Working_Celdas.
 	 * @param {number|null} arg2 - Si arg1 es fila, arg2 es la columna. Si no, es null.
 	 * @returns {Boolean} - true si es una celda de la matriz. false si no es una celda de la matriz.
-	 * @example is_OK(5); ■ is_OK(2, 3); ■ is_OK("B3"); ■ is_OK({1, 4}); 
+	 * @example is_OK(5); ■ is_OK(2, 3); ■ is_OK("B3"); ■ is_OK( {1, 4} ); 
 	*/
 	is_OK(arg1, arg2 = null) {
 		// ■ CASO 1: Índice directo (un solo número)
@@ -407,7 +409,7 @@ class Working_Celdas {
 		}
 		// ■ CASO 3: Coordenadas (fila, columna)
 		if (typeof arg1 === 'number' && typeof arg2 === 'number') {
-				return this._fc_OK({ fila: arg1, columna: arg2 });
+				return this._fila_columna_OK({ fila: arg1, columna: arg2 });
 		}
 		// ■ CASO 4: arg1 es un objeto {fila, columna}
 		if (arg1 && typeof arg1 === 'object' && arg2 === null) {
@@ -415,7 +417,7 @@ class Working_Celdas {
 				let columna = arg1.columna;
 				if (typeof columna === 'string') columna = this._AZ_to_numcol(columna);
 				columna = this._entero_positivo(columna);
-				return this._fc_OK({ fila, columna });
+				return this._fila_columna_OK({ fila, columna });
 		}
 		// ■ CASO 5: Ninguno de los anteriores
 		return false;
@@ -868,7 +870,10 @@ class Working_Rangos  extends Working_Celdas{
 			}
 			// VALIDACION
 			const ficha_rango = this.api_read(nombre_rango, dicc_to_update);
-			if(!ficha_rango);
+			if(!ficha_rango){
+				console.log(`❌ Error: Rango ${nombre_rango} no existe en diccionario.`);
+				return false;
+			}
 
 			// INICIO - FIN en coordenadas.
 			const inicio = this._celda_to_fc(celda_inicio);
@@ -3234,7 +3239,9 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 				// ┌■■■ NECESITO LOS DATOS PARA "CREAR UN RANGO" PARA TENER: [celda_inicio, celda_fin, dimension, geo e items]
 				// ┌■ Obtengo las celdas ocupadas por esta reserva.... celdas_reserva =  ["E0","F0","D0",]
 				const celdas_reserva = Object.keys(d_celda_elemento);
-
+				if (celdas_reserva.length === 0) return; // Si no hay celdas, no hago nada.
+				
+				// ┌■ Obtengo la celda_inicio y celda_fin de las celdas ocupadas por esta reserva.
 				const ci_cf = this.__get_cicf_from_celdas(celdas_reserva);			
 				const dimension_rango = this._get_dimension(ci_cf.celda_inicio , ci_cf.celda_fin , false);
 
@@ -3261,8 +3268,6 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 	// Este metodo es de pruebas y tiene que ser borrado. aquí voy a poner todos los metodos llamados desde 
 	// cargar_elementos_salon 
 	__pruebas_union_interseccion(){
-		// const this = this.Salon.eRdS || null;
-		// if(!this) return null;
 		
 		// 👀 Quiero convertir la union en un rango.
 		const celdas_union = this._get_union('rango_fila_0','rango_fila_1');
