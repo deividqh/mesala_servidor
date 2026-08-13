@@ -525,9 +525,9 @@ class Working_Celdas {
 		}
 	}
 
-	/** ## Standariza la dimensión ┌■■ {filas:3, columnas:4} 
-	 * ### Formatos Entrada: 1■ '3x4' - 2■ {filas:3, columnas:4} - 3■ (3,4) - 4■ {filas:3,columnas:4}	*/
-	_standard_dimension(arg1 = null, arg2 = null) {
+	/** #### Standariza la dimensión, devuelve {filas:3, columnas:4} o null si no es válida.
+	 * #### Formatos Entrada: 1■ '3x4' - 2■ {filas:3, columnas:4} - 3■ (3,4) - 4■ {filas:3,columnas:4}	*/
+	_standar_dimension(arg1 = null, arg2 = null) {
         // Variable para centralizar la validación de números enteros positivos
         const esEnteroPositivo = (num) => Number.isInteger(num) && num > 0;
 
@@ -566,7 +566,7 @@ class Working_Celdas {
                 }
             }
 
-            // 4. Caso '(arg1, arg2)': _standard_dimension(3, 4)
+            // 4. Caso '(arg1, arg2)': _standar_dimension(3, 4)
             if (esEnteroPositivo(arg1) && esEnteroPositivo(arg2)) {
                 return { filas: arg1, columnas: arg2 };
             }
@@ -576,7 +576,7 @@ class Working_Celdas {
 
         } catch (error) {
             // El catch atrapa cualquier throw o error de ejecución y asegura que no se rompa la aplicación
-            console.error(`Error en _standard_dimension: ${error.message}`);
+            console.error(`Error en _standar_dimension: ${error.message}`);
             return null;
         }
     }
@@ -3437,11 +3437,7 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 		this.d_reservas = {};
 		this.rango_repository.registrar_fuente('reservas', this.d_reservas);
 		this.reserva_range_mapper = new Reserva_Range_Mapper({
-			indice_a_celda: (indice, dimension) => this._get_celda_CON_dimension_X(
-				indice,
-				dimension.columnas,
-				dimension.filas,
-			),
+			indice_a_celda: (indice, dimension) => this._get_celda(indice,dimension.columnas,dimension.filas,),
 			crear_rango: this.api_crear.bind(this),
 			eliminar_rango: this.api_delete.bind(this),
 			siguiente_nombre: this._nombre_secuencial.bind(this),
@@ -3467,108 +3463,108 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 	 * [ {celda_inicio: A1 , celda_fin: A1 , dimension: '1x1',  geo:{x}, items:{y}. values:{'silla_1'} }, 
 	 *   {celda_inicio: A0 , celda_fin: A0 , dimension: '1x1',  geo:{x}, items:{y}. values:{'silla_8'} } ]	  
 	 * ``` 	 */
-	_reservas_a_rangos(arr_reservas = [], dicc_indices={} , dimension_aplicada=null) {
-		try {			
-			const Salon = this.ref_Salon;
-			if (!Array.isArray(arr_reservas) || arr_reservas.length === 0) 
-				return [];
-			if (!dicc_indices || typeof dicc_indices !== 'object' || Object.keys(dicc_indices).length === 0) 
-				return [];
+	// _reservas_a_rangos(arr_reservas = [], dicc_indices={} , dimension_aplicada=null) {
+	// 	try {			
+	// 		const Salon = this.ref_Salon;
+	// 		if (!Array.isArray(arr_reservas) || arr_reservas.length === 0) 
+	// 			return [];
+	// 		if (!dicc_indices || typeof dicc_indices !== 'object' || Object.keys(dicc_indices).length === 0) 
+	// 			return [];
 
-			// 💡 La indea es que con la 'dimension' y el 'indice' se puede saber la celda de cada elemento.
-			// Las dimensiones del Salon Actualmente
-			let dimension = this._standard_dimension(dimension_aplicada);
+	// 		// 💡 La indea es que con la 'dimension' y el 'indice' se puede saber la celda de cada elemento.
+	// 		// Las dimensiones del Salon Actualmente
+	// 		let dimension = this._standar_dimension(dimension_aplicada);
 			
-			// ┌■■ Si no entra la dimension como parametro o x error, usa las dimensiones del 'Salon Actuales'.
-			// [Esto hace que se pueda pasar a rango una reserva del "Salon" or de "BD".]
-			if(!dimension) 
-				dimension = this._standard_dimension(Salon.filas, Salon.columnas);
+	// 		// ┌■■ Si no entra la dimension como parametro o x error, usa las dimensiones del 'Salon Actuales'.
+	// 		// [Esto hace que se pueda pasar a rango una reserva del "Salon" or de "BD".]
+	// 		if(!dimension) 
+	// 			dimension = this._standar_dimension(Salon.filas, Salon.columnas);
 
-			/** ### Diccionario de índices: { 'silla_0': 15, 'mesa_3': 23, 'silla_1': 12, . . . } */
-			let indice_s = dicc_indices;
+	// 		/** ### Diccionario de índices: { 'silla_0': 15, 'mesa_3': 23, 'silla_1': 12, . . . } */
+	// 		let indice_s = dicc_indices;
 
-			const dicc_celda_elemento = {};			
-			// ┌■■ Creo el dicc_celda_elemento: {'B0':'silla_0', 'B1':'mesa_3', 'C12':'silla_1', . . . }
-			Object.entries(indice_s).forEach(([elemento, indice]) =>{
-				const celda = this._get_celda(indice, dimension.columnas, dimension.filas);
-				if(!celda) return;
-				dicc_celda_elemento[celda] = elemento;				
-			});
+	// 		const dicc_celda_elemento = {};			
+	// 		// ┌■■ Creo el dicc_celda_elemento: {'B0':'silla_0', 'B1':'mesa_3', 'C12':'silla_1', . . . }
+	// 		Object.entries(indice_s).forEach(([elemento, indice]) =>{
+	// 			const celda = this._get_celda(indice, dimension.columnas, dimension.filas);
+	// 			if(!celda) return;
+	// 			dicc_celda_elemento[celda] = elemento;				
+	// 		});
 						
-			// ┌■■ array de rangos a devolver
-			const array_rangos = [];
-			// ┌■■ LOGICA DEL NEGOCION: . . . Recorro cada reserva para calcular su rango.
-			arr_reservas.forEach(reserva => {
+	// 		// ┌■■ array de rangos a devolver
+	// 		const array_rangos = [];
+	// 		// ┌■■ LOGICA DEL NEGOCION: . . . Recorro cada reserva para calcular su rango.
+	// 		arr_reservas.forEach(reserva => {
 
-				const reservadores = Array.isArray(reserva?.reservadores) ? reserva.reservadores : [];
-				const clientes = Array.isArray(reserva?.clientes) ? reserva.clientes : [];
+	// 			const reservadores = Array.isArray(reserva?.reservadores) ? reserva.reservadores : [];
+	// 			const clientes = Array.isArray(reserva?.clientes) ? reserva.clientes : [];
 				
-				// ┌■ La Reserva de 'Sillas Ronin': Se da como resultado un [Array de Rangos].
-				// ┌■ Cada silla genera un rango 1x1 independiente.
-                if (reservadores.length === 0 && clientes.length > 0) {
-					const array_ronin = [];
-                    clientes.forEach(cli => {
-                        // Encontrar la celda donde está ubicada la silla actual
-                        const entrada = Object.entries(dicc_celda_elemento).find(([celda, elemento]) => elemento === cli);
-                        if (!entrada) return;                         
-                        const [celda_silla, id_silla] = entrada;                        
-                        // ⏳ Generando rango temporal 1x1 para la silla ⏳
-                        const nombre_temp = this._nombre_secuencial('temporal');
-                        const rango_temp = this.api_crear(nombre_temp, celda_silla, '1x1');                        
-                        // Asignamos el 'value' específicamente para esta celda y silla (byHand)
-                        rango_temp.values = { [celda_silla]: id_silla };                        
-                        // ┌■ Introduzco el rango en el array de retorno
-                        array_ronin.push(rango_temp);                        
-                        // ⏳ Eliminar Temporal ⏳ 
-                        this.api_delete(nombre_temp);
-                    });
-					// Si tenemos datos, insertamos el array en array_rangos
-					if(array_ronin.length > 0) array_rangos.push(array_ronin);                    
-                    return; // (continue) salta a la siguiente reserva en el forEach
-                }
-				// ┌■■■ PREPARO EL DICC VALUES 
-				// ┌■ Junto mesas y sillas, filtro vacíos.
-				const ids_reserva = [...reservadores, ...clientes].filter(Boolean);				
-				// ┌■ Desmontamos el diccionario en pares [celda, elemento] y filtramos comprobando si el elemento existe en el array.
-				const pares_reservados = Object.entries(dicc_celda_elemento).filter(([celda, elemento]) => ids_reserva.includes(elemento));
-				// ┌■ Ensamblamos (reconstruimos) el nuevo diccionario exclusivamente con las reservas confirmadas.
-				// Resultado en dicc_reservas:
-				// { E3: "silla_1", F3: "mesa_0", G3: "silla_0", E4: "silla_8", F4: "mesa_2", G4: "silla_11", F5: "silla_15" }
-				const d_celda_elemento = Object.fromEntries(pares_reservados);
+	// 			// ┌■ La Reserva de 'Sillas Ronin': Se da como resultado un [Array de Rangos].
+	// 			// ┌■ Cada silla genera un rango 1x1 independiente.
+    //             if (reservadores.length === 0 && clientes.length > 0) {
+	// 				const array_ronin = [];
+    //                 clientes.forEach(cli => {
+    //                     // Encontrar la celda donde está ubicada la silla actual
+    //                     const entrada = Object.entries(dicc_celda_elemento).find(([celda, elemento]) => elemento === cli);
+    //                     if (!entrada) return;                         
+    //                     const [celda_silla, id_silla] = entrada;                        
+    //                     // ⏳ Generando rango temporal 1x1 para la silla ⏳
+    //                     const nombre_temp = this._nombre_secuencial('temporal');
+    //                     const rango_temp = this.api_crear(nombre_temp, celda_silla, '1x1');                        
+    //                     // Asignamos el 'value' específicamente para esta celda y silla (byHand)
+    //                     rango_temp.values = { [celda_silla]: id_silla };                        
+    //                     // ┌■ Introduzco el rango en el array de retorno
+    //                     array_ronin.push(rango_temp);                        
+    //                     // ⏳ Eliminar Temporal ⏳ 
+    //                     this.api_delete(nombre_temp);
+    //                 });
+	// 				// Si tenemos datos, insertamos el array en array_rangos
+	// 				if(array_ronin.length > 0) array_rangos.push(array_ronin);                    
+    //                 return; // (continue) salta a la siguiente reserva en el forEach
+    //             }
+	// 			// ┌■■■ PREPARO EL DICC VALUES 
+	// 			// ┌■ Junto mesas y sillas, filtro vacíos.
+	// 			const ids_reserva = [...reservadores, ...clientes].filter(Boolean);				
+	// 			// ┌■ Desmontamos el diccionario en pares [celda, elemento] y filtramos comprobando si el elemento existe en el array.
+	// 			const pares_reservados = Object.entries(dicc_celda_elemento).filter(([celda, elemento]) => ids_reserva.includes(elemento));
+	// 			// ┌■ Ensamblamos (reconstruimos) el nuevo diccionario exclusivamente con las reservas confirmadas.
+	// 			// Resultado en dicc_reservas:
+	// 			// { E3: "silla_1", F3: "mesa_0", G3: "silla_0", E4: "silla_8", F4: "mesa_2", G4: "silla_11", F5: "silla_15" }
+	// 			const d_celda_elemento = Object.fromEntries(pares_reservados);
 				
-				// ┌■■■ NECESITO LOS DATOS PARA "CREAR UN RANGO" PARA TENER: [celda_inicio, celda_fin, dimension, geo e items]
-				// ┌■ Obtengo las celdas ocupadas por esta reserva.... celdas_reserva =  ["E0","F0","D0",]
-				const celdas_reserva = Object.keys(d_celda_elemento);
-				if (celdas_reserva.length === 0) return; // Si no hay celdas, no hago nada.
+	// 			// ┌■■■ NECESITO LOS DATOS PARA "CREAR UN RANGO" PARA TENER: [celda_inicio, celda_fin, dimension, geo e items]
+	// 			// ┌■ Obtengo las celdas ocupadas por esta reserva.... celdas_reserva =  ["E0","F0","D0",]
+	// 			const celdas_reserva = Object.keys(d_celda_elemento);
+	// 			if (celdas_reserva.length === 0) return; // Si no hay celdas, no hago nada.
 				
-				// ┌■ Obtengo la celda_inicio y celda_fin de las celdas ocupadas por esta reserva.
-				const ci_cf = this.__get_cicf_from_celdas(celdas_reserva);			
-				const dimension_rango = this._get_dimension(ci_cf.celda_inicio , ci_cf.celda_fin , false);
+	// 			// ┌■ Obtengo la celda_inicio y celda_fin de las celdas ocupadas por esta reserva.
+	// 			const ci_cf = this.__get_cicf_from_celdas(celdas_reserva);			
+	// 			const dimension_rango = this._get_dimension(ci_cf.celda_inicio , ci_cf.celda_fin , false);
 
-				// ⏳ Generando rangos temporales(Creados y borrados) ⏳
-				const nombre_temp = this._nombre_secuencial('temporal');
-				const rango_temp = this.api_crear(nombre_temp, ci_cf.celda_inicio, dimension_rango);
-				rango_temp.values = d_celda_elemento;
-				array_rangos.push(rango_temp);
-				// ⏳ Eliminar  Temporales ⏳ 
-				this.api_delete(nombre_temp);
+	// 			// ⏳ Generando rangos temporales(Creados y borrados) ⏳
+	// 			const nombre_temp = this._nombre_secuencial('temporal');
+	// 			const rango_temp = this.api_crear(nombre_temp, ci_cf.celda_inicio, dimension_rango);
+	// 			rango_temp.values = d_celda_elemento;
+	// 			array_rangos.push(rango_temp);
+	// 			// ⏳ Eliminar  Temporales ⏳ 
+	// 			this.api_delete(nombre_temp);
 
-			});
+	// 		});
 			
-			// Retorno:
-			return array_rangos;
+	// 		// Retorno:
+	// 		return array_rangos;
 
-		} catch (error) {
-			console.log(`❌ Error :::  reservas_a_rangos() ::: ${error}`);
-			return [];	
-		}
-	}
+	// 	} catch (error) {
+	// 		console.log(`❌ Error :::  reservas_a_rangos() ::: ${error}`);
+	// 		return [];	
+	// 	}
+	// }
 
 	_reservas_a_rangos(arr_reservas = [], dicc_indices = {}, dimension_aplicada = null) {
 		try {
-			let dimension = this._standard_dimension(dimension_aplicada);
+			let dimension = this._standar_dimension(dimension_aplicada);
 			if (!dimension) {
-				dimension = this._standard_dimension(this.ref_Salon.filas, this.ref_Salon.columnas);
+				dimension = this._standar_dimension(this.ref_Salon.filas, this.ref_Salon.columnas);
 			}
 
 			return this.reserva_range_mapper.reservas_a_rangos(arr_reservas,dicc_indices,dimension,);

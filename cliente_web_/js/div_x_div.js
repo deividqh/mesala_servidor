@@ -9835,7 +9835,7 @@ class Working_Celdas {
 
 	/** ## Standariza la dimensión ┌■■ {filas:3, columnas:4} 
 	 * ### Formatos Entrada: 1■ '3x4' - 2■ {filas:3, columnas:4} - 3■ (3,4) - 4■ {filas:3,columnas:4}	*/
-	_standard_dimension(arg1 = null, arg2 = null) {
+	_standar_dimension(arg1 = null, arg2 = null) {
         // Variable para centralizar la validación de números enteros positivos
         const esEnteroPositivo = (num) => Number.isInteger(num) && num > 0;
 
@@ -9874,7 +9874,7 @@ class Working_Celdas {
                 }
             }
 
-            // 4. Caso '(arg1, arg2)': _standard_dimension(3, 4)
+            // 4. Caso '(arg1, arg2)': _standar_dimension(3, 4)
             if (esEnteroPositivo(arg1) && esEnteroPositivo(arg2)) {
                 return { filas: arg1, columnas: arg2 };
             }
@@ -9884,7 +9884,7 @@ class Working_Celdas {
 
         } catch (error) {
             // El catch atrapa cualquier throw o error de ejecución y asegura que no se rompa la aplicación
-            console.error(`Error en _standard_dimension: ${error.message}`);
+            console.error(`Error en _standar_dimension: ${error.message}`);
             return null;
         }
     }
@@ -12736,12 +12736,12 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 
 			// 💡 La indea es que con la 'dimension' y el 'indice' se puede saber la celda de cada elemento.
 			// Las dimensiones del Salon Actualmente
-			let dimension = this._standard_dimension(dimension_aplicada);
+			let dimension = this._standar_dimension(dimension_aplicada);
 			
 			// ┌■■ Si no entra la dimension como parametro o x error, usa las dimensiones del 'Salon Actuales'.
 			// [Esto hace que se pueda pasar a rango una reserva del "Salon" or de "BD".]
 			if(!dimension) 
-				dimension = this._standard_dimension(Salon.filas, Salon.columnas);
+				dimension = this._standar_dimension(Salon.filas, Salon.columnas);
 
 			let indice_s = dicc_indices;
 			
