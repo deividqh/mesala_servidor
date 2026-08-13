@@ -1,4 +1,107 @@
 /**
+ * Convierte entre índices, coordenadas y nombres de celda.
+ *
+ * Esta clase solo realiza cálculos: no conoce Salon, el DOM ni los rangos.
+ * Los límites de la matriz se reciben mediante la dimensión para que sus
+ * resultados sean fáciles de probar y no dependan del estado de la interfaz.
+ */
+class Celda_Mapper {
+	/**
+	 * Convierte un índice lineal en coordenadas {fila, columna}.
+	 * Si se indican las filas, también valida que el índice esté en la matriz.
+	 */
+	indice_a_coordenadas(indice, columnas, filas = null) {
+		const indice_numero = Number(indice);
+		const columnas_numero = Number(columnas);
+
+		if (!Number.isInteger(indice_numero) || indice_numero < 0) {
+			throw new Error(`Índice inválido: ${indice_numero}. Debe ser un entero mayor o igual a cero.`);
+		}
+		if (!Number.isInteger(columnas_numero) || columnas_numero <= 0) {
+			throw new Error(`Columnas inválidas: ${columnas_numero}. Debe ser un entero mayor a cero.`);
+		}
+
+		if (filas !== null) {
+			if (!Number.isInteger(filas) || filas <= 0) {
+				throw new Error(`Filas inválidas: ${filas}. Debe ser un entero mayor a cero.`);
+			}
+			if (indice_numero >= filas * columnas_numero) {
+				throw new Error(`Índice fuera de límites: ${indice_numero}. El máximo permitido es ${(filas * columnas_numero) - 1}.`);
+			}
+		}
+
+		return {
+			fila: Math.floor(indice_numero / columnas_numero),
+			columna: indice_numero % columnas_numero,
+		};
+	}
+
+	/** Convierte coordenadas válidas en un índice lineal. */
+	coordenadas_a_indice(fila, columna, dimension) {
+		if (!this._es_dimension_valida(dimension)) return null;
+		if (!Number.isInteger(fila) || !Number.isInteger(columna)) return null;
+		if (fila < 0 || columna < 0) return null;
+		if (fila >= dimension.filas || columna >= dimension.columnas) return null;
+
+		return fila * dimension.columnas + columna;
+	}
+
+	/** Convierte coordenadas de base cero en una referencia como A0, B3 o AA1. */
+	coordenadas_a_celda(fila, columna) {
+		if (!Number.isInteger(fila) || fila < 0) return null;
+		if (!Number.isInteger(columna) || columna < 0) return null;
+
+		return `${this._numero_a_columna(columna)}${fila}`;
+	}
+
+	/** Convierte una referencia como A0, B3 o AA1 en {fila, columna}. */
+	celda_a_coordenadas(celda) {
+		if (typeof celda !== 'string') return null;
+
+		const coincidencia = celda.trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
+		if (!coincidencia) return null;
+
+		const fila = Number.parseInt(coincidencia[2], 10);
+		let columna = 0;
+
+		for (const letra of coincidencia[1]) {
+			columna = columna * 26 + letra.charCodeAt(0) - 64;
+		}
+
+		return { fila, columna: columna - 1 };
+	}
+
+	/** Convierte directamente un índice lineal en una referencia de celda. */
+	indice_a_celda(indice, columnas, filas = null) {
+		const coordenadas = this.indice_a_coordenadas(indice, columnas, filas);
+		return this.coordenadas_a_celda(coordenadas.fila, coordenadas.columna);
+	}
+
+	_numero_a_columna(columna) {
+		let numero = columna + 1;
+		let resultado = '';
+
+		while (numero > 0) {
+			const resto = (numero - 1) % 26;
+			resultado = String.fromCharCode(65 + resto) + resultado;
+			numero = Math.floor((numero - 1) / 26);
+		}
+
+		return resultado;
+	}
+
+	_es_dimension_valida(dimension) {
+		return Boolean(
+			dimension
+			&& Number.isInteger(dimension.filas)
+			&& dimension.filas > 0
+			&& Number.isInteger(dimension.columnas)
+			&& dimension.columnas > 0
+		);
+	}
+}
+
+/**
  * ## Working_Celdas representa una celda en una matriz_plana.
  * ### Permite convertir entre coordenadas (fila, columna) o indice y referencias estilo Excel (A1, B2, etc.)
  * @example let celda = new Working_Celdas(this, fila, columna);
@@ -13,6 +116,8 @@ class Working_Celdas {
 		
 		this.ref_Salon = instancia_Salon;
 
+		this.celda_mapper = new Celda_Mapper();
+
 	}
 
 	/**
@@ -23,32 +128,37 @@ class Working_Celdas {
 	 * [RETORNO] {Object} Objeto con la {fila, columna} correspondiente.
 	 */
 	_get_celda_CON_dimension_X(indice, columnas, filas = null) {
-		// Conversión estricta a número (Number('6a') da NaN, evitando errores lógicos)
-    	indice = Number(indice);
-    	columnas = Number(columnas);
+		// // Conversión estricta a número (Number('6a') da NaN, evitando errores lógicos)
+    	// indice = Number(indice);
+    	// columnas = Number(columnas);
 	
-		// Validaciones de formato
-		if (!Number.isInteger(indice) || indice < 0) {
-			throw new Error(`Índice inválido: ${indice}. Debe ser un entero mayor o igual a cero.`);
-		}
-		if (!Number.isInteger(columnas) || columnas <= 0) {
-			throw new Error(`Columnas inválidas: ${columnas}. Debe ser un entero mayor a cero.`);
-		}
+		// // Validaciones de formato
+		// if (!Number.isInteger(indice) || indice < 0) {
+		// 	throw new Error(`Índice inválido: ${indice}. Debe ser un entero mayor o igual a cero.`);
+		// }
+		// if (!Number.isInteger(columnas) || columnas <= 0) {
+		// 	throw new Error(`Columnas inválidas: ${columnas}. Debe ser un entero mayor a cero.`);
+		// }
 
-		// Validación opcional de límites (si se pasa el argumento 'filas')
-		if (filas !== null) {
-			if (!Number.isInteger(filas) || filas <= 0) {
-				throw new Error(`Filas inválidas: ${filas}. Debe ser un entero mayor a cero.`);
-			}
-			if (indice >= filas * columnas) {
-				throw new Error(`Índice fuera de límites: ${indice}. El máximo permitido es ${(filas * columnas) - 1}.`);
-			}
-		}
-		// Cálculo matemático puro
-		const fila = Math.floor(indice / columnas);
-		const columna = indice % columnas;
+		// // Validación opcional de límites (si se pasa el argumento 'filas')
+		// if (filas !== null) {
+		// 	if (!Number.isInteger(filas) || filas <= 0) {
+		// 		throw new Error(`Filas inválidas: ${filas}. Debe ser un entero mayor a cero.`);
+		// 	}
+		// 	if (indice >= filas * columnas) {
+		// 		throw new Error(`Índice fuera de límites: ${indice}. El máximo permitido es ${(filas * columnas) - 1}.`);
+		// 	}
+		// }
+		// // Cálculo matemático puro
+		// const fila = Math.floor(indice / columnas);
+		// const columna = indice % columnas;
 
-		const celda = this.X_to_celda(fila, columna);
+		// const celda = this.X_to_celda(fila, columna);
+
+
+		// Método antiguo conservado para no cambiar la API de Working_Celdas.
+		const coordenadas = this.celda_mapper.indice_a_coordenadas(indice,{ filas, columnas },);
+		const celda = this.X_to_celda(coordenadas.fila, coordenadas.columna);
 		return celda || null;
 	}
 
@@ -558,20 +668,19 @@ class Working_Celdas {
 	 	console.log(`❌ NO HAY RANGO LIBRE en dimension ${dimension} , desde Celda ${celda_inicio}`);
 
   ■■■■■■■■ UNION / INTERSECCION
- const celdas_union = RnG._get_union('rango_fila_0','rango_fila_1');
-	const celdas_intersección = RnG._get_interseccion('rango_columna_1','rango_fila_0');
-	const celdas_intersección_2 = RnG._get_interseccion('rango_columna_1','rango_columna_2');
-	const celdas_intersección_3 = RnG._get_interseccion('rango_columna_1','rango_columna_1');
-	console.log(`• CELDAS-UNION: ${celdas_union} ➿ ${RnG._is_continuos(celdas_union)}`);
-	console.log(`• CELDAS-INTERSECCION:${celdas_intersección} ➿ ${RnG._is_continuos(celdas_intersección)}`);
-	console.log(`• CELDAS-INTERSECCION NULL:${celdas_intersección_2} ➿ ${RnG._is_continuos(celdas_intersección_2)} `);
+const celdas_union = RnG._get_union('rango_fila_0','rango_fila_1');
+const celdas_intersección = RnG._get_interseccion('rango_columna_1','rango_fila_0');
+const celdas_intersección_2 = RnG._get_interseccion('rango_columna_1','rango_columna_2');
+const celdas_intersección_3 = RnG._get_interseccion('rango_columna_1','rango_columna_1');
+console.log(`• CELDAS-UNION: ${celdas_union} ➿ ${RnG._is_continuos(celdas_union)}`);
+console.log(`• CELDAS-INTERSECCION:${celdas_intersección} ➿ ${RnG._is_continuos(celdas_intersección)}`);
+console.log(`• CELDAS-INTERSECCION NULL:${celdas_intersección_2} ➿ ${RnG._is_continuos(celdas_intersección_2)} `);
 
   ■■■■■■■  👀 ES RANGO CONTINUO??
-	RnG._is_continuos(celdas_union);
+RnG._is_continuos(celdas_union);
 
   ■■■■■■■  👀 ADD RANGO "A MANO"
 RnG.add_rango('rango_prueba', rango_from_reservas_bdd[0]);
-
 
   ■■■■■■■ 👻👻 Tengo un Fantasma!!!! 👻👻
   // Crea un rango solo con dimension, sin celda_inicio, ni celda_fin, me permite DINAMISMO. 
@@ -607,31 +716,31 @@ class Working_Rangos  extends Working_Celdas{
 		 * @returns {{filas: number, columnas: number}|null} Objeto con dimensiones o null si es inválido.
 		 */
 		_get_dimensiones_3x4(texto) {
-			// 1. Verificación básica de entrada
-			if (typeof texto !== 'string' || !texto.includes('x')) {
-				return null;
-			}
-			// 2. Fragmentación y limpieza (Case Insensitive para mayor usabilidad)
-			const partes = texto.toLowerCase().split('x');
-			// 3. Validar que existan exactamente dos componentes
-			if (partes.length !== 2) {
-				return null;
-			}
-			// 4. Parseo numérico
-			const filas = parseInt(partes[0], 10);
-			const columnas = parseInt(partes[1], 10);
-			// 5. Deben ser números enteros positivos
-			const esValido = !isNaN(filas) && !isNaN(columnas) && filas > 0 && columnas > 0;
+			// // 1. Verificación básica de entrada
+			// if (typeof texto !== 'string' || !texto.includes('x')) {
+			// 	return null;
+			// }
+			// // 2. Fragmentación y limpieza (Case Insensitive para mayor usabilidad)
+			// const partes = texto.toLowerCase().split('x');
+			// // 3. Validar que existan exactamente dos componentes
+			// if (partes.length !== 2) {
+			// 	return null;
+			// }
+			// // 4. Parseo numérico
+			// const filas = parseInt(partes[0], 10);
+			// const columnas = parseInt(partes[1], 10);
+			// // 5. Deben ser números enteros positivos
+			// const esValido = !isNaN(filas) && !isNaN(columnas) && filas > 0 && columnas > 0;
 			
-			// 6. Validación final: Deben pertenecer a la matriz.
-			const ok  = this._dimension_OK({filas, columnas})
-			if(ok) 
-				return esValido ? { filas, columnas } : null;
+			// // 6. Validación final: Deben pertenecer a la matriz.
+			// const ok  = this._dimension_OK({filas, columnas})
+			// if(ok) 
+			// 	return esValido ? { filas, columnas } : null;
 			
-			return null;
+			// return null;
 
-			// const dimension = this._dimension_to_f_x_c(texto);
-			// return this._dimension_OK(dimension) ? dimension : null;
+			const dimension = this._dimension_to_f_x_c(texto);
+			return this._dimension_OK(dimension) ? dimension : null;
 
 		}
 		/**
@@ -955,8 +1064,6 @@ class Working_Rangos  extends Working_Celdas{
 						// Creo un rango anonimo que elimino inmediatamente.
 						const new_nombre = this._nombre_secuencial('temporal');
 						const new_rango = this.api_crear(new_nombre, rango.celda_inicio, rango.dimension, false, false);
-						// get_values del rango anonimo
-						// const new_values = new_rango.values;
 						const new_values = this._get_values(new_nombre, false);
 						this.api_delete(new_nombre)
 						// acumulado de values.
@@ -2192,13 +2299,13 @@ class Rango_Ghost extends Working_Rangos{
 			linea_s_to_print.push(linea);
         }
 
-		// ■■■ CALCULO DE ANCHOS 👻		
+		// ■■■ CALCULO DE ANCHOS 		
 		// ┌■■ Longitud maxima de cada linea que suma de las matrices "Rango + Salon + separacion"
 		let max_l = 0;
 		linea_s_to_print.forEach(linea =>{max_l = Math.max(max_l, get_real_length(linea)) });
 		const x_matriz = Math.floor((max_l - separacion) / 2);
 
-		// ■■■ RENDERIZADO 👻        
+		// ■■■ RENDERIZADO     
         const BARRA = '■'.repeat(max_l+4);
 		// ┌• Cabecera (Techo)
         console.log(`${F.bright}${F.green} ${BARRA}👻${F.reset} ► " ${F.red}${accion}${F.reset} "`);
@@ -3159,10 +3266,10 @@ class Wedding_Rangos extends Rango_Ghost{
 			Ran = this._crear_ghost_desde_rango(argumento);
 		}else{
 			// ■ No se reconoce el formato de entrada.
-			return this._get_ficha_vacia();;		
+			return this._get_ficha_vacia();		
 		}
 
-		return Ran ? Ran : this._get_ficha_vacia();;
+		return Ran ? Ran : this._get_ficha_vacia();
 	}
 
 	get basics(){return this.rangos.basic;}

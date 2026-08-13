@@ -1,30 +1,27 @@
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 // ████████████████████████  LOGICA DEL NEGOCIO DE FOTOS
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-// Controlador (Controller): Una vez
-// El método específico del controlador asociado a esa ruta se ejecuta exactamente una vez por petición. 
 // Es el encargado de procesar la lógica de negocio y, finalmente, enviar la respuesta al cliente (res.send, res.json).
 // Una vez que el controlador envía la respuesta, el ciclo de vida de esa petición para ese archivo termina. 
 
-// ┌•••••••••••••••••••••••••••••••••••••••••••••
-// ┌•• Importar la conexión a la BASE DE DATOS
-// ┌•••••••••••••••••••••••••••••••••••••••••••••
+// ┌■■ Importar la conexión a la BASE DE DATOS
 const pool = require('../config/db');
 
 /** ## Guarda un salón y su foto asociada en la base de datos.  */
 async function createFoto(req, res) {
     const usuarioId = req.user?.id;
     const { salon, foto } = req.body || {};
+    
     // Validar datos obligatorios
     if (!usuarioId || !salon || !foto) return res.status(400).json({ message: 'Datos incompletos' });
     // Obtener conexión a la base de datos
     const connection = await pool.getConnection();
 
     try {
-      // ■■■■■■■■ INICIAR una TRANSACCION
+      // ┌■ INICIAR una TRANSACCION
       await connection.beginTransaction();
 
-      // ■■■■■■■■ 
+      // ┌■ 
       const clasesJson = JSON.stringify(salon.clases_json || {});
       const rutasJson = JSON.stringify(salon.rutas_json || {});
       const configuracionJson = JSON.stringify(salon.configuracion_json || {});
@@ -32,7 +29,7 @@ async function createFoto(req, res) {
       
       const tiposJson = JSON.stringify(salon.tipos_json || {});
 
-      // ■■■■■■■■ Verificar si el slug público ya existe para este usuario
+      // ┌■ Verificar si el slug público ya existe para este usuario
       const [slugRows] = await connection.query(
         `SELECT 1 FROM foto
          INNER JOIN salon ON foto.salon_id = salon.id
@@ -60,8 +57,8 @@ async function createFoto(req, res) {
         ]
       );
       
-      // ■■■■■■■■■■■4■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
       // Guardo el ID del salón (nuevo o existente)
+      // ■■■■■■■■■■■4■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
       let salon_id = null;
       //    • Si existe (existingSalonRows)    ► Update fecha de la tabla Salon 
       //    • si no existe (existingSalonRows) ► Insert un NUEVO SALON
@@ -84,9 +81,7 @@ async function createFoto(req, res) {
         salon_id = resSalon.insertId;
       }
 
-      // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-      // ■■■■■■■■■■■■■■■■■■■ 2. Insertar Foto 
-      // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+      // ┌■ Insertar Foto 
       const [resFoto] = await connection.query(
         `INSERT INTO foto SET 
           salon_id = ?, 
@@ -445,21 +440,13 @@ async function get_foto_by_id(req, res){
  * #### • La dimension con la que fue guardada la foto NO está en la tabla 'foto' (error?). Está guardada en la tabla 'salon'.
  */
 async function get_dimension_foto(req, res){
-  // ┌••••••••••••••••••••••
   // ┌•• RECOJO LOS DATOS.
-  // ┌••••••••••••••••••••••
   const foto_id = Number(req.params?.id);
-  // ┌••••••••••••
   // ┌•• VALIDO
-  // ┌••••••••••••
   if (!Number.isFinite(foto_id)) return res.status(400).json({ message: 'ID de foto inválido' });
-  // ┌••••••••••••••••••••••••••••
-  // ┌•• 🔌🔌 EMPIEZA LA CONEXION
-  // ┌••••••••••••••••••••••••••••
+  // ┌•• EMPIEZA LA CONEXION
   const connection = await pool.getConnection();
-  // ┌•••••••••••••••••••••••••••••••••
   // ┌•• 🔓🔓 EMPIEZA LA   TRANSACCION:
-  // ┌•••••••••••••••••••••••••••••••••
   try {
     await connection.beginTransaction();        
     const [rows] = await connection.query(
@@ -471,23 +458,17 @@ async function get_dimension_foto(req, res){
     if( rows.length === 0 ) return res.status(404).json({error: 'Foto no encontrada.'})
     const dimension = rows[0];
     // res.json({filas: dimension.filas, clumnas: dimension.columnas});
-    // ┌•••••••••••••••••••••••••••••••••••
     // ┌••🔒🔒 TERMINA LA   TRANSACCION ✔️
-    // ┌•••••••••••••••••••••••••••••••••••
     await connection.commit();
     res.status(200).json({ ok: true, filas: dimension.filas, columnas:dimension.columnas , message: '✔️ Operacion Realizada'});    
     
   }catch(error){
-    // ┌•••••••••••••••••••••••••••••••••••
     // ┌••🔒⭕ TERMINA LA   TRANSACCION ⭕
-    // ┌•••••••••••••••••••••••••••••••••••
      await connection.rollback();
     console.log(`Error ::: get_dimension_foto ::: ${error}`);
     res.status(500).json({ ok: false, filas: null, columnas: null, message: '⭕ Error interno del servidor' });
   }finally {
-  // ┌••••••••••••••••••••••••••••
-  // ┌•• 🔌🔌 TERMINA LA CONEXION
-  // ┌••••••••••••••••••••••••••••
+  // ┌••  TERMINA LA CONEXION
     connection.release();
   }
 }

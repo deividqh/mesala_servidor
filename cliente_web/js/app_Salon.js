@@ -265,15 +265,15 @@ class e_Salon extends Tablero_Touch {
 		this.RegisteR();
 
 		// ┌■■ REGISTRA EL MOTOR DE ALERGIAS  (PESTAÑA DE LOGICA) 
-		const MA = Catalogo.get_motor('motor_alergias');
+		// const MA = Catalogo.get_motor('motor_alergias');
 		// this.CFG.api_re_posicionar();				
 		const ok_alerg = this._load_alergias_en_Salon(d_alergias_mock);		
-		console.log(JSON.stringify(MA.d_data, null, 2)); 
+		// console.log(JSON.stringify(MA.d_data, null, 2)); 
 		
 		// ┌■■ REGISTRA EL MOTOR DE MENSAJES (PESTAÑA DE LOGICA)
-		const MM = Catalogo.get_motor('motor_mensajes');
+		// const MM = Catalogo.get_motor('motor_mensajes');
 		const ok_msg = this._load_mensajes_en_Salon(d_mensajs_mock);
-		console.log(JSON.stringify(MM.d_data, null, 2)); 
+		// console.log(JSON.stringify(MM.d_data, null, 2)); 
 		
 		// ┌■■ VALIDA E INFORMA:
 		if( !ok_elements || !ok_alerg || !ok_msg ){
@@ -2436,60 +2436,8 @@ class Configuracion_Salon {
 			
 			// Ninguna de las piezas a colocar encontró conflicto
 			return false;
-
-			// 💥💥💥💥💥💥💥💥
-			// 💥💥💥💥💥💥💥💥
-
-		// 	// Si el objeto de la reserva que quiero colocar es una mesa.....
-		// 	if (item.id.toLowerCase().startsWith(tipo_mesa)) 
-		// 		soy_mesa = true;
-		// 	else  
-		// 		soy_mesa = false;
-			
-		// 	// 1. Calculamos dónde caería esta mesa
-		// 	const celda_destino = this.Salon.eRdS.suma_fc(celda_inicio_free, item.delta_y, item.delta_x);
-		// 	if (!celda_destino) return true; // Error o fuera de rango
-
-		// 	const indice_matriz = this.Salon.eRdS.X_to_indice(celda_destino);
-		// 	let baldosa_obj = this.Salon.matriz_plana[indice_matriz]; 
-		// 	if (!baldosa_obj) return true;
-
-		// 	// 2. USAMOS SCANNER_NSEW sobre esa baldosa para ver sus vecinos ACTUALES
-		// 	const scan_result = this.Salon.scanner_nsew(baldosa_obj.elemento_div); 
-
-		// 	// 3. Revisamos los 8 vecinos (N, S, E, W + Diagonales)
-		// 	let vecinos = [
-		// 		baldosa_obj.scan.n,  baldosa_obj.scan.s,  baldosa_obj.scan.e,  baldosa_obj.scan.w,
-		// 		baldosa_obj.scan.ne, baldosa_obj.scan.nw, baldosa_obj.scan.se, baldosa_obj.scan.sw
-		// 	];
-		// 	// ...y eliminamos null/false
-		// 	vecinos = vecinos.filter(x => x !== null && x !== false && x !== undefined && x.trim() !== '');	
-		// 	if(vecinos.length === 0) continue; // No hay vecinos, no hay conflicto
-			
-		// 	// Recorremos los vecinos ya colocados antes de hacer scanner_nsew... si los tiene
-		// 	for (const vecino_id of vecinos) {					
-		// 		if (typeof(vecino_id) === 'string') {						
-		// 			// ► Si Soy mesa y además tengo vecinos, sea mesa o silla, HAY CONFLICTO ❌
-		// 			if(soy_mesa === true) return true;
-		// 			// ■ NO SOY MESA, SOY SILLA
-		// 			// ■ ¿EL VECION, Es una MESA?
-		// 			if (vecino_id.toLowerCase().startsWith(tipo_mesa)) {							
-		// 				// ¿Es de nuestra propia reserva ("familia")?
-		// 				if (ids_reserva.includes(vecino_id)) {
-		// 					// Mesa propia, NO hay CONFLICTO.
-		// 					continue; 
-		// 				} else {
-		// 					// ¡Es una Mesa de otra reserva! CONFLICTO.
-		// 					return true; 
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// // }
 		}
 		
-		// // Ninguna de las mesas a colocar encontró conflicto
-		// return false;
 	}
 
 	/** 
@@ -4984,18 +4932,18 @@ class Foto_CRUD{
 	_set_payload_create(valores_offcanvas) {
 		
 		// ┌•• Cacho el rango_matriz
-		const RnG  = this?.Salon?.eRdS;
-		if(!RnG) return;
+		const Ranget  = this?.Salon?.eRdS;
+		if(!Ranget) return;
 		
 		// ┌•• Le hace una foto al salón en este momento
 		const dicc_api_foto = this.Salon?.api_foto();
 		const dimension = this.Salon.dimension;		
 		
 		// ┌•• Cacho los rangos de las reservas de la foto.
-		const rangos_reservas = RnG._reservas_a_rangos(dicc_api_foto.reservas || [], dicc_api_foto.indices, dimension || null);
+		const rangos_reservas = Ranget._reservas_a_rangos(dicc_api_foto.reservas || [], dicc_api_foto.indices, dimension || null);
 		// ┌•• Cacho el Rango Matriz.
-		RnG.to_pull('rango_matriz');
-		const rango_matriz = RnG?.d_rangos["rango_matriz"];
+		Ranget.to_pull('rango_matriz');
+		const rango_matriz = Ranget?.d_rangos["rango_matriz"];
 
 		const rango_tot = {reservas: rangos_reservas , matriz: rango_matriz};
 		
@@ -5104,17 +5052,23 @@ class Foto_CRUD{
 	 * 1. Pregunta confirmación.
 	 * 2. Limpia el salón actual.
 	 * 3. Buscamos datos de la foto_id
-	 * 4. Carga datos Nuevos
-	 */
+	 * 4. Carga datos Nuevos  */
 	async _accion_cargar_elementos_en_Salon(foto_id) {
 		const Salon = this.Salon || null;
-		const CFG = this.Salon?.CFG;			// Configuracion_Salon
-		const RnG = this.Salon.eRdS || null;
-		// ┌■■ Busca la foto en la lista de fotos
+		const CFG = this.Salon?.CFG;			
+		const Ranget = this.Salon.eRdS || null;
+		// ┌■ Validacion
+		if(!Salon || !CFG || !Ranget) 
+			return;
+		Ranget.pull_all();
+
+		// ┌■ Busca la foto en la lista de fotos
 		const photo = this.lista_fotos_RUD.find(reg => reg.id === foto_id);
 		if(!photo) return;
-		// ┌• 🧹 Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
+		
+		// ┌■ Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
 		CFG.limpiar_Salon();
+		
 		// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos
 		this._ocultar_offcanvas_abiertos();
 		try {
@@ -5139,36 +5093,42 @@ class Foto_CRUD{
 			// ┌■■ DIMENSION del Salon en 'Salon'
 			const filas_salon = Salon.filas;
 			const columnas_salon = Salon.columnas;
+			
 			// 🧩 Cacho los RANGOS desde la Base de datos: la Reserva "no está" o "no tiene pq estar" sobre la mesa.
-			const rango_s_en_BDD = RnG._reservas_a_rangos(FW?.dicc_reservas, FW?.dicc_indices, {filas:filas_bdd, columnas:columnas_bdd});
+			const rango_s_en_BDD = Ranget._reservas_a_rangos(FW?.dicc_reservas, FW?.dicc_indices, {filas:filas_bdd, columnas:columnas_bdd});
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
-					const ghostizado = RnG._ghost(rango);	
-					const nombre_f = RnG._nombrar_rango_anonimo(ghostizado);
+					const ghostizado = Ranget._ghost(rango);	
+					const nombre_f = Ranget._nombrar_rango_anonimo(ghostizado);
 					// ┌• Impongo 'cut' para que ghost suelte SU el elemento en el salon y no Haga un clon. revisar "stt.paste"
-					RnG.paste_ghost(true, false, true);									
-					RnG.api_delete(nombre_f);
+					Ranget.paste_ghost(true, false, true);									
+					Ranget.api_delete(nombre_f);
 				});
 			}
-			// ┌■■■
-			// ┌■■■
+
 			// ┌■ Cacho los datos que nos interesan para cargar las sillas y las mesas.
 			const d_mensajes = FW.dicc_mensajes;
 			const d_indices = FW.dicc_indices;
 			const d_alergias = FW.dicc_alergias;
+			
 			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
 			// 🔳🔳🔳🔳🔳🔳 CARGA Antigua de  SALON 🔳🔳🔳🔳🔳🔳
+			
 			// ┌• CARGA LOS MENSAJES
 			this._load_en_Salon(d_indices, d_mensajes);						
+			
 			// ┌• CARGA LAS ALERGIAS
 			Salon._load_alergias_en_Salon(d_alergias);
+			
 			// ┌••   ••••••••
 			Salon.RegisteR();
 			console.log("┌■■ SCANNER + REGISTRO ✔️");
 			// 🟥 ┌•••  🟥
 
 			console.log(" • • • • • • • •  FIN");
+
 			this.foto_work = FW;
+
 		} catch (error) {
 			console.log(`❌ Error ::: __cargar_elementos_en_Salon ::: foto_id ► ${foto_id}`)
 			console.error(error);
@@ -5180,6 +5140,15 @@ class Foto_CRUD{
 	 * ### • Comprueba dimensiones.
 	 * ### • Si hay cambiio de dimensiones gestiona las opciones	 */
 	async __el_portero_de_carga(modelo_salon, filas_salon, columnas_salon, filas_bdd, columnas_bdd){
+		
+		const Ranget = this.Salon.eRdS || null;
+		if(!Ranget) return;
+		const Salon = this.Salon || null;
+		if(!Salon) return;
+		const CFG = this.Salon?.CFG;			// Configuracion_Salon
+		if(!CFG) return;
+		const dimension = {filas: filas_salon, columnas: columnas_salon};
+		let celda_inicio_rango_open = '';
 
 		// ┌■■■
 		// ┌■■■ opcion 1
@@ -5196,7 +5165,7 @@ class Foto_CRUD{
 			msg += `<br><br><h5>Al cargar este salón se perderá el trabajo actual no guardado.</h5>`;				
 			const label = `<br><br>Escribe la Columna de Inicio Desde la foto ${photo.filas}x${photo.columnas}`;
 			
-			RnG.api_crear("", celda_inicio_rango_open, dimension, false, false);
+			Ranget.api_crear("", celda_inicio_rango_open, dimension, false, false);
 			// let celda_s = 
 			
 			const entre_estos = ['A0', 'B0', 'C0', 'D0', 'E0'];
@@ -5206,8 +5175,8 @@ class Foto_CRUD{
 			// Extrae fila y columna de los datos de la resupuesta de usuario:
 			const match = celda_inicio_rango_open.trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
 			if (!match) return null;			
-			fila = RnG._entero_positivo(match[2]);
-			columna = RnG._AZ_to_numcol(match[1]);
+			fila = Ranget._entero_positivo(match[2]);
+			columna = Ranget._AZ_to_numcol(match[1]);
 
 		}else{
 			// ┌•• Mensaje Confirmacion - Dimension
@@ -5218,18 +5187,8 @@ class Foto_CRUD{
 		// ┌■■■
 		// ┌■■■ opcion 2
 		// ┌■■■
-		
-		// ┌•• •••••••••           •• •••••••••••••
-		// ┌■■ DIMENSION del Salon en BASE DE DATOS.
-		// const filas_bdd = FW.filas;
-		// const columnas_bdd = FW.columnas;
-		
-		// ┌•• •••••••••          •• •••••
-		// ┌■■ DIMENSION del Salon en 'Salon'
-		// const filas_salon = this.Salon.filas;
-		// const columnas_salon = this.Salon.columnas;
 
-		// 🔥🔥 COMPARAMOS DIMENSIONES EN SALON Y EN BASE-DATOS y Planes(limitado/scrollado/apilado)
+		// ┌■ COMPARAMOS DIMENSIONES EN SALON Y EN BASE-DATOS y Planes(limitado/scrollado/apilado)
 		if(Salon.modelo_salon==='limitado'){
 			if (columnas_bdd != columnas_salon){
 				console.log(`Cargar-Elementos::: Columnas Distintas 🔥 ::: Modelo-Salon:${Salon.modelo_salon}, columnas-BDD: ${columnas_bdd}, columnas-Salon: ${columnas_salon}`)
@@ -5250,10 +5209,10 @@ class Foto_CRUD{
 		// ┌■■■ Acciones Finales
 		// ┌■■■
 
-		// ┌••       •••••••••••           ••••• ••    •••••
-		// ┌•• 🧠🧠 PREPARACION DEL SALON ANTES DE LA CARGA DE ELEMENTOS.
+		//       •••••••••••           ••••• ••    •••••
+		// 🧠🧠 PREPARACION DEL SALON ANTES DE LA CARGA DE ELEMENTOS.
 
-		// ┌• 🧹 Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
+		// ┌■ 🧹 Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
 		CFG.limpiar_Salon();
 
 		// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos

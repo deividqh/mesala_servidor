@@ -687,9 +687,6 @@ class Logica_Catalogo  {
         $offcanvas_dom.classList.remove('offcanvas-bottom');
 
         $offcanvas_dom.classList.add(clase_actual);
-        // $offcanvas_dom.style.height = 'auto';
-        // $offcanvas_dom.style.minHeight = '20vh';
-        // $offcanvas_dom.style.maxHeight = 'auto';
         $offcanvas_dom.dataset.posicionLogica = posicion;
     }
 
