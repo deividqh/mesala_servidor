@@ -14,9 +14,6 @@
   <link rel="stylesheet" href="./css/estilo_salon.css">
   <link rel="stylesheet" href="./css/estilo_logica.css">
   
-  
-  
-  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0 , user-scalable=no">
 
   <!-- MIS SCRIPTS JS -->
@@ -28,7 +25,9 @@
   <script type='text/javascript' src='./js/Ranghos.js'></script> 
   <script type='text/javascript' src='./js/Salon.js'></script> 
   <script type='text/javascript' src='./js/static_helps.js'></script> 
+
 </head>
+
 <body data-page="mesala">
 
   <!-- 
@@ -66,13 +65,15 @@
         
           </div>
       
-          <!-- ■■■■■■■■■■■■■■■■■■■■■■■■ DISPARADOR DEL SIDEBAR DE ELEMENTOS -->
+          <!-- 
+          ■■■■■■■■■■■■■■■■■■■■■■■■ DISPARADOR DEL SIDEBAR DE ELEMENTOS 
+          -->
           <div class="navbar-elementos d-flex align-items-center flex-nowrap">
             <i class="bi bi-box-fill me-3 botones_accion" title="Elementos del salón" data-action-nav="elementos" data-side-active="false"></i>
           </div>
 
           <!-- 
-          ■■■■■■■■■■■■■■■■■■■■■■■■ BOTONES BI ACCIONES SOBRE EL NAVBAR
+          ■■■■■■■■■■■■ BOTONES BI ACCIONES SOBRE EL NAVBAR
           -->
           <div class="navbar-actions d-flex align-items-center flex-nowrap">
             <div class="navbar-actions-group d-flex align-items-center flex-nowrap">
@@ -89,7 +90,9 @@
 
             </div>
             
-            <!-- ■■■■■■■■ Toggler ■■■■■■■■ -->
+            <!-- 
+            ■■■■■■■■ Toggler 
+            -->
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvas_configuracion" aria-label="Abrir menú de configuración">
               <span class="navbar-toggler-icon"></span>
             </button>
@@ -135,7 +138,7 @@
               <form id="form_config_salon">
                 <section class="config-section config-section--sidebar" aria-labelledby="config_sidebar_title">
                   <div class="config-section__header">
-                    <span id="config_sidebar_title" class="options-bar__label">Posición del sidebar</span>
+                    <span id="config_sidebar_title" class="options-bar__label">Posición del sidebar de elementos</span>
                     <label class="sidebar-position-switch" aria-label="Cambiar posición del sidebar">
                       <span>Izq.</span>
                       <input type="checkbox" data-side-position-toggle checked>
@@ -216,8 +219,6 @@
           
           <div class="alert d-none" role="alert" data-creat="feedback">FeedBack</div>
           
-          <!-- <div class="alert  text-black-50" data-creat="dimension">Dimension(filas X columnas): </div> -->
-
           <div class="accordion accordion-flush" data-creat="acordeon">
               <div class="accordion-item">
                 <h3 class="accordion-header">
