@@ -102,6 +102,173 @@ class Celda_Mapper {
 }
 
 /**
+ * Centraliza el acceso a los distintos diccionarios de rangos.
+ * Conserva las referencias originales: no copia ni transforma los rangos.
+ */
+class Rango_Repository {
+	constructor() {
+		this.fuentes = {};
+	}
+
+	registrar_fuente(nombre_fuente, diccionario) {
+		if (typeof nombre_fuente !== 'string' || nombre_fuente.trim() === '') return false;
+		if (!diccionario || typeof diccionario !== 'object' || Array.isArray(diccionario)) return false;
+
+		this.fuentes[nombre_fuente] = diccionario;
+		return true;
+	}
+
+	obtener(nombre_rango, nombres_fuente = Object.keys(this.fuentes)) {
+		if (typeof nombre_rango !== 'string' || nombre_rango.trim() === '') return null;
+
+		for (const nombre_fuente of nombres_fuente) {
+			const diccionario = this.fuentes[nombre_fuente];
+			if (diccionario && Object.prototype.hasOwnProperty.call(diccionario, nombre_rango)) {
+				return diccionario[nombre_rango];
+			}
+		}
+
+		return null;
+	}
+
+	guardar(nombre_fuente, nombre_rango, rango) {
+		const diccionario = this.fuentes[nombre_fuente];
+		if (!diccionario || typeof nombre_rango !== 'string' || nombre_rango.trim() === '') return false;
+		if (!rango || typeof rango !== 'object') return false;
+
+		diccionario[nombre_rango] = rango;
+		return rango;
+	}
+
+	eliminar(nombre_fuente, nombre_rango) {
+		const diccionario = this.fuentes[nombre_fuente];
+		if (!diccionario || !Object.prototype.hasOwnProperty.call(diccionario, nombre_rango)) return null;
+
+		const rango = diccionario[nombre_rango];
+		delete diccionario[nombre_rango];
+		return rango;
+	}
+
+	obtener_fuente(nombre_fuente) {
+		return this.fuentes[nombre_fuente] || null;
+	}
+}
+
+/**
+ * Convierte reservas en rangos sin conocer Salon ni los diccionarios internos.
+ * La creación de la ficha completa se delega para conservar el formato actual.
+ */
+class Reserva_Range_Mapper {
+	constructor({
+		indice_a_celda,
+		crear_rango,
+		eliminar_rango,
+		siguiente_nombre,
+		celdas_a_limites,
+		calcular_dimension,
+	}) {
+		this.indice_a_celda = indice_a_celda;
+		this.crear_rango = crear_rango;
+		this.eliminar_rango = eliminar_rango;
+		this.siguiente_nombre = siguiente_nombre;
+		this.celdas_a_limites = celdas_a_limites;
+		this.calcular_dimension = calcular_dimension;
+	}
+
+	reservas_a_rangos(reservas, indices, dimension) {
+		if (!Array.isArray(reservas) || reservas.length === 0) return [];
+		if (!indices || typeof indices !== 'object' || Object.keys(indices).length === 0) return [];
+		if (!dimension || !Number.isInteger(dimension.filas) || !Number.isInteger(dimension.columnas)) return [];
+
+		const elemento_por_celda = this._crear_indice_de_celdas(indices, dimension);
+		const rangos = [];
+
+		for (const reserva of reservas) {
+			const reservadores = Array.isArray(reserva?.reservadores) ? reserva.reservadores : [];
+			const clientes = Array.isArray(reserva?.clientes) ? reserva.clientes : [];
+
+			if (reservadores.length === 0 && clientes.length > 0) {
+				const rangos_ronin = this._crear_rangos_ronin(clientes, elemento_por_celda);
+				if (rangos_ronin.length > 0) rangos.push(rangos_ronin);
+				continue;
+			}
+
+			const rango = this._crear_rango_de_reserva(
+				[...reservadores, ...clientes].filter(Boolean),
+				elemento_por_celda,
+			);
+			if (rango) rangos.push(rango);
+		}
+
+		return rangos;
+	}
+
+	_crear_indice_de_celdas(indices, dimension) {
+		// Primero conservamos la relación histórica celda -> elemento. Si dos
+		// elementos comparten índice, el último es el que ocupa esa celda.
+		const elemento_por_celda = {};
+
+		for (const [elemento, indice] of Object.entries(indices)) {
+			const celda = this.indice_a_celda(indice, dimension);
+			if (celda) elemento_por_celda[celda] = elemento;
+		}
+
+		return elemento_por_celda;
+	}
+
+	_crear_rangos_ronin(clientes, elemento_por_celda) {
+		const rangos = [];
+
+		for (const cliente of clientes) {
+			const entrada = Object.entries(elemento_por_celda)
+				.find(([, elemento]) => elemento === cliente);
+			if (!entrada) continue;
+			const [celda] = entrada;
+
+			const rango = this._crear_rango_temporal(celda, '1x1');
+			if (!rango) continue;
+
+			rango.values = { [celda]: cliente };
+			rangos.push(rango);
+		}
+
+		return rangos;
+	}
+
+	_crear_rango_de_reserva(elementos, elemento_por_celda) {
+		const elementos_reservados = new Set(elementos);
+		const values = Object.fromEntries(
+			Object.entries(elemento_por_celda)
+				.filter(([, elemento]) => elementos_reservados.has(elemento)),
+		);
+
+		const celdas = Object.keys(values);
+		if (celdas.length === 0) return null;
+
+		const limites = this.celdas_a_limites(celdas);
+		if (!limites) return null;
+
+		const dimension = this.calcular_dimension(limites.celda_inicio, limites.celda_fin);
+		if (!dimension) return null;
+
+		const rango = this._crear_rango_temporal(limites.celda_inicio, dimension);
+		if (!rango) return null;
+
+		rango.values = values;
+		return rango;
+	}
+
+	_crear_rango_temporal(celda_inicio, dimension) {
+		const nombre = this.siguiente_nombre('temporal');
+		const rango = this.crear_rango(nombre, celda_inicio, dimension);
+		if (!rango) return null;
+
+		this.eliminar_rango(nombre);
+		return rango;
+	}
+}
+
+/**
  * ## Working_Celdas representa una celda en una matriz_plana.
  * ### Permite convertir entre coordenadas (fila, columna) o indice y referencias estilo Excel (A1, B2, etc.)
  * @example let celda = new Working_Celdas(this, fila, columna);
@@ -127,36 +294,7 @@ class Working_Celdas {
 	 * @param {number} [filas] - (Opcional) El total de filas para validar los límites de la matriz.
 	 * [RETORNO] {Object} Objeto con la {fila, columna} correspondiente.
 	 */
-	_get_celda_CON_dimension_X(indice, columnas, filas = null) {
-		// // Conversión estricta a número (Number('6a') da NaN, evitando errores lógicos)
-    	// indice = Number(indice);
-    	// columnas = Number(columnas);
-	
-		// // Validaciones de formato
-		// if (!Number.isInteger(indice) || indice < 0) {
-		// 	throw new Error(`Índice inválido: ${indice}. Debe ser un entero mayor o igual a cero.`);
-		// }
-		// if (!Number.isInteger(columnas) || columnas <= 0) {
-		// 	throw new Error(`Columnas inválidas: ${columnas}. Debe ser un entero mayor a cero.`);
-		// }
-
-		// // Validación opcional de límites (si se pasa el argumento 'filas')
-		// if (filas !== null) {
-		// 	if (!Number.isInteger(filas) || filas <= 0) {
-		// 		throw new Error(`Filas inválidas: ${filas}. Debe ser un entero mayor a cero.`);
-		// 	}
-		// 	if (indice >= filas * columnas) {
-		// 		throw new Error(`Índice fuera de límites: ${indice}. El máximo permitido es ${(filas * columnas) - 1}.`);
-		// 	}
-		// }
-		// // Cálculo matemático puro
-		// const fila = Math.floor(indice / columnas);
-		// const columna = indice % columnas;
-
-		// const celda = this.X_to_celda(fila, columna);
-
-
-		// Método antiguo conservado para no cambiar la API de Working_Celdas.
+	_get_celda(indice, columnas, filas = null) {
 		const coordenadas = this.celda_mapper.indice_a_coordenadas(indice,{ filas, columnas },);
 		const celda = this.X_to_celda(coordenadas.fila, coordenadas.columna);
 		return celda || null;
@@ -705,7 +843,11 @@ class Working_Rangos  extends Working_Celdas{
 
 			// this.ref_matriz = instancia_matriz_plana;	// ► Puntero a la clase matriz. 
 			this.d_rangos = {};							// ► Diccionario de rangos
-			this.d_temporales = {}
+			this.d_temporales = {};
+			this.rango_repository = new Rango_Repository();
+			this.rango_repository.registrar_fuente('rangos', this.d_rangos);
+			this.rango_repository.registrar_fuente('temporales', this.d_temporales);
+
 
 			this._init_rangos_basicos(true, true, true, true, true);
         }
@@ -1909,11 +2051,11 @@ class Working_Rangos  extends Working_Celdas{
 			});		
 			return;
 		}
-		if(nombre_rango && only_one){
+		if(nombre_rango && only_one===true){
 			// ┌■ (byDef) - Elimina 'sólo este rango'. Si no existe no posa nada.
 			this.api_delete(nombre_rango, this.d_temporales);
 
-		}else if(nombre_rango && !only_one){
+		}else if(nombre_rango && only_one===false){
 			// ┌■ Elimina la 'familia' (startswith)
 			const criterio = nombre_rango.toLowerCase();
 			Object.keys(temporales).forEach((nombre_temporal) => {
@@ -3151,14 +3293,17 @@ class Wedding_Rangos extends Rango_Ghost{
 			return this.rangos.app
 		
 		// ┌• Viene como nombre de rango
-		if(typeof rango == 'string') {			
-			// ┌■■ 'd_rangos'
-			const ppal = this.api_read(rango);
-			if(ppal) return this.d_rangos[rango];
+		// if(typeof rango == 'string') {			
+		// 	// ┌■■ 'd_rangos'
+		// 	const ppal = this.api_read(rango);
+		// 	if(ppal) return this.d_rangos[rango];
 			
-			// ┌■■ 'd_temporales'
-			const in_temp = this.api_read(rango, this.d_temporales);
-			if(in_temp) return this.d_temporales[rango];
+		// 	// ┌■■ 'd_temporales'
+		// 	const in_temp = this.api_read(rango, this.d_temporales);
+		// 	if(in_temp) return this.d_temporales[rango];
+		// }
+		if (typeof rango === 'string') {
+			return this.rango_repository.obtener(rango, ['rangos', 'temporales']);
 		}
 		
 		// ┌• Viene con su ficha
@@ -3289,7 +3434,20 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 		
 		/** ###  [ diccionario de rangos ] de las reservas creadas en Salon
 		 ### • NOTA: Tienen que ser rangos 'temporales' pq las reservas son dinamicas... hay que "gestionarlo" */
-		this.d_reservas = {}
+		this.d_reservas = {};
+		this.rango_repository.registrar_fuente('reservas', this.d_reservas);
+		this.reserva_range_mapper = new Reserva_Range_Mapper({
+			indice_a_celda: (indice, dimension) => this._get_celda_CON_dimension_X(
+				indice,
+				dimension.columnas,
+				dimension.filas,
+			),
+			crear_rango: this.api_crear.bind(this),
+			eliminar_rango: this.api_delete.bind(this),
+			siguiente_nombre: this._nombre_secuencial.bind(this),
+			celdas_a_limites: this.__get_cicf_from_celdas.bind(this),
+			calcular_dimension: (celda_inicio, celda_fin) => this._get_dimension(celda_inicio, celda_fin, false),
+		});
 	}
 
 	
@@ -3297,12 +3455,12 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 	/**
 	 * ## Convierte reserva_s en rangos ({celda_inicio, celda_fin, dimension}).
 	 * ###	Si la reserva no tiene mesas, devuelve únicamente las celdas ocupadas por sus sillas.
-	 * @param {Array} arr_reservas Array de reservas [{mesas:[], sillas:[]}].
+	 * @param {Array} arr_reservas Array de reservas [{reservadores:[], clientes:[]}].
 	 * ### RETORNO {Array|Boolean} Array de rangos normalizados o false si no hay datos suficientes.
 	 * ```javascript
-	 * 	reservas: [ {"mesas":["mesa_9"],"sillas":["silla_10","silla_11"]},
-	 * 	{"mesas":["mesa_22","mesa_6"],"sillas":["silla_12","silla_5","silla_13","silla_7"]},
-	 * 	{"mesas":[],"sillas":["silla_1", "silla_8"]} ]
+	 * 	reservas: [ {"reservadores":["mesa_9"],"clientes":["silla_10","silla_11"]},
+	 * 	{"reservadores":["mesa_22","mesa_6"],"clientes":["silla_12","silla_5","silla_13","silla_7"]},
+	 * 	{"reservadores":[],"clientes":["silla_1", "silla_8"]} ]
 	 * // RETORNO:
 	 * [ {celda_inicio: D0, celda_fin: F0, dimension: '1x3', geo:{x}, items:{y}, values:{x} }, 
 	 * {celda_inicio: G1 , celda_fin: H3 , dimension: '3x2',  geo:{x}, items:{y}. values:{x} }, 
@@ -3326,31 +3484,27 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 			if(!dimension) 
 				dimension = this._standard_dimension(Salon.filas, Salon.columnas);
 
+			/** ### Diccionario de índices: { 'silla_0': 15, 'mesa_3': 23, 'silla_1': 12, . . . } */
 			let indice_s = dicc_indices;
-			
-			/** ### diccionario {B0:'silla_0', B1:'mesa_3', C12:'silla_1', . . . }  
-			 * ## En cualquier dimesión que tenga te devuelve la celda a la que pertenece.
-			*/
-			const dicc_celda_elemento = {};
+
+			const dicc_celda_elemento = {};			
+			// ┌■■ Creo el dicc_celda_elemento: {'B0':'silla_0', 'B1':'mesa_3', 'C12':'silla_1', . . . }
 			Object.entries(indice_s).forEach(([elemento, indice]) =>{
-				const celda = this._get_celda_CON_dimension_X(indice, dimension.columnas, dimension.filas);
+				const celda = this._get_celda(indice, dimension.columnas, dimension.filas);
 				if(!celda) return;
 				dicc_celda_elemento[celda] = elemento;				
 			});
 						
-			// ┌••••••••••••••••••••••••
-			// ■ array de rangos a devolver
+			// ┌■■ array de rangos a devolver
 			const array_rangos = [];
-			// ┌••••••••••••••••••••••••
-			// ┌•• LOGICA DEL NEGOCION: . . . Recorro cada reserva para calcular su rango.
-			// ┌••••••••••••••••••••••••
+			// ┌■■ LOGICA DEL NEGOCION: . . . Recorro cada reserva para calcular su rango.
 			arr_reservas.forEach(reserva => {
 
 				const reservadores = Array.isArray(reserva?.reservadores) ? reserva.reservadores : [];
 				const clientes = Array.isArray(reserva?.clientes) ? reserva.clientes : [];
 				
-				// ┌■■ La Reserva de 'Sillas Ronin': Se da como resultado un [Array de Rangos].
-				// ┌■■ Cada silla genera un rango 1x1 independiente.
+				// ┌■ La Reserva de 'Sillas Ronin': Se da como resultado un [Array de Rangos].
+				// ┌■ Cada silla genera un rango 1x1 independiente.
                 if (reservadores.length === 0 && clientes.length > 0) {
 					const array_ronin = [];
                     clientes.forEach(cli => {
@@ -3373,11 +3527,11 @@ class El_Rango_del_Salon extends Wedding_Rangos{
                     return; // (continue) salta a la siguiente reserva en el forEach
                 }
 				// ┌■■■ PREPARO EL DICC VALUES 
-				// ┌• Junto mesas y sillas, filtro vacíos.
+				// ┌■ Junto mesas y sillas, filtro vacíos.
 				const ids_reserva = [...reservadores, ...clientes].filter(Boolean);				
-				// ┌• Desmontamos el diccionario en pares [celda, elemento] y filtramos comprobando si el elemento existe en el array.
+				// ┌■ Desmontamos el diccionario en pares [celda, elemento] y filtramos comprobando si el elemento existe en el array.
 				const pares_reservados = Object.entries(dicc_celda_elemento).filter(([celda, elemento]) => ids_reserva.includes(elemento));
-				// ┌• Ensamblamos (reconstruimos) el nuevo diccionario exclusivamente con las reservas confirmadas.
+				// ┌■ Ensamblamos (reconstruimos) el nuevo diccionario exclusivamente con las reservas confirmadas.
 				// Resultado en dicc_reservas:
 				// { E3: "silla_1", F3: "mesa_0", G3: "silla_0", E4: "silla_8", F4: "mesa_2", G4: "silla_11", F5: "silla_15" }
 				const d_celda_elemento = Object.fromEntries(pares_reservados);
@@ -3409,6 +3563,23 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 			return [];	
 		}
 	}
+
+	_reservas_a_rangos(arr_reservas = [], dicc_indices = {}, dimension_aplicada = null) {
+		try {
+			let dimension = this._standard_dimension(dimension_aplicada);
+			if (!dimension) {
+				dimension = this._standard_dimension(this.ref_Salon.filas, this.ref_Salon.columnas);
+			}
+
+			return this.reserva_range_mapper.reservas_a_rangos(arr_reservas,dicc_indices,dimension,);
+
+		} catch (error) {
+			console.log(`❌ Error ::: reservas_a_rangos() ::: ${error}`);
+			return [];
+		}
+
+	}
+
 
 
 	// Este metodo es de pruebas y tiene que ser borrado. aquí voy a poner todos los metodos llamados desde 
@@ -3454,19 +3625,23 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 			return this.d_reservas;
 		
 		// ┌• Viene como nombre de rango
-		if(typeof rango == 'string') {			
-			// ┌■■ 'd_rangos'
-			const in_ppal = this.api_read(rango);
-			if(in_ppal) return this.d_rangos[rango];
+		// if(typeof rango == 'string') {			
+		// 	// ┌■■ 'd_rangos'
+		// 	const in_ppal = this.api_read(rango);
+		// 	if(in_ppal) return this.d_rangos[rango];
 			
-			// ┌■■ 'd_temporales'
-			const in_temporales = this.api_read(rango, this.d_temporales);
-			if(in_temporales) return this.d_temporales[rango];
+		// 	// ┌■■ 'd_temporales'
+		// 	const in_temporales = this.api_read(rango, this.d_temporales);
+		// 	if(in_temporales) return this.d_temporales[rango];
 			
-			// ┌■■ 'reservas'
-			const in_reservas = this.api_read(rango, this.d_reservas);
-			if(in_reservas) return this.d_reservas[rango];
+		// 	// ┌■■ 'reservas'
+		// 	const in_reservas = this.api_read(rango, this.d_reservas);
+		// 	if(in_reservas) return this.d_reservas[rango];
+		// }
+		if (typeof rango === 'string') {
+			return this.rango_repository.obtener(rango, ['rangos', 'temporales', 'reservas']);
 		}
+
 		
 		// ┌• Viene con su ficha
 		if(typeof rango === 'object' && rango.celda_inicio && rango.celda_fin && rango.dimension && rango.geo){
