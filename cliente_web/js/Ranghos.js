@@ -104,7 +104,7 @@ class Celda_Mapper {
 /**
  * ### Centraliza el acceso a los distintos diccionarios de rangos.
  * ### Conserva las referencias originales: no copia ni transforma los rangos.
- * ### Las fuentes pueden ser: 'rango', 'temporal', 'reserva' ... y cada fuente puede tener varios rangos.
+ * ### Las fuentes pueden ser: 'rangos', 'temporales', 'reservas' ... y cada fuente puede tener varios rangos.
  */
 class Rango_Repository {
 	constructor() {
@@ -170,9 +170,6 @@ class Rango_Repository {
 class Reserva_Range_Mapper {
 	constructor({
 		indice_a_celda,
-		// crear_rango,
-		// eliminar_rango,
-		// siguiente_nombre,
 		crear_ficha,
 		celdas_a_limites,
 		calcular_dimension,
@@ -230,6 +227,11 @@ class Reserva_Range_Mapper {
 		return elemento_por_celda;
 	}
 
+	/**
+	 * @param {*} clientes 
+	 * @param {*} elemento_por_celda 
+	 * @returns 
+	 */
 	_crear_rangos_ronin(clientes, elemento_por_celda) {
 		const rangos = [];
 
@@ -780,17 +782,17 @@ class Working_Rangos  extends Working_Celdas{
 		/**
 		 * Procesa un string con formato 'NxM' y devuelve un objeto con dimensiones.
 		 * Basado en principios KISS para garantizar mantenibilidad.
-		 * * @param {string} texto - Cadena en formato 'filasxcolumnas' (ej. '3x4')
+		 * @param {string} texto - Cadena en formato 'filasxcolumnas' (ej. '3x4')
 		 * @returns {{filas: number, columnas: number}|null} Objeto con dimensiones o null si es inválido.
 		 */
 		_get_dimensiones_3x4(texto) {
 			const dimension = this._dimension_to_f_x_c(texto);
 			return this._dimension_OK(dimension) ? dimension : null;
-
 		}
 		/**
-		 * 
-		 * @param {*} dimension 
+		 * Convierte una representación de dimensión en un objeto con filas y columnas.
+		 * Devuelve null si la entrada no es válida.
+		 * @param {object|string} dimension '3x4' o {filas: 3, columnas: 4}
 		 */
         _dimension_to_f_x_c(dimension = '') {
 			// ■ PROCESO SOBRE OBJETO {filas, columnas}
@@ -818,8 +820,7 @@ class Working_Rangos  extends Working_Celdas{
 		/**
          * Indica si el valor recibido representa una dimensión ("3x4" o {filas, columnas}) o una celda ("C7").
          * @param {String|Object} valor
-         * @returns {'dimension'|'celda'|false}
-         */
+         * @returns {'dimension'|'celda'|false}  */
         _dimension_or_celda(valor = '') {
 			const es_dimension_objeto = (obj) => {
 				if (!obj || typeof obj !== 'object') return false;
@@ -1660,16 +1661,18 @@ class Working_Rangos  extends Working_Celdas{
 		return arr_retorno;
 	}	
 
-	/** ## Devuelve un array de los nombres de las celdas de un rango */
-	_get_celdas(nombre_rango){
-		if(!nombre_rango) nombre_rango = 'rango_matriz';
-		nombre_rango = nombre_rango.trim();
+	/** ## Devuelve un array de los nombres de las celdas de un rango 
+	 * * @param {String} nombre_rango  'rango_matriz', 'rango_fila_2', 'pares', 'nones', etc.
+	*/
+	_get_celdas(nombre_rango = 'rango_matriz'){
+		if(String(nombre_rango).trim() === '') 
+			return [];
 		
 		// ┌• Valida si existe en this.d_rangos.
 		const rango = this.api_read(nombre_rango);
 		if (!rango) return null;
 		
-		// ┌• X Si viene un [ARRAY de Rangos]  🌶️🌶️
+		// ┌• X Si viene un [ARRAY de Rangos] 
 		if (Array.isArray(rango)) {
 			const rango_filtrado = rango.filter(ran => typeof ran === 'string' && ran.trim() !== '');
 			return rango_filtrado || this._get_ficha_vacia() || {};
@@ -1985,7 +1988,7 @@ class Rango_Ghost extends Working_Rangos{
 			values_element_rango_ori = Object.fromEntries(
 				Object.entries(valores_rango_ori).map(([celda, id]) => [
 					celda, 
-					this._X_to_element(id)
+					this._X_to_element(id) || id,
 				])
 			);
 		}
@@ -2100,7 +2103,11 @@ class Rango_Ghost extends Working_Rangos{
 		return this.d_ghost;
 	}
 
-	/** ### Devuelve el contenido actual del ghost */
+	/** ### Devuelve el contenido actual del ghost
+	 * @param {String} accion  'Mover' | 'Ghost' | 'Cortar' | 'Copiar' | 'Pegar' | 'Volver' | 'Reset' 
+	 * @param {Number} separacion  Espacio de separación entre las matrices (La separación dinámica)
+	 * @returns {Array}  Array de strings representando la matriz del ghost y el salon
+	 */
     read_ghost(accion = '', separacion = 15) {
         const margin = '  ';
 
@@ -2158,8 +2165,14 @@ class Rango_Ghost extends Working_Rangos{
 			const ansiRegex = /\x1b\[[0-9;]*m/g;
 			return str.replace(ansiRegex, '').length;
 		};
-
-        const g = this.d_ghost;
+		
+		const obtener_id = (valor) => {
+			if (valor === null || valor === undefined || valor === false) return 'vacío';
+			if (typeof valor === 'string' || typeof valor === 'number') return String(valor);
+			return valor.id || '(elemento sin id)';
+		};
+		
+		const values_ghost = this.d_ghost.values || {};
 
 		// ┌■■ PREPARACIÓN DE DATOS 👻 		
 		// ┌■■ Hay que cachar los datos del Salon y compararlos con los de Ghost:
@@ -2175,28 +2188,36 @@ class Rango_Ghost extends Working_Rangos{
 
 		// ┌• Array de string 'B4:silla_3','A4:mesa_1', . . .   del Salon
 		let values_rango = '';
-        for (let [c, el] of Object.entries(g.values)) values_rango +=(`${c}: ${el?.id ? el.id : el}, `);        
-        
-		// ┌• Array de celdas con valor del Salon(g.values)
-		let arr_values = [];
-        for (let c of Object.keys(g.values)) arr_values.push(c);
+		for (const [celda, valor] of Object.entries(values_ghost)) {
+			values_rango += `${celda}: ${obtener_id(valor)}, `;
+		}
+		// ┌• Array de celdas con valor del Salon(this.d_ghost.values)
+		// let arr_values = [];		
+        // for (let c of Object.keys(this.d_ghost.values)) arr_values.push(c);
+		const arr_values = Object.keys(values_ghost);
 		
 		// ┌• Asegura celda_inicio y celda_fin con el formato correcto
-        if(typeof g.celda_inicio == 'object') g.celda_inicio = this.X_to_celda(g.celda_inicio);
-        if(typeof g.celda_fin == 'object') g.celda_fin = this.X_to_celda(g.celda_fin);   
+        if(typeof this.d_ghost.celda_inicio == 'object') this.d_ghost.celda_inicio = this.X_to_celda(this.d_ghost.celda_inicio);
+        if(typeof this.d_ghost.celda_fin == 'object') this.d_ghost.celda_fin = this.X_to_celda(this.d_ghost.celda_fin);   
 
         // ┌• Necesito las celdas del 'Rango' para pasarlas a representar_matriz
-        let celdas_rango = Object.keys(g.items);		
+        let celdas_rango = Object.keys(this.d_ghost.items);		
         
         // ┌• Necesito las celdas del 'Salon' para pasarlas a representar_matriz
-        let values_salon = '';
-        for (let [c, el] of Object.entries(d_values_salon)) values_salon +=(`${c}: ${el?.id}, `);
+        // let values_salon = '';
+        // for (let [c, el] of Object.entries(d_values_salon)) values_salon +=(`${c}: ${el?.id}, `);
+		let values_salon = '';
+        for (const [celda, valor] of Object.entries(d_values_salon || {})) {
+			values_salon += `${celda}: ${obtener_id(valor)}, `;
+		}
+
         let celdas_salon = [];
         for (let celda of Object.keys(d_items_salon)) celdas_salon.push(celda);        
         
         // ┌• Array de str de Salon - Rango_Ghost (CORREGIDO PARA USAR DATOS DEL SALON)
         const lineas_rango = representar_matriz(celdas_rango, arr_values || []);
-        const lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon) || []);
+        // const lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon) || []);
+		const lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon || {}));
 		
 		// ┌• Calcular la 'longitud max de las filas' de la MATRIZ
         const filas_totales = Math.max(lineas_rango.length, lineas_salon.length);
@@ -2215,7 +2236,8 @@ class Rango_Ghost extends Working_Rangos{
 		const x_matriz = Math.floor((max_l - separacion) / 2);
 
 		// ■■■ RENDERIZADO     
-        const BARRA = '■'.repeat(max_l+4);
+        // const BARRA = '■'.repeat(max_l+4);
+        const BARRA = '■'.repeat(10+4);
 		// ┌• Cabecera (Techo)
         console.log(`${F.bright}${F.green} ${BARRA}👻${F.reset} ► " ${F.red}${accion}${F.reset} "`);
 		// ┌• Imprimir las matrices lado a lado
@@ -2225,11 +2247,25 @@ class Rango_Ghost extends Working_Rangos{
 		const under_rango = this.__generar_linea_formateada(x_matriz, 'RANGO',  2);
         console.log(` ${F.bright}${F.gray}${under_salon}${GAP}${under_rango}${F.reset}`);
         // ┌• Metadatos
-        console.log(`${F.bright}${F.gray}┌■${F.reset} CELDA_INICIO: '${g.celda_inicio}'  ${F.gray}┌■${F.reset} CELDA_FIN: '${g.celda_fin}' \t${F.gray}┌■■${F.reset} DIMENSION: ( ${g.dimension.filas} x ${g.dimension.columnas} )  ${F.bright}${F.gray}┌■${F.reset} GEOMETRIA: ${g.geo ? 'Deltas :)' : 'NO DATA ⚠️'}   ${F.bright}${F.gray}┌■${F.reset} ITEMS: ${g.items ? 'Baldosas :)' : 'NO DATA ⚠️'}`);      
-        console.log(`${F.bright}${F.gray}┌■${F.reset} CUT: ${this.stt.cut ? '✔️' : '❌' }  ${F.bright}${F.gray}┌■${F.reset} COPY: ${this.stt.copy ? '✔️' : '❌' }  ${F.gray}┌■■${F.reset}   Nº PASTEs: ${this.stt.paste}    ${F.bright}${F.gray}┌■■${F.reset} is_array: ${g.is_array}`);
-        console.log(`${F.bright}${F.gray}┌■■${F.reset} VALUES RANGO: ${F.bright}${F.red}■ ${F.reset}${values_rango}${F.bright}${F.red}█▀▄█${F.reset}`);
-        console.log(`${F.bright}${F.gray}┌■■${F.reset} VALUES SALON: ${F.bright}${F.red}■ ${F.reset}${values_salon}${F.bright}${F.red}█▀▄█${F.reset}`);
-        console.log(`${F.bright}${F.gray} ${BARRA}${F.reset}\n`);
+		const ci = `${F.bright}${F.gray}┌■■${F.reset} CELDA_${F.red}I${F.reset}NI: "${this.d_ghost.celda_inicio}"`;
+		const cf = `${F.bright}${F.gray}┌■■${F.reset} CELDA_${F.red}F${F.reset}IN: "${this.d_ghost.celda_fin}"`;
+		const dim = `${F.gray}┌■■${F.reset} ${F.red}D${F.reset}IM: ( ${this.d_ghost.dimension.filas} x ${this.d_ghost.dimension.columnas} )`;
+		const geo = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}G${F.reset}EO: ${this.d_ghost.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
+		const items = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}I${F.reset}TEMS: ${this.d_ghost.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
+		const cut = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}C${F.reset}UT: ${this.stt.cut ? '✔️' : '❌' }`;
+		const copy = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}C${F.reset}OPY: ${this.stt.copy ? '✔️' : '❌' }`;
+		const paste = `${F.gray}┌■■${F.reset}   Nº ${F.red}P${F.reset}ASTEs: ${this.stt.paste}`;
+		const is_array = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}is_array${F.reset}: ${this.d_ghost.is_array}`;
+		const values_rango_str = `${F.bright}${F.gray}┌■■${F.reset} VALUES ${F.red}R${F.reset}ANGO: ${F.bright}${F.red}■ ${F.reset}${values_rango}${F.bright}${F.red}█▀▄█${F.reset}`;
+		const values_salon_str = `${F.bright}${F.gray}┌■■${F.reset} VALUES ${F.red}S${F.reset}ALON: ${F.bright}${F.red}■ ${F.reset}${values_salon}${F.bright}${F.red}█▀▄█${F.reset}`;
+
+		console.log(`${ci}  ${cf}  ${dim}  ${geo}  ${items}`);
+		console.log(`${cut}  ${copy}  ${paste}  ${is_array}`);
+		console.log(`${values_rango_str}`);
+		console.log(`${values_salon_str}`);
+		console.log(`${F.bright}${F.gray} ${BARRA}${F.reset}\n`);
+
+		return this.d_ghost;
     }
 	/**
 	 * Genera una línea formateada tipo: ---- texto ----
@@ -2399,8 +2435,6 @@ class Rango_Ghost extends Working_Rangos{
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
 			this.stt.cut = true; this.stt.copy = false;
 			this.stt.paste = 0;
-			// this.stt.cursor = ficha.celda_inicio;
-
 			// 🍏
 			this.read_ghost('Cortar');
 			this.api_delete(ghost_name);
@@ -2451,7 +2485,6 @@ class Rango_Ghost extends Working_Rangos{
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
 			this.stt.cut = false; this.stt.copy = true;
 			this.stt.paste = 0;		
-			// this.stt.cursor = ficha.celda_inicio;
 			// 🍏
 			this.read_ghost('Copiar');
 			// ┌■ RETORNO
@@ -2669,10 +2702,9 @@ class Rango_Ghost extends Working_Rangos{
 	
 	/** ## 4 ACCIONES: mover + cut + mover + paste */
 	cut_paste(celda_origen, celda_destino='A0'){
-		// Validamos si tenemos rango ghost
 		try {
 			const Casper = this.d_ghost
-			// Validamos si tenemos rango ghost
+			//┌■■  Validamos si tenemos rango ghost
 			if(!Casper || Casper == {} )  throw('Error. No hay Fantasma!!');
 			if(!Casper.celda_inicio || !Casper.celda_fin) throw('Error. No encuentro celda_inicio o celda_fin!!');
 			if(!Casper.geo  || !Casper.items)  throw('Error. No encuentro geometria delta o items!!');
@@ -2680,7 +2712,7 @@ class Rango_Ghost extends Working_Rangos{
 			if(!celda_destino) throw('Error. Para mover y pegar tienes que tener celda_destino');
 			if(celda_destino === celda_origen ) return;
 
-			// Proceso:
+			// ┌■■ Proceso: 
 			let ok = false;
 			ok = this.mover_cursor(celda_origen)
 			if(!ok) throw Error(`Error en "Mover" a celda-origen ${celda_origen}`);
@@ -2698,12 +2730,14 @@ class Rango_Ghost extends Working_Rangos{
 		}
 	}
 	/** ## 4 ACCIONES: mover(celda_origen) + copy + mover(celda_destino) + paste 
-	 * ### • copy siempre crea elementos nuevos.	*/
+	 * ### • copy siempre crea elementos nuevos.	
+	 * 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+	 * FALTA VALIDAR SI AL HACER PASTE HAY ELEMENTOS EN LA BALDOSA DESTINO Y SI SE MACHACA O NO.
+	 * */
 	copy_paste(celda_origen='A0', celda_destino='A0'){
-		// Validamos si tenemos rango ghost
 		try {
 			const Casper = this.d_ghost
-			// Validamos si tenemos rango ghost
+			// ┌■■ Validamos si tenemos rango ghost
 			if(!Casper || Casper == {} )  throw('Error. No hay Fantasma!!');
 			if(!Casper.celda_inicio || !Casper.celda_fin) throw('Error. No encuentro celda_inicio o celda_fin!!');
 			if(!Casper.geo  || !Casper.items)  throw('Error. No encuentro geometria delta o items!!');
@@ -2711,7 +2745,7 @@ class Rango_Ghost extends Working_Rangos{
 			if(!celda_destino) throw('Error. Para mover y pegar tienes que tener celda_destino');
 			if(celda_destino === celda_origen ) return;
 
-			// Proceso:			
+			// ┌■■ Proceso:			
 			let ok = false;
 			ok = this.mover_cursor(celda_origen)
 			if(!ok) throw Error(`Error en "Mover" a celda-origen ${celda_origen}`);
@@ -2727,7 +2761,6 @@ class Rango_Ghost extends Working_Rangos{
 			console.log(`❌ Error Copy-Paste 👻, celda-destino ${celda_destino} :::` , error);
 			return false;
 		}
-		
 	}
 
 	/** ## Mete el id del elemento nuevo introducido en el salon con nueva id en el buffer 

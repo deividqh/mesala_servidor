@@ -3361,7 +3361,7 @@ class Foto_CRUD{
 		 * */		
 		this.lista_fotos_RUD = null		
 
-		/** ## Última foto de Salon ┌•abierta• desde offcanvas-RUD. {@link _accion_cargar_elementos_en_Salon } */
+		/** ## Última foto de Salon ┌•abierta• desde offcanvas-RUD. */
 		this.foto_work = null;
 		
 		/** ## El ultimo payload creado tras 'Guardar' */
@@ -4162,10 +4162,7 @@ class Foto_CRUD{
 		return bs_offcanvas_RUD || null;
 	}
 
-	/** 🎞️ UI 🖼️ 
-	 * ### ■■■ Delegación de eventos para tooltips/popovers dinámicos (Mobile First).
-	 * {@link _inyectar_lista_registros_RUD}
-	 */
+	/** UI 	 */
 	static _crear_dinamic_bs_elements_RUD(contenedor = null) {
 		const bootstrap = window.bootstrap;
 		if (!bootstrap) return;
@@ -4343,10 +4340,6 @@ class Foto_CRUD{
 			button.addEventListener('click', () => {
 				const foto_id = Number(button.dataset.photoId); 		// button.dataset.photoId equivale a  <button data-photo-id="xxx" 				
 				if (Number.isFinite(foto_id)) {
-					// ┌•• Valido si puedo cargar el Salon 
-					// const ok = this.__validar_carga(foto_id);
-					// ┌•• Cargo los elementos en el Salon.
-					// if (ok) 
 					this._accion_cargar_elementos_en_Salon(foto_id);
 				}
 			});
@@ -4355,10 +4348,9 @@ class Foto_CRUD{
 		contenedor.querySelectorAll('.photo-info-section').forEach((item) => {
 			item.addEventListener('dblclick', () => {
 				// ┌•• Cacho el id del data-set que generó el evento.
-				// const foto_id = Number(item.dataset.photoId);
-				// this.__validar_carga(foto_id);					
+				const foto_id = Number(item.dataset.photoId);
 				// ┌•• Cargo los elementos en el Salon.	
-				// if (Number.isFinite(foto_id)) 
+				if (Number.isFinite(foto_id)) 
 					this._accion_cargar_elementos_en_Salon(foto_id);
 			});
 		});		
@@ -5125,6 +5117,7 @@ class Foto_CRUD{
 			console.log("┌■■ SCANNER + REGISTRO ✔️");
 			// 🟥 ┌•••  🟥
 			console.log(" • • • • • • • •  FIN");
+			Alertas_UI._NotA('✅ Foto Cargada con Exito', 'Listo para empezar!', 'success', 1500);
 
 			this.foto_work = FW;
 
@@ -5223,7 +5216,6 @@ class Foto_CRUD{
 	 * ### Compara las dimensiones del salon actual con las dimensiones de la foto a cargar.
 	 * ### Si son iguales devuelve true.
 	 * ### Si son distintas: si viene de menos a mas devuelve true, si viene de mas a menos devuelve false.
-	 * {@link _accion_cargar_elementos_en_Salon}
 	 */
 	_logica_match_dimensiones(photo){
 		const Salon = this.Salon;
@@ -5634,23 +5626,6 @@ class Foto_CRUD{
 	//     module.exports = Save_Photo;
 // }
 
-
-// ◘◘◘ 
-// ◘◘◘ Ini  CLASE 	PopOverElemen_t ◘◘◘
-// ◘◘◘ 
-// Clase para gestionar un PopOver de Bootstrap 5.3+
-// Solo se crea un PopOver y se va reutilizando para todas las sillas.
-// Se crea un PopOver "vacío" y oculto, enganchado a un div dummy.
-// Luego se va reenganchando a la silla que lo solicita.
-
-// Propiedades importantes de this.bs_popover:
-// 		tip: El elemento DOM del popover (equivalente a lo que era getTipElement())
-// 		_element: El elemento al que está attached el popover
-// 		_popper: La instancia de Popper para positioning
-
-
-
-
 // ◘◘◘◘
 // Side__Elementos: Sidebar de elementos (mesa/silla)
 //  ◘◘◘
@@ -5704,8 +5679,6 @@ class Side_Elementos {
 		this._vincular_eventos();
 	}
 
-	
-
 	/**
 	 * ### Crea el sidebar una sola vez o reutiliza el existente para mantenerlo vivo.
 	 * @link constructor
@@ -5725,10 +5698,6 @@ class Side_Elementos {
 		this.$sidebar.dataset.sideSizeMode = this.modo_tamano;
 		this.$sidebar.dataset.sideDragging = 'false';
 		this.$sidebar.dataset.sideLocked = 'false';
-
-		// contenido es un div donde voy a meter todos los elementos players.
-		// const contenido = document.createElement('div');
-		// contenido.dataset.sideContent = 'lista';
 
 		// Consultar la nueva fuente de la verdad
         const elementos_catalogo = Catalogo.get();
