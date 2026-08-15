@@ -430,11 +430,6 @@ class Matriz_Plana extends Work_ClassName {
 	 * @returns {object}  { filas, columnas } devuelve un objeto tipo filas:5 , columnas:7
 	 * * {5, 3} ► matriz 5x3  
 	 * * {0, 0} ► error.
-	 * @example
-	 * ```javascript
-	 * const limites = this.ref_Salon?._get_limites_matriz_plana?.();
-	 *	if (!limites || limites.filas === 0 || limites.columnas === 0) return false;
-	 * ```	
 	 */
 	_get_limites_matriz_plana() {
 		if (!this || typeof this !== 'object') return { filas: 0, columnas: 0 };
