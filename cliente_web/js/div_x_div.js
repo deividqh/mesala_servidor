@@ -432,11 +432,11 @@ class Matriz_Plana extends Work_ClassName {
 	 * * {0, 0} ► error.
 	 * @example
 	 * ```javascript
-	 * const limites = this.ref_Salon?._limites_matriz?.();
+	 * const limites = this.ref_Salon?._get_limites_matriz_plana?.();
 	 *	if (!limites || limites.filas === 0 || limites.columnas === 0) return false;
 	 * ```	
 	 */
-	_limites_matriz() {
+	_get_limites_matriz_plana() {
 		if (!this || typeof this !== 'object') return { filas: 0, columnas: 0 };
 		// Columnas
 		const cols = this.columnas; 

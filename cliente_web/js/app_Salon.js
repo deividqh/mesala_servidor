@@ -5047,22 +5047,24 @@ class Foto_CRUD{
 	 * 4. Carga datos Nuevos  */
 	async _accion_cargar_elementos_en_Salon(foto_id) {
 		const Salon = this.Salon || null;
-		const CFG = this.Salon?.CFG;			
-		const Ranget = this.Salon.eRdS || null;
+		const CFG = this?.Salon?.CFG;			
+		const Ranget = this?.Salon?.eRdS || null;
 		// ┌■ Validacion
 		if(!Salon || !CFG || !Ranget) 
 			return;
+
+		// ┌■■ De Salon a los rangos abiertos.
 		Ranget.pull_all();
 
 		// ┌■ Busca la foto en la lista de fotos
-		const photo = this.lista_fotos_RUD.find(reg => reg.id === foto_id);
-		if(!photo) return;
+		// const photo = this.lista_fotos_RUD.find(reg => reg.id === foto_id);
+		// if(!photo) return;
 		
 		// ┌■ Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
-		CFG.limpiar_Salon();
-		
+		CFG.limpiar_Salon();		
 		// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos
 		this._ocultar_offcanvas_abiertos();
+
 		try {
 			// ┌•• Buscamos Datos en BDD:
 			// ┌• Cachamos el registro para conseguir el slug-publico del salon abierto.
@@ -5077,10 +5079,12 @@ class Foto_CRUD{
 			}
 			// ┌••••        •••••••••
 			const FW = this.foto_work || null;
+
 			// ┌•• •••••••••           •• •••••••••••••
 			// ┌■■ DIMENSION del Salon en BASE DE DATOS.
 			const filas_bdd = FW.filas;
 			const columnas_bdd = FW.columnas;
+			
 			// ┌•• •••••••••          •• •••••
 			// ┌■■ DIMENSION del Salon en 'Salon'
 			const filas_salon = Salon.filas;
@@ -5090,7 +5094,7 @@ class Foto_CRUD{
 			const rango_s_en_BDD = Ranget._reservas_a_rangos(FW?.dicc_reservas, FW?.dicc_indices, {filas:filas_bdd, columnas:columnas_bdd});
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
-					const ghostizado = Ranget._ghost(rango);	
+					const ghostizado = Ranget.crear_ghost(rango);	
 					const nombre_f = Ranget._nombrar_rango_anonimo(ghostizado);
 					// ┌• Impongo 'cut' para que ghost suelte SU el elemento en el salon y no Haga un clon. revisar "stt.paste"
 					Ranget.paste_ghost(true, false, true);									
@@ -5098,13 +5102,14 @@ class Foto_CRUD{
 				});
 			}
 
+
+			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
+			// 🔳🔳🔳🔳🔳🔳 CARGA  de  SALON SEGURA 🔳🔳🔳🔳🔳🔳
+
 			// ┌■ Cacho los datos que nos interesan para cargar las sillas y las mesas.
 			const d_indices = FW.dicc_indices;
 			const d_mensajes = FW.dicc_mensajes;
 			const d_alergias = FW.dicc_alergias;
-			
-			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
-			// 🔳🔳🔳🔳🔳🔳 CARGA  de  SALON 🔳🔳🔳🔳🔳🔳
 
 			// ┌• INDICES
 			Salon._load_elementos_en_Salon(d_indices);
@@ -5112,11 +5117,9 @@ class Foto_CRUD{
 			Salon._load_mensajes_en_Salon(d_mensajes);
 			// ┌• ALERGIAS
 			Salon._load_alergias_en_Salon(d_alergias);
-			// ┌••   ••••••••
+			// ┌•• SIEMPRE REGISTRAR LAS RESERVAS DESPUES DE CARGAR.
 			Salon.RegisteR();
-			console.log("┌■■ SCANNER + REGISTRO ✔️");
-			// 🟥 ┌•••  🟥
-			console.log(" • • • • • • • •  FIN");
+			console.log(" • • • • • • • •  FIN CARGAR ELEMENTOS");
 			Alertas_UI._NotA('✅ Foto Cargada con Exito', 'Listo para empezar!', 'success', 1500);
 
 			this.foto_work = FW;
