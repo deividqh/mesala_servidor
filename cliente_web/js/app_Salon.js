@@ -86,9 +86,9 @@ class e_Salon extends Tablero_Touch {
 				columnas_aplicadas, dicc_config.filas );		
 				
 		// 💥💥💥💥💥💥💥💥
-		const z_catalogo = Catalogo.get();
-		// const z_silla = Catalogo.get("silla");
-		const z_silla_zero = Catalogo.get("silla_0");
+		const z_catalogo = Catalogo.get();				// Catalogo entero
+		// const z_silla = Catalogo.get("silla");	
+		// const z_silla_zero = Catalogo.get("silla_0");
 		// const z_silla_logica = Catalogo.get("silla", "logica");
 		// const z_silla_id = Catalogo.get("silla", "id");
 		// const z_silla_visual = Catalogo.get("silla", 'visual');
@@ -106,7 +106,7 @@ class e_Salon extends Tablero_Touch {
 		// const z_mesa = Catalogo.get_distinto_s('mesa');	// NULL
 		// const z_mesa_id = Catalogo.get_distinto_s('mesa' , 'id');	// NULL
 		
-		const z_keys = Catalogo.get_keys();
+		// const z_keys = Catalogo.get_keys();
 		
 		// const z_players = Catalogo.get_item_s("grupo", "player");
 		// const z_logica_alergias = Catalogo.get_item_s("logica", "motor_alergias", true);
@@ -5069,7 +5069,7 @@ class Foto_CRUD{
 
 			const foto_bdd = foto_select;
 
-			this._set_UI_ojo(this.foto_work);		// ┌• icono-camara
+			this._set_UI_ojo(foto_bdd);		// ┌• icono-camara
 
 			// ┌•• •••••••••           •• •••••••••••••
 			// ┌■■ DIMENSION del Salon en BASE DE DATOS.
@@ -5082,12 +5082,14 @@ class Foto_CRUD{
 			const columnas_salon = Salon.columnas;
 
 			if(filas_bdd !== filas_salon || columnas_bdd !== columnas_salon){
-				Alertas_UI._NotA("Dimensiones Distintas", `<br>■ Dimension <b>Salon:</b> ${filas_salon}x${columnas_salon}<br>■ Dimension <b>Foto:</b> ${filas_bdd}x${columnas_bdd}`, "warning");
+				Alertas_UI._NotA("Dimensiones Distintas", `■ Dimension <b>Salon:</b> ${filas_salon}x${columnas_salon}<br>■ Dimension <b>Foto:</b> ${filas_bdd}x${columnas_bdd}`, "warning");
 				console.log(`Dimensiones Distintas:  ■ Dimension Salon: ${filas_salon}x${columnas_salon}  ■ Dimension Foto: ${filas_bdd}x${columnas_bdd}`);
 				// return;
+				throw('Dimensiones Distintas');
 			}
 			
 			// 🧩 Cacho los RANGOS desde la Base de datos: la Reserva "no está" o "no tiene pq estar" sobre la mesa.
+			// SIMPLIFICAR CARGANDO rango_matriz. comprobar dimensiones y que hacer cuando cambian.
 			const rango_s_en_BDD = Ranget._reservas_a_rangos(foto_bdd?.dicc_reservas, foto_bdd?.dicc_indices, {filas:filas_bdd, columnas:columnas_bdd});
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
@@ -5108,7 +5110,7 @@ class Foto_CRUD{
 			const d_alergias = foto_bdd.dicc_alergias;
 
 			// ┌• INDICES
-			Salon._load_elementos_en_Salon(d_indices);
+			// Salon._load_elementos_en_Salon(d_indices);
 			// ┌• MENSAJES
 			Salon._load_mensajes_en_Salon(d_mensajes);
 			// ┌• ALERGIAS
@@ -5636,6 +5638,9 @@ class Side_Elementos {
 	 * {@link e_Salon}
 	 */
 	constructor(dragCallback = null, diccionario_elementos = null, icono_disparador = null, opciones = {}) {
+		/** ### diccionario id-key:<objeto> ('silla':<objeto silla> , 'mesa':<objeto mesa>...)  de cada elemento del menu. */
+		this.elementos_menu = {};
+
 		/** ### Es el enlace disparador del sidebar en el navbar(cubo). */
 		this.icono_disparador = icono_disparador;
 		/** ### Callback para manejar el arrastre de elementos. */
@@ -5730,11 +5735,20 @@ class Side_Elementos {
 
 			// ■ Inyectar al Sidebar
             contenedor_elementos.appendChild(div_item);
+
+			// ■ Guardar en el dict Elementos_Menu:
+			this.elementos_menu[key]=div_item;
         }
 		this.$sidebar.appendChild(contenedor_elementos);
 
 		this._asegurar_handle();
 		document.body.appendChild(this.$sidebar);
+	}
+
+	get_elemento_menu(id_key=''){
+		if(typeof(id_key) != 'string') return null;
+		if(id_key.trim() == '') return null;
+		return this.elementos_menu[id_key];
 	}
 
 	/**

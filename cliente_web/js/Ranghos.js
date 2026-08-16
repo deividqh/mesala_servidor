@@ -2388,19 +2388,46 @@ class Rango_Ghost extends Working_Rangos{
 			// Si existe, lo Retorno, el objetivo de esta funcion es retornar un elemento si o si.
 			if(elemento) return elemento;
 
-			// Pasas por aqui sólo Si elemento no existe como DOM en Salon, es string ► me pasas un id a crear:
-			// • creo un clon del elemento, le asigno el div pasado y  lo salonizo.
-			const menu_element = Salon?._what_player_menu(id_del_elemento);					
-			// Catalogo.get(id_del_elemento)
 			
-			if(!menu_element) return; 	// . . . continue 
-			const new_elemento = menu_element.cloneNode(true);
+			// Pruebas del 16ago 🔥🔥🔥🔥🔥🔥🔥🔥
+			// Intento obtener un elemento del menu Side_Elementos para poder clonar.
+			// Crear una funcion get_elemento_menu('mesa') o get_elemento_menu('mesa_0') en Side_Elementos
+			const search_by_id = (idkey =>{
+				const z_keys = Catalogo.get_keys();
+				let key_menu = '';
+				z_keys.forEach(id_key => {
+					if(id_del_elemento.startsWith(id_key)) key_menu=id_key;
+				});
+				return key_menu;
+
+			});
+
+			const key_menu = search_by_id(id_del_elemento);
+			if(!key_menu){
+				console.log(':( Not posible .... for now.');
+				return null;
+			}
+			const $elemento_menu = Salon.Side_Elementos.get_elemento_menu(key_menu);
+			if(!$elemento_menu) return null;
+			const new_elemento = $elemento_menu.cloneNode(true);
 			new_elemento.id = id_del_elemento;
 			 if(!new_elemento) return;  // . . . continue
 			Salon._saloniza_elemento(new_elemento);
-			return new_elemento;
+			return new_elemento;	
+			
+			// 🔥🔥🔥🔥🔥🔥🔥🔥
+			
+			// Pasas por aqui sólo Si elemento no existe como DOM en Salon, es string ► me pasas un id a crear:
+			// • creo un clon del elemento, le asigno el div pasado y  lo salonizo.
+			// const menu_element = Salon?._what_player_menu(id_del_elemento);					
+			// if(!menu_element) return; 	// . . . continue 
+			// const new_elemento = menu_element.cloneNode(true);
+			// new_elemento.id = id_del_elemento;
+			//  if(!new_elemento) return;  // . . . continue
+			// Salon._saloniza_elemento(new_elemento);
+			// return new_elemento;
 
-		}else if(typeof elemento == 'object'){
+		}else if(typeof(elemento) == 'object'){
 			const id_del_elemento = elemento?.id ? elemento.id : '';			
 			if(id_del_elemento) {
 				return elemento;
