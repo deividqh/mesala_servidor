@@ -178,8 +178,8 @@ class Catalogo {
     }
 
     static _from_id_to_catalogo(id) {
-        const es_dom = document.getElementById(id);
-        if (!es_dom) return null;
+        // const es_dom = document.getElementById(id);
+        // if (!es_dom) return null;
 
         const id_keys = Catalogo.get_keys();
         for (const id_key of id_keys) {

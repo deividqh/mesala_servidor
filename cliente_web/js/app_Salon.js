@@ -88,7 +88,7 @@ class e_Salon extends Tablero_Touch {
 		// 💥💥💥💥💥💥💥💥
 		const z_catalogo = Catalogo.get();
 		// const z_silla = Catalogo.get("silla");
-		// const z_silla_zero = Catalogo.get("silla_0");
+		const z_silla_zero = Catalogo.get("silla_0");
 		// const z_silla_logica = Catalogo.get("silla", "logica");
 		// const z_silla_id = Catalogo.get("silla", "id");
 		// const z_silla_visual = Catalogo.get("silla", 'visual');
@@ -106,7 +106,7 @@ class e_Salon extends Tablero_Touch {
 		// const z_mesa = Catalogo.get_distinto_s('mesa');	// NULL
 		// const z_mesa_id = Catalogo.get_distinto_s('mesa' , 'id');	// NULL
 		
-		// const z_keys = Catalogo.get_keys();
+		const z_keys = Catalogo.get_keys();
 		
 		// const z_players = Catalogo.get_item_s("grupo", "player");
 		// const z_logica_alergias = Catalogo.get_item_s("logica", "motor_alergias", true);
@@ -1370,13 +1370,7 @@ class e_Salon extends Tablero_Touch {
 			element = document.querySelector(`[data-${str}]`);
 			if(element) return element;
 
-			// Si no existe como ID, intentamos como CLASE o ATRIBUTO-DATA (KISS: intentamos selector genérico)
-			// if (!element) {
-			// 	// Probamos si es una clase .nombre o un data-set [data-nombre]
-			// 	element = document.querySelector(`.${str}`) || document.querySelector(`[data-${str}]`);
-			// }
-			
-
+			// ┌■ Retorno
 			return element;
 		} catch (error) {
 			console.error(`e-Salon ► _to_element ► Selector inválido "${input}"`, error);
@@ -5070,7 +5064,9 @@ class Foto_CRUD{
 			// ┌• Cachamos el registro para conseguir el slug-publico del salon abierto.
 			// ┌• Lo 'cacho' de BDD pq el user puede hacer cambios en la ficha antes de  querer cargar un elemento.
 			const foto_select = await this._get_foto_from_BDD(foto_id);		
-			if(!foto_select) throw(`❌ Error Al cargar foto de BD ::: ${foto_id}`);
+			if(!foto_select) 
+				throw(`❌ Error Al cargar foto de BD ::: ${foto_id}`);
+
 			const foto_bdd = foto_select;
 
 			this._set_UI_ojo(this.foto_work);		// ┌• icono-camara
@@ -5097,8 +5093,7 @@ class Foto_CRUD{
 				rango_s_en_BDD.forEach(rango =>{					
 					const ghostizado = Ranget.crear_$marco(rango);	
 					const nombre_f = Ranget._nombrar_rango_anonimo(ghostizado);
-					// ┌• Impongo 'cut' para que ghost suelte SU el elemento en el salon y no Haga un clon. revisar "stt.paste"
-					Ranget.pegar_$marco(true, false, true);									
+					Ranget.pegar_$marco();
 					Ranget.eliminar_rango(nombre_f);
 				});
 			}

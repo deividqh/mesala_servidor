@@ -1599,19 +1599,10 @@ class Rango_Ghost extends Working_Rangos{
 		if (!instancia_matriz_plana) return null;		
 		// ┌■ 
 		super(instancia_matriz_plana);	
-		
 		// ┌■ ghost es un rango que se mueve / copia / corta / pega sobre el Salon.
 		this.d_ghost = {};		
-		
-		// ┌■ Estados del rango ghost. 
-		this.stt = {
-			cut:false,		// true en 'cortar_$marco()' y pone a false [copy].
-			copy:false,		// true en 'copiar_ghost()' y pone a false [cut].
-			paste:0,		// cuenta el numero de pastes realizados desde el ultimo 'cut_copy'. . . pegar_$marco()
-		}
 		this.accion = 'inicial';	// 'inicial' | 'copiar' | 'cortar' | 'pegar' | 'mover' |
 		this.num_pegar = 0;		    // cuenta el numero de pastes realizados desde el ultimo 'cut | copy'
-
     }
 
 	/** ## Un Rango 'ghost' es un marco 'invisible' que se coloca sobre el Salon Cogiendo, Yendo, Viniendo y Pegando.
@@ -1696,15 +1687,10 @@ class Rango_Ghost extends Working_Rangos{
 			}
 		}
 
-		this.stt.copy = true; this.stt.cut = false;
 		this.num_pegar = 0;
-		this.accion = 'crear';
-		
-		// Cursor solo se cambia en ghost(aquí) y en mover_cursor()
-		// this.stt.cursor = this.d_ghost.celda_inicio;
-
 		// 🍏
-		this.log('Ghost');
+		this.accion = 'crear';
+		this.informe_consola('Crear');
 		// ┌■ RETORNO
 		return this.d_ghost;
 		
@@ -1835,7 +1821,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * @param {Number} separacion  Espacio de separación entre las matrices (La separación dinámica)
 	 * @returns {Array}  Array de strings representando la matriz del ghost y el salon
 	 */
-    log(accion = '', separacion = 15) {
+    informe_consola(accion = '', separacion = 15) {
         const margin = '  ';
 
         const F = {
@@ -1901,7 +1887,7 @@ class Rango_Ghost extends Working_Rangos{
 		
 		const values_ghost = this.d_ghost.values || {};
 
-		// ┌■■ PREPARACIÓN DE DATOS 👻 		
+		// ┌■■ PREPARACIÓN DE DATOS  		
 		// ┌■■ Hay que cachar los datos del Salon y compararlos con los de Ghost:
 
 		// ┌• espacio de separación entre las matrices(La separación dinámica)
@@ -1919,8 +1905,6 @@ class Rango_Ghost extends Working_Rangos{
 			values_rango += `${celda}: ${obtener_id(valor)}, `;
 		}
 		// ┌• Array de celdas con valor del Salon(this.d_ghost.values)
-		// let arr_values = [];		
-        // for (let c of Object.keys(this.d_ghost.values)) arr_values.push(c);
 		const arr_values = Object.keys(values_ghost);
 		
 		// ┌• Asegura celda_inicio y celda_fin con el formato correcto
@@ -1931,8 +1915,6 @@ class Rango_Ghost extends Working_Rangos{
         let celdas_rango = Object.keys(this.d_ghost.items);		
         
         // ┌• Necesito las celdas del 'Salon' para pasarlas a representar_matriz
-        // let values_salon = '';
-        // for (let [c, el] of Object.entries(d_values_salon)) values_salon +=(`${c}: ${el?.id}, `);
 		let values_salon = '';
         for (const [celda, valor] of Object.entries(d_values_salon || {})) {
 			values_salon += `${celda}: ${obtener_id(valor)}, `;
@@ -1941,9 +1923,8 @@ class Rango_Ghost extends Working_Rangos{
         let celdas_salon = [];
         for (let celda of Object.keys(d_items_salon)) celdas_salon.push(celda);        
         
-        // ┌• Array de str de Salon - Rango_Ghost (CORREGIDO PARA USAR DATOS DEL SALON)
+        // ┌• Array de str de Salon - 
         const lineas_rango = representar_matriz(celdas_rango, arr_values || []);
-        // const lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon) || []);
 		const lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon || {}));
 		
 		// ┌• Calcular la 'longitud max de las filas' de la MATRIZ
@@ -1957,42 +1938,42 @@ class Rango_Ghost extends Working_Rangos{
         }
 
 		// ■■■ CALCULO DE ANCHOS 		
-		// ┌■■ Longitud maxima de cada linea que suma de las matrices "Rango + Salon + separacion"
+		// ┌■■ Longitud maxima de cada linea que suma de las matrices "Salon+Separacion+Rango"
 		let max_l = 0;
 		linea_s_to_print.forEach(linea =>{max_l = Math.max(max_l, get_real_length(linea)) });
 		const x_matriz = Math.floor((max_l - separacion) / 2);
 
 		// ■■■ RENDERIZADO     
-        // const BARRA = '■'.repeat(max_l+4);
-        const BARRA = '■'.repeat(10+4);
-		// ┌• Cabecera (Techo)
-        console.log(`${F.bright}${F.green} ${BARRA}👻${F.reset} ► " ${F.red}${accion}${F.reset} "`);
-		// ┌• Imprimir las matrices lado a lado
+        const BARRA = `${'■ '.repeat(10+4)}`;
+		const LINEA = `${'— '.repeat(10+4)}`;
+        const BARRAINI = `${F.bright}${F.green}${BARRA}${F.reset}`;
+        const BARRAFIN = `${F.bright}${F.gray}${LINEA}${F.reset}\n`;
+		const BASTON = `${F.bright}${F.gray}┌■■${F.reset}`;
+		const action = `${BASTON} ACCION: ${this.accion}`;
+		// ┌■ Cabecera (Techo)
+        console.log(`${BARRAINI} ► " ${F.red}${accion}${F.reset} "`);
+		// ┌■ Imprimir las matrices lado a lado
 		linea_s_to_print.forEach(linea =>{console.log(linea)});
-		// ┌• Imprime la Base de las Matrices:
+		// ┌■ Base de las Matrices:
 		const under_salon = this.__generar_linea_formateada(x_matriz, 'SALON',  2);
 		const under_rango = this.__generar_linea_formateada(x_matriz, 'RANGO',  2);
         console.log(` ${F.bright}${F.gray}${under_salon}${GAP}${under_rango}${F.reset}`);
-        // ┌• Metadatos
-		const ci = `${F.bright}${F.gray}┌■■${F.reset} CELDA_${F.red}I${F.reset}NI: "${this.d_ghost.celda_inicio}"`;
-		const cf = `${F.bright}${F.gray}┌■■${F.reset} CELDA_${F.red}F${F.reset}IN: "${this.d_ghost.celda_fin}"`;
-		const dim = `${F.gray}┌■■${F.reset} ${F.red}D${F.reset}IM: ( ${this.d_ghost.dimension.filas} x ${this.d_ghost.dimension.columnas} )`;
-		const geo = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}G${F.reset}EO: ${this.d_ghost.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
-		const items = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}I${F.reset}TEMS: ${this.d_ghost.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
-		const cut = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}C${F.reset}UT: ${this.stt.cut ? '✔️' : '❌' }`;
-		const copy = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}C${F.reset}OPY: ${this.stt.copy ? '✔️' : '❌' }`;
-		const paste = `${F.gray}┌■■${F.reset}   Nº ${F.red}P${F.reset}ASTEs: ${this.num_pegar}`;
-		const is_array = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}is_array${F.reset}: ${this.d_ghost.is_array}`;
-		const values_rango_str = `${F.bright}${F.gray}┌■■${F.reset} VALUES ${F.red}R${F.reset}ANGO: ${F.bright}${F.red}■ ${F.reset}${values_rango}${F.bright}${F.red}█▀▄█${F.reset}`;
-		const values_salon_str = `${F.bright}${F.gray}┌■■${F.reset} VALUES ${F.red}S${F.reset}ALON: ${F.bright}${F.red}■ ${F.reset}${values_salon}${F.bright}${F.red}█▀▄█${F.reset}`;
-
+        // ┌■ Metadatos
+		const ci = `${BASTON} CELDA_${F.red}I${F.reset}NI: "${this.d_ghost.celda_inicio}"`;
+		const cf = `${BASTON} CELDA_${F.red}F${F.reset}IN: "${this.d_ghost.celda_fin}"`;
+		const dim = `${BASTON} ${F.red}D${F.reset}IM: ( ${this.d_ghost.dimension.filas} x ${this.d_ghost.dimension.columnas} )`;
+		const geo = `${BASTON} ${F.red}G${F.reset}EO: ${this.d_ghost.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
+		const items = `${BASTON} ${F.red}I${F.reset}TEMS: ${this.d_ghost.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
+		const paste = `${F.gray}┌■■${F.reset} Nº ${F.red}P${F.reset}ASTEs: ${this.num_pegar}`;
+		const is_array = `${BASTON} ${F.red}is_array${F.reset}: ${this.d_ghost.is_array}`;
+		const values_rango_str = `${BASTON} VALUES ${F.red}R${F.reset}ANGO: ${F.bright}${F.red}■ ${F.reset}${values_rango}${F.bright}${F.red}█▀▄█${F.reset}`;
+		const values_salon_str = `${BASTON} VALUES ${F.red}S${F.reset}ALON: ${F.bright}${F.red}■ ${F.reset}${values_salon}${F.bright}${F.red}█▀▄█${F.reset}`;
+		// ┌■ Los imprimo.
 		console.log(`${ci}  ${cf}  ${dim}  ${geo}  ${items}`);
-		console.log(`${cut}  ${copy}  ${paste}  ${is_array}`);
+		console.log(`${action} ${paste}  ${is_array}`);
 		console.log(`${values_rango_str}`);
 		console.log(`${values_salon_str}`);
-		console.log(`${F.bright}${F.gray} ${BARRA}${F.reset}\n`);
-
-		return this.d_ghost;
+		console.log(`${BARRAFIN}`);		
     }
 	
 	/** ## EL FANTASMA 👻 SE MUEVE 
@@ -2036,9 +2017,9 @@ class Rango_Ghost extends Working_Rangos{
 	
 				// --- B. Transferencia de VALORES (Payload) ---
 				// Si el ghost tiene algo capturado en la posición vieja, lo movemos a la nueva
-				if (this.d_ghost.values[celda_old]) {
-					new_values[celda_new] = this.d_ghost.values[celda_old];
-				}
+				new_values[celda_new] = Object.prototype.hasOwnProperty.call(this.d_ghost.values, celda_old)
+						? this.d_ghost.values[celda_old]
+						: null;
 	
 				// --- C. Actualización de ITEMS (Grid Destino) ---
 				// Calculamos el ID del DOM correspondiente a la nueva celda
@@ -2060,8 +2041,8 @@ class Rango_Ghost extends Working_Rangos{
 			this.d_ghost.celda_fin = this.X_to_celda(fin_f, fin_c);
 			
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
-			// this.stt.cursor = celda_destino;
-			this.log('Mover');
+			this.accion = 'mover';
+			this.informe_consola('Mover');
 		
 			// ┌• RETORNO
 			return true;
@@ -2072,19 +2053,18 @@ class Rango_Ghost extends Working_Rangos{
 		}
 	}
 	/** ## Pone el cursor en 'A0' con una dimension '1x1' con values {}, solo items y geo y preparado para ser activado por ghost() */
-	eliminar_$marco(){
+	re_init_$marco(){
 		ficha = this._get_ficha_vacia();
 		if(!ficha) return null;
 		ficha.celda_inicio = 'A0';
 		ficha.geo = {delta_y:0, delta_x:0};
 		ficha.items = '🔥🔥 PENDIENTE, HAY QUE HACER UN first_baldosa Y UN last-baldosa DE RANGOS BASIC Y ASIGNARLO AQUI 🔥🔥';
-
+		
+		this.d_ghost = ficha;
+		
 		// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
-		this.stt.cut = false; this.stt.copy = false;
 		this.num_pegar = 0;
-		this.accion = 'eliminar';
-		// 🍏
-		this.log('Reset');
+		this.informe_consola('Re-Init');
 	}
 
 	/** ## CORTA los 'Valores de Salon' donde está posicionado el ghost	 
@@ -2094,31 +2074,26 @@ class Rango_Ghost extends Working_Rangos{
 	cortar_$marco() {
 		const ghost_name = this._nombrar_rango_anonimo(this.d_ghost);
 		try {
-			// 1. Obtener los elementos del DOM directamente y no el id del elemento usando el tercer parámetro en true
+			// Obtener los elementos del DOM directamente y no el id del elemento usando el tercer parámetro en true
 			const elementos_r = this._get_values(ghost_name, false, true);
-			// 2. Acción de CORTAR: Remover los elementos del DOM + Cachar celda:elemento en d_values.
-			const d_values = {}
-			if (elementos_r) {
-				Object.keys(elementos_r).forEach(celda => {
-					const el = elementos_r[celda];
-					if (el && el.parentNode) {
-						d_values[celda] = el;
-						el.parentNode.removeChild(el);
-					}
-				});
-			}
-			// 3. Construir la estructura d_ghost requerida
+			// Acción de CORTAR: Remover los elementos del DOM + Cachar celda:elemento en d_values.
+			const d_values = {};
+			Object.keys(this.d_ghost.items || {}).forEach(celda => {
+				const elemento = elementos_r?.[celda] || null;
+				d_values[celda] = elemento;
+				if (elemento?.parentNode) elemento.parentNode.removeChild(elemento);
+			});
+			// Construir la estructura d_ghost requerida
 			// Asumimos que this.celda_inicio, this.celda_fin, this.geo, etc., No cambian, sólo values.
 			const $MARCO  = this.d_ghost;
 			$MARCO.values = d_values || {};   // AQUI guardamos los elementos DOM extraídos
 			$MARCO.is_basic = false;			// me aseguro.
 
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
-			this.stt.cut = true; this.stt.copy = false;
 			this.num_pegar = 0;
 			this.accion = 'cortar';
 			// 🍏
-			this.log('Cortar');
+			this.informe_consola(this.accion);
 			this.eliminar_rango(ghost_name);
 			
 			return d_values;		
@@ -2147,29 +2122,21 @@ class Rango_Ghost extends Working_Rangos{
 			const resultado = {};
 			Object.entries(baldosas).forEach(([celda, id_baldosa]) => {
 					if (!id_baldosa) {
-						resultado[celda] = false;
+						resultado[celda] = null;
 						return;
 					}
 					const baldosa = document.getElementById(id_baldosa);
-					if(!baldosa) return;	
-					const contenido = baldosa?.firstElementChild;				
-					
-					// ► En caso de no haber contenido html devuelve false
-					// resultado[celda] = contenido instanceof HTMLElement ? contenido?.id : false;	
-					if(contenido instanceof HTMLElement){
-						resultado[celda] = contenido;	
-					}
-					
+					const contenido = baldosa?.firstElementChild;
+					resultado[celda] = contenido instanceof HTMLElement ? contenido : null;					
 			});
 			// Asigno a ghost: "Copia"
 			this.d_ghost.values = resultado ?  resultado : {};
 
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
-			this.stt.cut = false; this.stt.copy = true;
 			this.num_pegar = 0;	
 			this.accion = 'copiar';	
 			// 🍏
-			this.log('Copiar');
+			this.informe_consola(this.accion);
 			// ┌■ RETORNO
 			return resultado;							
 		} catch (error) {
@@ -2178,134 +2145,76 @@ class Rango_Ghost extends Working_Rangos{
 		}
 	}
 
-	/** ### "PEGA los 'values' de ghost donde está posicionado el cursor."
-	 * #### • Esto es así para que haya que 'mover' obligatoriamente el cursor para volver a pegarlo.
-	 * #### • La variable de estado 'stt.pegar' indica el número de pegados desde la última cut, copy o ghost.
-	 * #### • Cut solo permite '1 pegado' ( los elementos son movidos ).	 
-	 * #### • Copy permite 'múltiples pegados' creando elementos nuevos.
-	 * #### • Paste trabaja con [Arrays de Rangos], por lo que puede pegar pares, nones, . . .  
-	 * */
-	pegar_$marco(b_machaca=true, copy_impuesto=null, cut_impuesto=null) {
-		
-		const $MARCO = this.d_ghost;
-		
-		// ┌■■ Logica sobre CUT & COPY: Se pueden imponer o venir de fabrica(sst.cut/copy)
-		if(copy_impuesto!=null || cut_impuesto!=null){
-			if(typeof copy_impuesto != 'boolean' || typeof cut_impuesto != 'boolean' ) throw Error(`Error de tipos Cut && Copy`)
-			if(copy_impuesto == cut_impuesto) throw Error(`Error pegar_$marco::: copy_impuesto: ${copy_impuesto} cut_impuesto: ${cut_impuesto}`)
-			this.stt.cut  = cut_impuesto!=null  ? cut_impuesto : false;
-			this.stt.copy = copy_impuesto!=null ? copy_impuesto : false;
+	/**
+	 * Prepara el diccionario que consumirá pegar_$marco.
+	 * Cortar conserva los mismos nodos; copiar crea nodos nuevos en cada llamada.
+	 */
+	pre_pegado() {
+		if (!this.d_ghost?.values) return null;
+		if (this.accion === 'cortar' && this.num_pegar > 0) return null;
+		if (!['cortar', 'copiar', 'crear'].includes(this.accion)) return null;
+		const celda_elemento = {};
+		const celdas = Object.keys(this.d_ghost.items || this.d_ghost.values);
+		for (const celda of celdas) {
+			const elemento_origen = this.d_ghost.values[celda] || null;
+			if (!elemento_origen) {
+				celda_elemento[celda] = null;
+				continue;
+			}
+			if (this.accion === 'cortar') {
+				celda_elemento[celda] = elemento_origen;
+				continue;
+			}
+			if (this.accion === 'crear') {
+				celda_elemento[celda] = this._X_to_element(elemento_origen) || null;
+				continue;
+			}
+			if (this.accion === 'copiar') {
+				const elemento_copiado = elemento_origen.cloneNode(true);
+				const id_key = elemento_origen.dataset?.id_key;
+				if (!id_key) return null;
+				elemento_copiado.id = Herramientas.get_dom_secuency(id_key);
+				this.ref_Salon._saloniza_elemento(elemento_copiado);
+				celda_elemento[celda] = elemento_copiado;
+				continue;
+			}
 		}
-		const Cut = this.stt.cut;
-		const Copy = this.stt.copy;
-		
-		// ┌■■ Validacion de Accion
-		if(Copy && Cut) throw Error('Copy y Cut a False');
-		if(!Copy && !Cut) throw Error('Copy y Cut a False');
-
-		this.__paste_rango(Copy, Cut, b_machaca);
-    }
-
-	
-	
-	
-	/** ### Realiza el paste cuando d_ghost representa "1 rango" ► is_array == false 
-	 * #### Solo hace 'paste' de las celdas con valor. TENGO QUE AÑADIR UN 'modo-parche' que pegue el Rango entero, con las falses incluidas.
-	 * #### Si viene de Cut tiene comportamiento diferente de si viene de Copy.
-	 * #### Funciona para arrays porque actua sobre celdas:values
-	 * */
-	__paste_rango(Copy=false, Cut=false, b_machaca=true){
-		try {
-			const $MARCO = this.d_ghost;	
-			const Salon  = this.ref_Salon;
-			// ┌■ Iteramos sobre los valores definidos en el ghost (el contenido a pegar)
-			const celda_s = Object.keys($MARCO.values);
-
-			// ┌• •••••••  ••••
-			// ┌• PROCESAR DATOS
-			celda_s.forEach( celda => {		
-				// ┌• Elemento origen
-				const player_fantasma = $MARCO.values[celda];      
-				if (!player_fantasma) return;
-				const id_player_fantasma = player_fantasma?.id ? player_fantasma.id : player_fantasma
-				      
-				// ┌• id de la baldosa desitno. . . calculado previamente en mover_cursor fantasma.
-				const baldosa_fantasma = $MARCO.items[celda];
-				if (!baldosa_fantasma) return;
-				
-				// ┌• Referencia al elemento del DOM (Baldosa destino)
-				const baldosa_destino = document.getElementById(baldosa_fantasma);
-				if (!baldosa_destino) return;
-				
-				// ┌•••••••••    •••••••    •••••••••••••
-				// ┌• Lógica:    Machaca vs Espacio Vacío 🧠🧠				
-				let proceder_pegado = false;
-				if (b_machaca) {
-					this.ref_Salon.api_vaciar_baldosa(baldosa_destino);
-					proceder_pegado = true;
-				} else {
-					if (baldosa_destino.children.length === 0) {
-						proceder_pegado = true;
-					}
-					// ┌• [ Si tiene hijos y no machaca ], no hacemos nada (proceder_pegado=false)
-				}
-				
-				// ┌••                 ••••••••••••     •••
-				// ┌■■ Ejecución de la Manipulación del DOM
-				if (!proceder_pegado) throw ('. . . procesar_pegado = false, No se Puede Pegar');
-				
-				const menu_element = Salon?._what_player_menu(id_player_fantasma);					
-				if(!menu_element) return; 	// . . . continue 	
-				const idkey_menu = menu_element.dataset.id_key;
-				if(!idkey_menu) return; 	// . . . continue 	
-
-				const id_key = Catalogo.get(id_player_fantasma);
-				
-				// ┌■■ Cut o Copy ??  🧠🧠									
-				if(Cut && !Copy){
-
-					const player = menu_element.cloneNode(true);
-					if (player) {
-						player.id = id_player_fantasma; 
-						Salon._saloniza_elemento(player);
-					}
-					// ┌• Se deposita sobre la baldosa.
-					baldosa_destino.appendChild(player);						
-					
-				}else if(!Cut && Copy){					
-					
-					// ┌• Clonamos el nodo para mantener el ghost intacto para futuros pegados
-					const new_player = menu_element.cloneNode(true);
-					if (new_player) {
-						new_player.id = Herramientas.get_dom_secuency(idkey_menu); 
-						Salon._saloniza_elemento(new_player);
-					}
-					// ┌• Se deposita sobre la baldosa.
-					baldosa_destino.appendChild(new_player);
-					
-				}
-			});
-			// 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-			// 🔥 DesPues de Pegado-from-Cut.  🔥 
-			// 🔥 vaciar 'values' xa que NO SE VUELVA a PEGAR
-			// if(Cut && !Copy) this.d_ghost.values = {};
-			
-			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭			
-			this.stt.cut = Cut; 
-			this.stt.copy = Copy;
-			this.num_pegar +=1;
-			this.accion = 'pegar';
-			// 🍏
-			this.log('Paste');
-
-			return true;
-		} catch (error) {
-			console.log(error);
-			return false;	
-		}
+		return celda_elemento;
 	}
 
-	
+
+	/** Pega cada elemento en su celda. La preparación y comprobación de las baldosas son externas. */
+	pegar_$marco() {
+		// ┌■ Previo a Pegar
+		const celda_elemento = this.pre_pegado();
+		// ┌■ Validacion:
+		if (!celda_elemento || typeof celda_elemento !== 'object' || Array.isArray(celda_elemento)) return false;
+		
+		// ┌■ Proceso:
+		const elementos_a_pegar = [];
+		for (const [celda, elemento] of Object.entries(celda_elemento)) {
+			if (!elemento) continue;
+			const indice = this.X_to_indice(celda);
+			const baldosa = indice === false ? null : this.ref_Salon.matriz_plana[indice]?.elemento_div;
+			if (!baldosa || typeof elemento !== 'object') return false;
+			elementos_a_pegar.push({ baldosa, elemento });
+		}
+		elementos_a_pegar.forEach(({ baldosa, elemento }) => baldosa.appendChild(elemento));
+		// ┌■ Estado:
+		this.num_pegar += 1;
+		
+		// ┌■ Post-Pegado:
+		this.post_pegado();
+		
+		// ┌■ Informe Consola:
+		this.informe_consola('Paste');
+		return true;
+	}
+
+	/** acciones a realizar después del pegado. */
+	post_pegado(){
+		console.log(`┌•••• Post-Pegado:  accion: ${this.accion}  num-pegar: ${this.num_pegar}\n`);
+	}
 	
 	/** ## 4 ACCIONES: mover + cut + mover + paste */
 	comb_cut_paste(celda_origen, celda_destino='A0'){
@@ -2327,7 +2236,7 @@ class Rango_Ghost extends Working_Rangos{
 			if(!ok) throw Error(`Error en "Cortar" celda-destino: ${celda_destino}`);
 			ok = this.mover_cursor(celda_destino);
 			if(!ok) throw Error(`Error "Mover" a celda-destino ${celda_destino}`);
-			ok = this.pegar_$marco();
+			ok = this.pegar_$marco();			
 			if(!ok) throw Error(`Error "Paste" en celda-destino ${celda_destino}`);
 			return ok;
 
