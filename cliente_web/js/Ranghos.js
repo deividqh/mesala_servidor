@@ -161,8 +161,8 @@ class Working_Celdas {
 	 * @param {*} valor 
 	 * @returns {number} índice normalizado o 0 si no es válido.
 	 */
-	_AZ_to_numcol(columna_excel = '') {
-		const coordenadas = this.celda_mapper.celda_a_coordenadas(`${columna_excel}0`);
+	_AZ_to_numcol(columna_en_AZ = '') {
+		const coordenadas = this.celda_mapper.celda_a_coordenadas(`${columna_en_AZ}0`);
 		return coordenadas?.columna ?? null;
 	}
 
@@ -206,7 +206,7 @@ class Working_Celdas {
 			coordenadas = { fila: celda.fila, columna };
 		}
 		const is_ok = this._fila_columna_OK(coordenadas) || false;
-		is_ok ? coordenadas : null;
+		return is_ok ? coordenadas : null;
 	}
 
 	/**
@@ -396,6 +396,10 @@ class Working_Celdas {
 	 * @example is_OK(5); ■ is_OK(2, 3); ■ is_OK("B3"); ■ is_OK( {1, 4} ); 
 	*/
 	is_OK(arg1, arg2 = null) {
+		const _normaliza_coordenada = (valor) => {
+			const numero = Number(valor);
+			return Number.isInteger(numero) && numero >= 0 ? numero : null;
+		};
 		// ■ CASO 1: Índice directo (un solo número)
 		if (typeof arg1 === 'number' && arg2 === null) {
 				return this._indice_OK(arg1);
@@ -408,18 +412,17 @@ class Working_Celdas {
 		if (typeof arg1 === 'number' && typeof arg2 === 'number') {
 				return this._fila_columna_OK({ fila: arg1, columna: arg2 });
 		}
-		const _normaliza_coordenada = (valor) => {
-			const numero = Number(valor);
-			return Number.isInteger(numero) && numero >= 0 ? numero : null;
-		};
 		// ■ CASO 4: arg1 es un objeto {fila, columna}
 		if (arg1 && typeof arg1 === 'object' && arg2 === null) {
 				const fila = _normaliza_coordenada(arg1.fila);
 				let columna = arg1.columna;
-				if (typeof columna === 'string') columna = this._AZ_to_numcol(columna);
+				if (typeof columna === 'string' && isNaN(columna)) {
+					columna = this._AZ_to_numcol(columna);
+				}
 				columna = _normaliza_coordenada(columna);
 				return this._fila_columna_OK({ fila, columna });
 		}
+
 		// ■ CASO 5: Ninguno de los anteriores
 		return false;
     }
@@ -560,13 +563,13 @@ console.log(`• CELDAS-INTERSECCION NULL:${celdas_intersección_2} ➿ ${RnG._i
 RnG._is_continuos(celdas_union);
 
   ■■■■■■■  👀 ADD RANGO "A MANO"
-RnG.add_rango('rango_prueba', rango_from_reservas_bdd[0]);
+RnG.registrar_ficha('rango_prueba', rango_from_reservas_bdd[0]);
 
   ■■■■■■■ 👻👻 Tengo un Fantasma!!!! 👻👻
   // Crea un rango solo con dimension, sin celda_inicio, ni celda_fin, me permite DINAMISMO. 
   // juega con to_pull para cargarlo de datos.
   // 
-const nombre_ghost = this.crear_ghost({filas:3,columnas:4});
+const nombre_ghost = this.crear_$marco({filas:3,columnas:4});
 this.ghost_s[nombre_ghost];
 
  ▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️ FIN PRUEBAS CON RANGOS
@@ -609,7 +612,9 @@ class Rango_Repository {
 		return null;
 	}
 
-	/** Crea un rango o reemplaza por completo uno existente. */
+	/** Crea un rango o reemplaza por completo uno existente. 
+	 * const rango = this.rango_repository.guardar('rangos', 'nombre_rango', ficha);
+	*/
 	guardar(nombre_fuente, nombre_rango, rango) {
 		const diccionario = this.fuentes[nombre_fuente];
 		if (!diccionario || typeof nombre_rango !== 'string' || nombre_rango.trim() === '') return false;
@@ -619,6 +624,12 @@ class Rango_Repository {
 		return rango;
 	}
 
+	/**
+	 * ### Elimina un rango de un diccionario específico.
+	 * @param {String} nombre_fuente nombre del diccionario (normalmente 'rangos' o 'reservas')
+	 * @param {String} nombre_rango nombre del rango a eliminar (ejemplo: 'rango_fila_3')
+	 * @returns la ficha del rango eliminado o null si no existe.
+	 */
 	eliminar(nombre_fuente, nombre_rango) {
 		const diccionario = this.fuentes[nombre_fuente];
 		if (!diccionario || !Object.prototype.hasOwnProperty.call(diccionario, nombre_rango)) return null;
@@ -628,10 +639,20 @@ class Rango_Repository {
 		return rango;
 	}
 
+	/**
+	 * ### Obtiene un diccionario de rangos por su nombre.
+	 * @param {String} nombre_fuente nombre del diccionario (normalmente 'rangos' o 'reservas')
+	 * @returns {Object|null} el diccionario de rangos o null si no existe.
+	 */
 	obtener_fuente(nombre_fuente) {
 		return this.fuentes[nombre_fuente] || null;
 	}
 
+	/**
+	 * ### Obtiene el nombre de la fuente dado su diccionario.
+	 * @param {Object} diccionario 
+	 * @returns {String|null} el nombre de la fuente o null si no se encuentra.
+	 */
 	obtener_nombre_fuente(diccionario) {
 		for (const [nombre, fuente] of Object.entries(this.fuentes)) {
 			if (fuente === diccionario) return nombre;
@@ -640,6 +661,7 @@ class Rango_Repository {
 	}
 }
 
+/** */
 class Working_Rangos  extends Working_Celdas{
         // ■■
         // * C L A S E  "Rango"
@@ -650,6 +672,7 @@ class Working_Rangos  extends Working_Celdas{
 			// ■■
 			super(instancia_matriz_plana);	
 			// ■■ rango_fila_3: {celda_inicio:'A3',celda_fin:'H3',dimension:'1x8',geo:{*},items:{*},values:{*},is_basic:true,is_array:false}
+			
 			this.d_rangos = {};							
 			// ■■ rango_repository se encarga de los diccionarios de rangos y rangos-reservas.
 			this.rango_repository = new Rango_Repository();
@@ -752,7 +775,7 @@ class Working_Rangos  extends Working_Celdas{
 		/**
 		 * ### Elimina un rango de this.dicc_rangos_	 
 		 * ### Retorna el rango eliminado o null si hay error*/
-		api_delete(nombre_rango, dicc_to_delete = null) {
+		eliminar_rango(nombre_rango, dicc_to_delete = null) {
 			if (!nombre_rango) return null;
 			const nombre_fuente = dicc_to_delete === null
 				? 'rangos'
@@ -793,7 +816,7 @@ class Working_Rangos  extends Working_Celdas{
 						const new_nombre = this._get_nombre_rango('temporal');
 						const new_rango = this.crear_rango(new_nombre, rango.celda_inicio, rango.dimension, false, false);
 						const new_values = this._get_values(new_nombre, false);
-						this.api_delete(new_nombre)
+						this.eliminar_rango(new_nombre)
 						// acumulado de values.
 						sumatorio_values = {...sumatorio_values, ...new_values};
 					}	
@@ -821,7 +844,7 @@ class Working_Rangos  extends Working_Celdas{
 		 * ### • nombre_rango (string) ► nombre del rango. Si ='', crea un nombre 'rango_X' único para el rango.
 		 * ### • ficha ► es una ficha-rango completa.
 		 * ### ■ devuelve 'nombre_rango' si se completó con exito y false si no se completó con exito. 	*/
-		add_rango(nombre_rango, ficha){
+		registrar_ficha(nombre_rango, ficha){
 			if(ficha && ficha.celda_inicio && ficha.celda_fin && ficha.geo && ficha.items  ){		
 				if(!nombre_rango || typeof nombre_rango != 'string' || nombre_rango.trim() === ''){
 					nombre_rango = this._get_nombre_rango('rango', this.d_rangos);
@@ -879,7 +902,7 @@ class Working_Rangos  extends Working_Celdas{
 				if(ficha_rango.celda_inicio && ficha_rango.celda_fin && ficha_rango.geo ) {
 					// ■ Objeto rango.
 					const anonimo = this._get_nombre_rango('anonimo');		
-					this.add_rango(anonimo, ficha_rango);
+					this.registrar_ficha(anonimo, ficha_rango);
 					// Validacion estricta.
 					return anonimo;
 				}
@@ -968,8 +991,8 @@ class Working_Rangos  extends Working_Celdas{
 				const rangos_nones = coleccion_nones.map( (celda, index) => { return this.crear_rango(`nones_${index}`, celda, {filas:1, columnas:1} , true) });
 				if (rangos_nones) this.rango_repository.guardar('rangos', 'rango_nones', rangos_nones);
 
-				coleccion_pares.forEach( (par, i) =>{ this.api_delete(`pares_${i}`); });
-				coleccion_nones.forEach( (impar, i) =>{ this.api_delete(`nones_${i}`); });
+				coleccion_pares.forEach( (par, i) =>{ this.eliminar_rango(`pares_${i}`); });
+				coleccion_nones.forEach( (impar, i) =>{ this.eliminar_rango(`nones_${i}`); });
 				
 			}
 			// ■ Log
@@ -1582,11 +1605,12 @@ class Rango_Ghost extends Working_Rangos{
 		
 		// ┌■ Estados del rango ghost. 
 		this.stt = {
-			cut:false,		// true en 'cut_ghost()' y pone a false [copy].
+			cut:false,		// true en 'cortar_$marco()' y pone a false [copy].
 			copy:false,		// true en 'copiar_ghost()' y pone a false [cut].
-			paste:0,		// cuenta el numero de pastes realizados desde el ultimo 'cut_copy'. . . paste_ghost()
-			cursor:'A0',	// la última posición del cursor. . . mover_cursor()
+			paste:0,		// cuenta el numero de pastes realizados desde el ultimo 'cut_copy'. . . pegar_$marco()
 		}
+		this.accion = 'inicial';	// 'inicial' | 'copiar' | 'cortar' | 'pegar' | 'mover' |
+		this.num_pegar = 0;		    // cuenta el numero de pastes realizados desde el ultimo 'cut | copy'
 
     }
 
@@ -1602,7 +1626,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * ghost('rango_fila_2');	
 	 * ghost({celda_inicio:'A0', celda_fin:'E2', dimension:{filas:3, columnas:5} , geo:{}, items:{}, values:{} });
 	 * ```	 */
-	crear_ghost(argumento){
+	crear_$marco(argumento){
 		if(!argumento) return null;
 		// ┌••••••••••••••••••••••••••••••••••••••••••
 		// ┌• El parametro de entrada puede ser:
@@ -1620,19 +1644,17 @@ class Rango_Ghost extends Working_Rangos{
 			this.d_ghost.is_array = true;
 
 		}else if(typeof argumento === 'string'){
+			// ┌■■ Puede ser una dimesión o un nombre de rango.
 			const dimension_fc = this._normalizar_dimension(argumento);
-
 			if(dimension_fc) {
-				// ■ dimension '3x4'
+				// ■ dimension {filas:3, columnas:4}
 				filas = dimension_fc.filas;
 				columnas = dimension_fc.columnas;
 				this._crear_ghost_desde_dimension(filas, columnas);
 
-			} else{ 			
-				// ■ 'nombre_rango' en d_rangos 
-				// • rango_pares o rango_nones además de cualquier rango_fila, rango_columna,. . .
+			} else { 			
+				// ┌■ 'nombre_rango' en d_rangos 
 				rango_ori = this.read_rango(argumento);
-
 				if(rango_ori && Array.isArray(rango_ori)){
 					// 🔥 Es rango basico array de Rangos (rango_pares, rango_nones) 🔥
 					const values_argumento = this.to_pull(argumento);	
@@ -1653,16 +1675,10 @@ class Rango_Ghost extends Working_Rangos{
 					this.d_ghost = new_ghost;			
 
 				}else if(rango_ori && !Array.isArray(rango_ori)){				
-					// Es un rango del diccionario de rangos 'd_rangos' REGULAR.  'SE GHOSTIZA ASIGNANDOSE A ghost despues de pull'.
-					// filas = rango_ori.dimension.filas;
-					// columnas = rango_ori.dimension.columnas;
-					
 					// ┌■ cargo los valores en el Rango, pero solo los que tienen datos.
 					this.to_pull(argumento, false);	
 					this.d_ghost = rango_ori;
 
-					// argumento es una Dimension {filas:3, columnas:4}
-					// this._crear_ghost_desde_dimension(filas, columnas);
 				}else{
 					return this._get_ficha_vacia() || null;
 				}
@@ -1681,13 +1697,14 @@ class Rango_Ghost extends Working_Rangos{
 		}
 
 		this.stt.copy = true; this.stt.cut = false;
-		this.stt.paste = 0;
+		this.num_pegar = 0;
+		this.accion = 'crear';
 		
 		// Cursor solo se cambia en ghost(aquí) y en mover_cursor()
-		this.stt.cursor = this.d_ghost.celda_inicio;
+		// this.stt.cursor = this.d_ghost.celda_inicio;
 
 		// 🍏
-		this.read_ghost('Ghost');
+		this.log('Ghost');
 		// ┌■ RETORNO
 		return this.d_ghost;
 		
@@ -1712,7 +1729,7 @@ class Rango_Ghost extends Working_Rangos{
 		const ghost_name = this._get_nombre_rango('ghost');					
 		// ┌■■ Al Crear el Rango, coje los values del Salon y si el salon está vacio(cuando viene de bdd) pierde los values(={})
 		this.d_ghost = this.crear_rango(ghost_name, ficha_rango.celda_inicio, ficha_rango.dimension, false);			
-		this.api_delete(ghost_name);
+		this.eliminar_rango(ghost_name);
 		// ┌■■ Re-asigno 'values', pero ahora con los elementos_dom en lugar de con los 'id's'
 		this.d_ghost.values = values_element_rango_ori;		// this.d_ghost.values = this._get_values(ghost_name, false, true);
 
@@ -1725,7 +1742,7 @@ class Rango_Ghost extends Working_Rangos{
 		// ┌■ El proceso es el siguiente:
 		// Se pone el cursor(celda_inicio) en A0. Se calcula la dimension y el rango. Luego se puede calcular geo, items y values
 		const new_dimension = {filas:filas, columnas:columnas};
-		// ┌■  Cuando llama a crear_ghost solo con dimension situa el cursor en  'A0'
+		// ┌■  Cuando llama a crear_$marco solo con dimension situa el cursor en  'A0'
 		const ci = 'A0';
 		const cf = this._get_celda_fin(ci, new_dimension);
 		if(!cf) return null;
@@ -1756,13 +1773,13 @@ class Rango_Ghost extends Working_Rangos{
 		this.d_ghost = this.d_rangos[ghost_name];
 		
 		// ┌■ Lo Elimino de d_rangos
-		this.api_delete(ghost_name);	
+		this.eliminar_rango(ghost_name);	
 		
 		// ┌■ Retorno
 		return this.d_ghost;
 	}
 
-	/** ## Hace el tratamiento de array de un ghost {@link crear_ghost} */
+	/** ## Hace el tratamiento de array de un ghost {@link crear_$marco} */
 	_crear_ghost_desde_array(argumento){
 		const array_rangos = argumento;
 		let sumatorio_values = {};
@@ -1797,7 +1814,7 @@ class Rango_Ghost extends Working_Rangos{
 		const nombre_total = this._get_nombre_rango('universal');
 		const rango_total = this.crear_rango(nombre_total, cicf.celda_inicio,  dimension_total, false, true);
 		if(!rango_total) throw Error('ghost::: Error en crear_rango desde Array');
-		this.api_delete(nombre_total);
+		this.eliminar_rango(nombre_total);
 		
 		rango_total.values = sumatorio_values;
 		rango_total.items  = sumatorio_items;
@@ -1811,12 +1828,14 @@ class Rango_Ghost extends Working_Rangos{
 		return this.d_ghost;
 	}
 
+	
+	
 	/** ### Devuelve el contenido actual del ghost
 	 * @param {String} accion  'Mover' | 'Ghost' | 'Cortar' | 'Copiar' | 'Pegar' | 'Volver' | 'Reset' 
 	 * @param {Number} separacion  Espacio de separación entre las matrices (La separación dinámica)
 	 * @returns {Array}  Array de strings representando la matriz del ghost y el salon
 	 */
-    read_ghost(accion = '', separacion = 15) {
+    log(accion = '', separacion = 15) {
         const margin = '  ';
 
         const F = {
@@ -1892,7 +1911,7 @@ class Rango_Ghost extends Working_Rangos{
         const nombre_g = this._nombrar_rango_anonimo(this.d_ghost);
         const d_values_salon  = this._get_values(nombre_g, false, true);
         const d_items_salon = this._get_items(nombre_g, false);
-        this.api_delete(nombre_g);
+        this.eliminar_rango(nombre_g);
 
 		// ┌• Array de string 'B4:silla_3','A4:mesa_1', . . .   del Salon
 		let values_rango = '';
@@ -1962,7 +1981,7 @@ class Rango_Ghost extends Working_Rangos{
 		const items = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}I${F.reset}TEMS: ${this.d_ghost.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
 		const cut = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}C${F.reset}UT: ${this.stt.cut ? '✔️' : '❌' }`;
 		const copy = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}C${F.reset}OPY: ${this.stt.copy ? '✔️' : '❌' }`;
-		const paste = `${F.gray}┌■■${F.reset}   Nº ${F.red}P${F.reset}ASTEs: ${this.stt.paste}`;
+		const paste = `${F.gray}┌■■${F.reset}   Nº ${F.red}P${F.reset}ASTEs: ${this.num_pegar}`;
 		const is_array = `${F.bright}${F.gray}┌■■${F.reset} ${F.red}is_array${F.reset}: ${this.d_ghost.is_array}`;
 		const values_rango_str = `${F.bright}${F.gray}┌■■${F.reset} VALUES ${F.red}R${F.reset}ANGO: ${F.bright}${F.red}■ ${F.reset}${values_rango}${F.bright}${F.red}█▀▄█${F.reset}`;
 		const values_salon_str = `${F.bright}${F.gray}┌■■${F.reset} VALUES ${F.red}S${F.reset}ALON: ${F.bright}${F.red}■ ${F.reset}${values_salon}${F.bright}${F.red}█▀▄█${F.reset}`;
@@ -1975,23 +1994,9 @@ class Rango_Ghost extends Working_Rangos{
 
 		return this.d_ghost;
     }
-	/**
-	 * Genera una línea formateada tipo: ---- texto ----
-	 * @param {number} x - La longitud total deseada de la cadena.
-	 * @param {string} texto - El texto central (ej. "salon").
-	 * @param {number} num_espacios - Cantidad de espacios totales (por defecto 2).
-	 */
-	__generar_linea_formateada(x, texto, num_espacios = 2) {
-		const longitudTexto = texto.length;
-		const totalGuiones = Math.max(0, x - longitudTexto - num_espacios);
-		const izq = Math.floor(totalGuiones / 2);
-		const der = totalGuiones - izq;
-		const espacios = " ".repeat(Math.ceil(num_espacios / 2));
-		return `${'▬'.repeat(izq)}${espacios}${texto}${espacios}${'▬'.repeat(der)}`;
-	}
 	
 	/** ## EL FANTASMA 👻 SE MUEVE 
-	 * ### Se re-calcular todos los valores de ghost excepto values, que queda con el anterior valor. 
+	 * ### Se cambia celda_inicio, celda_fin e items. 'geo' no varia y 'values' mantiene los valores anteriores.
 	 * #### • esto provoca que se puedan asignar valores y luego pueda soltarlos. 
 	 
 	 * ### Luego las acciones que se pueden hacer son cut, copy y paste sobre el Salon.
@@ -2055,8 +2060,8 @@ class Rango_Ghost extends Working_Rangos{
 			this.d_ghost.celda_fin = this.X_to_celda(fin_f, fin_c);
 			
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
-			this.stt.cursor = celda_destino;
-			this.read_ghost('Mover');
+			// this.stt.cursor = celda_destino;
+			this.log('Mover');
 		
 			// ┌• RETORNO
 			return true;
@@ -2066,32 +2071,8 @@ class Rango_Ghost extends Working_Rangos{
 			return false;
 		}
 	}
-
-	/** ## obtiene las Coordenadas con offset.
-	 * ### 'celda'(str) normalmente 'celda_inicio' de un rango.
-	 * ### 'delta._y' es el desplazamiento vertical de la nueva-poisicion con respecto a la celda de entrada. 
-	 * ### 'delta._x' es el desplazamiento horizontal de la nueva-poisicion con respecto a la celda de entrada. 
-	 * ## [RETORNO] la celda resultado de aplicarle ese delta.
-	 * ```javascript
-	 * this.__get_coord_abs(A0, {delta_y:1, delta_x:0}) ► A1
-	 * this.__get_coord_abs(A0, {delta_y:2, delta_x:0}) ► A2
-	 * this.__get_coord_abs(A0, {delta_y:0, delta_x:1}) ► B0
-	 * ``` 	 */
-	_get_coord_abs(celda, delta){
-		// USAMOS LA FUNCIÓN NATIVA: Convertimos "A2" -> {fila: 2, columna: 0}
-		const pos = this.X_to_fc(celda);
-		// Aplicamos el delta geométrico
-		const nueva_columna = pos.columna + delta.delta_x;
-		const nueva_fila = pos.fila + delta.delta_y;
-		// Reconstruimos la coordenada string (0 -> A, 1 -> B...)
-		// Nota: Si dispones de una función inversa tipo 'fc_to_X(f, c)', sería ideal usarla aquí.
-		// const letra_columna = String.fromCharCode(nueva_columna + 65);
-		const celda_retorno = this.X_to_celda(nueva_fila, nueva_columna);
-		return celda_retorno ? celda_retorno : '';
-	}
-
 	/** ## Pone el cursor en 'A0' con una dimension '1x1' con values {}, solo items y geo y preparado para ser activado por ghost() */
-	reset_ghost(){
+	eliminar_$marco(){
 		ficha = this._get_ficha_vacia();
 		if(!ficha) return null;
 		ficha.celda_inicio = 'A0';
@@ -2100,17 +2081,17 @@ class Rango_Ghost extends Working_Rangos{
 
 		// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
 		this.stt.cut = false; this.stt.copy = false;
-		this.stt.cursor = ficha.celda_inicio;
-		this.stt.paste = 0;
+		this.num_pegar = 0;
+		this.accion = 'eliminar';
 		// 🍏
-		this.read_ghost('Reset');
+		this.log('Reset');
 	}
 
 	/** ## CORTA los 'Valores de Salon' donde está posicionado el ghost	 
 	 * ### • Es responsabilidad del programador mover el cursor con 'mover_cursor' para CORTAR valores distintos.
 	 * ### • VOY A INTENTAR 'CORTAR' LOS ELEMENTOS DIRECTAMENTE PORQUE GHOST VIVE EN EL DOM. NO SE GUARDA.
 	*/	
-	cut_ghost() {
+	cortar_$marco() {
 		const ghost_name = this._nombrar_rango_anonimo(this.d_ghost);
 		try {
 			// 1. Obtener los elementos del DOM directamente y no el id del elemento usando el tercer parámetro en true
@@ -2128,30 +2109,31 @@ class Rango_Ghost extends Working_Rangos{
 			}
 			// 3. Construir la estructura d_ghost requerida
 			// Asumimos que this.celda_inicio, this.celda_fin, this.geo, etc., No cambian, sólo values.
-			const Casper  = this.d_ghost;
-			Casper.values = d_values || {};   // AQUI guardamos los elementos DOM extraídos
-			Casper.is_basic = false;			// me aseguro.
+			const $MARCO  = this.d_ghost;
+			$MARCO.values = d_values || {};   // AQUI guardamos los elementos DOM extraídos
+			$MARCO.is_basic = false;			// me aseguro.
 
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
 			this.stt.cut = true; this.stt.copy = false;
-			this.stt.paste = 0;
+			this.num_pegar = 0;
+			this.accion = 'cortar';
 			// 🍏
-			this.read_ghost('Cortar');
-			this.api_delete(ghost_name);
+			this.log('Cortar');
+			this.eliminar_rango(ghost_name);
 			
 			return d_values;		
 		} catch (error) {
 			console.log(error);
-			this.api_delete(ghost_name);
+			this.eliminar_rango(ghost_name);
 			return false;			
 		}
 	}
 
-	/** ## COPIA los valores de Salon donde está posicionado el ghost. es como hacer un ghost
+	/** ## COPIA los valores de Salon donde está posicionado el ghost. 
 	 * ### • Es responsabilidad del programador mover el cursor con 'mover_cursor' para COPIAR valores distintos.
-	 * ### • VOY A INTENTAR 'CLONAR' LOS ELEMENTOS DIRECTAMENTE PORQUE GHOST VIVE EN EL DOM. NO SE GUARDA
+	 * ### • VOY A 'CLONAR' LOS ELEMENTOS DIRECTAMENTE PORQUE GHOST VIVE EN EL DOM. NO SE GUARDA
 	*/
-	copy_ghost(){
+	copiar_$marco(){
 		try {
 			if(!this.d_ghost || !this.d_ghost.celda_inicio) return null;
 			// TENGO QUE COPIAR LOS ELEMENTOS DEL SALON EN 'values', luego me quedo esperando que me muevan con 'mover_cursor'.
@@ -2184,9 +2166,10 @@ class Rango_Ghost extends Working_Rangos{
 
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
 			this.stt.cut = false; this.stt.copy = true;
-			this.stt.paste = 0;		
+			this.num_pegar = 0;	
+			this.accion = 'copiar';	
 			// 🍏
-			this.read_ghost('Copiar');
+			this.log('Copiar');
 			// ┌■ RETORNO
 			return resultado;							
 		} catch (error) {
@@ -2202,14 +2185,14 @@ class Rango_Ghost extends Working_Rangos{
 	 * #### • Copy permite 'múltiples pegados' creando elementos nuevos.
 	 * #### • Paste trabaja con [Arrays de Rangos], por lo que puede pegar pares, nones, . . .  
 	 * */
-	paste_ghost(b_machaca=true, copy_impuesto=null, cut_impuesto=null) {
+	pegar_$marco(b_machaca=true, copy_impuesto=null, cut_impuesto=null) {
 		
-		const Casper = this.d_ghost;
+		const $MARCO = this.d_ghost;
 		
 		// ┌■■ Logica sobre CUT & COPY: Se pueden imponer o venir de fabrica(sst.cut/copy)
 		if(copy_impuesto!=null || cut_impuesto!=null){
 			if(typeof copy_impuesto != 'boolean' || typeof cut_impuesto != 'boolean' ) throw Error(`Error de tipos Cut && Copy`)
-			if(copy_impuesto == cut_impuesto) throw Error(`Error paste_ghost::: copy_impuesto: ${copy_impuesto} cut_impuesto: ${cut_impuesto}`)
+			if(copy_impuesto == cut_impuesto) throw Error(`Error pegar_$marco::: copy_impuesto: ${copy_impuesto} cut_impuesto: ${cut_impuesto}`)
 			this.stt.cut  = cut_impuesto!=null  ? cut_impuesto : false;
 			this.stt.copy = copy_impuesto!=null ? copy_impuesto : false;
 		}
@@ -2222,6 +2205,9 @@ class Rango_Ghost extends Working_Rangos{
 
 		this.__paste_rango(Copy, Cut, b_machaca);
     }
+
+	
+	
 	
 	/** ### Realiza el paste cuando d_ghost representa "1 rango" ► is_array == false 
 	 * #### Solo hace 'paste' de las celdas con valor. TENGO QUE AÑADIR UN 'modo-parche' que pegue el Rango entero, con las falses incluidas.
@@ -2230,21 +2216,21 @@ class Rango_Ghost extends Working_Rangos{
 	 * */
 	__paste_rango(Copy=false, Cut=false, b_machaca=true){
 		try {
-			const Casper = this.d_ghost;	
+			const $MARCO = this.d_ghost;	
 			const Salon  = this.ref_Salon;
 			// ┌■ Iteramos sobre los valores definidos en el ghost (el contenido a pegar)
-			const celda_s = Object.keys(Casper.values);
+			const celda_s = Object.keys($MARCO.values);
 
 			// ┌• •••••••  ••••
 			// ┌• PROCESAR DATOS
 			celda_s.forEach( celda => {		
 				// ┌• Elemento origen
-				const player_fantasma = Casper.values[celda];      
+				const player_fantasma = $MARCO.values[celda];      
 				if (!player_fantasma) return;
 				const id_player_fantasma = player_fantasma?.id ? player_fantasma.id : player_fantasma
 				      
 				// ┌• id de la baldosa desitno. . . calculado previamente en mover_cursor fantasma.
-				const baldosa_fantasma = Casper.items[celda];
+				const baldosa_fantasma = $MARCO.items[celda];
 				if (!baldosa_fantasma) return;
 				
 				// ┌• Referencia al elemento del DOM (Baldosa destino)
@@ -2307,14 +2293,80 @@ class Rango_Ghost extends Working_Rangos{
 			// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭			
 			this.stt.cut = Cut; 
 			this.stt.copy = Copy;
-			this.stt.paste +=1;
+			this.num_pegar +=1;
+			this.accion = 'pegar';
 			// 🍏
-			this.read_ghost('Paste');
+			this.log('Paste');
 
 			return true;
 		} catch (error) {
 			console.log(error);
 			return false;	
+		}
+	}
+
+	
+	
+	/** ## 4 ACCIONES: mover + cut + mover + paste */
+	comb_cut_paste(celda_origen, celda_destino='A0'){
+		try {
+			const $MARCO = this.d_ghost
+			//┌■■  Validamos si tenemos rango ghost
+			if(!$MARCO || $MARCO == {} )  throw('Error. No hay Fantasma!!');
+			if(!$MARCO.celda_inicio || !$MARCO.celda_fin) throw('Error. No encuentro celda_inicio o celda_fin!!');
+			if(!$MARCO.geo  || !$MARCO.items)  throw('Error. No encuentro geometria delta o items!!');
+			if(!$MARCO.values || $MARCO.values == {}) throw('Error. No encuentro values!!');
+			if(!celda_destino) throw('Error. Para mover y pegar tienes que tener celda_destino');
+			if(celda_destino === celda_origen ) return;
+
+			// ┌■■ Proceso: 
+			let ok = false;
+			ok = this.mover_cursor(celda_origen)
+			if(!ok) throw Error(`Error en "Mover" a celda-origen ${celda_origen}`);
+			ok = this.cortar_$marco();
+			if(!ok) throw Error(`Error en "Cortar" celda-destino: ${celda_destino}`);
+			ok = this.mover_cursor(celda_destino);
+			if(!ok) throw Error(`Error "Mover" a celda-destino ${celda_destino}`);
+			ok = this.pegar_$marco();
+			if(!ok) throw Error(`Error "Paste" en celda-destino ${celda_destino}`);
+			return ok;
+
+		} catch (error) {
+			console.log(`Error Cut-Paste celda_destino( ${celda_destino} ):::` + error);
+			return false;
+		}
+	}
+	/** ## 4 ACCIONES: mover(celda_origen) + copy + mover(celda_destino) + paste 
+	 * ### • copy siempre crea elementos nuevos.	
+	 * 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+	 * FALTA VALIDAR SI AL HACER PASTE HAY ELEMENTOS EN LA BALDOSA DESTINO Y SI SE MACHACA O NO.
+	 * */
+	comb_copy_paste(celda_origen='A0', celda_destino='A0'){
+		try {
+			const $MARCO = this.d_ghost
+			// ┌■■ Validamos si tenemos rango ghost
+			if(!$MARCO || $MARCO == {} )  throw('Error. No hay Fantasma!!');
+			if(!$MARCO.celda_inicio || !$MARCO.celda_fin) throw('Error. No encuentro celda_inicio o celda_fin!!');
+			if(!$MARCO.geo  || !$MARCO.items)  throw('Error. No encuentro geometria delta o items!!');
+			if(!$MARCO.values || $MARCO.values == {}) throw('Error. No encuentro values!!');
+			if(!celda_destino) throw('Error. Para mover y pegar tienes que tener celda_destino');
+			if(celda_destino === celda_origen ) return;
+
+			// ┌■■ Proceso:			
+			let ok = false;
+			ok = this.mover_cursor(celda_origen)
+			if(!ok) throw Error(`Error en "Mover" a celda-origen ${celda_origen}`);
+			ok = this.copiar_$marco();
+			if(!ok) throw Error(`Error en "Copiar" celda-origen: ${celda_origen}`);
+			ok = this.mover_cursor(celda_destino);
+			if(!ok) throw Error(`Error en "Mover" a celda-destino ${celda_destino}`);
+			ok = this.pegar_$marco();
+			if(!ok) throw Error(`Error en "Paste" en celda-destino ${celda_destino}`);
+			
+			return ok;
+		} catch (error) {
+			console.log(`❌ Error Copy-Paste 👻, celda-destino ${celda_destino} :::` , error);
+			return false;
 		}
 	}
 
@@ -2391,69 +2443,21 @@ class Rango_Ghost extends Working_Rangos{
 		}
 
 		return true;
-	}	
-	
-	/** ## 4 ACCIONES: mover + cut + mover + paste */
-	cut_paste(celda_origen, celda_destino='A0'){
-		try {
-			const Casper = this.d_ghost
-			//┌■■  Validamos si tenemos rango ghost
-			if(!Casper || Casper == {} )  throw('Error. No hay Fantasma!!');
-			if(!Casper.celda_inicio || !Casper.celda_fin) throw('Error. No encuentro celda_inicio o celda_fin!!');
-			if(!Casper.geo  || !Casper.items)  throw('Error. No encuentro geometria delta o items!!');
-			if(!Casper.values || Casper.values == {}) throw('Error. No encuentro values!!');
-			if(!celda_destino) throw('Error. Para mover y pegar tienes que tener celda_destino');
-			if(celda_destino === celda_origen ) return;
-
-			// ┌■■ Proceso: 
-			let ok = false;
-			ok = this.mover_cursor(celda_origen)
-			if(!ok) throw Error(`Error en "Mover" a celda-origen ${celda_origen}`);
-			ok = this.cut_ghost();
-			if(!ok) throw Error(`Error en "Cortar" celda-destino: ${celda_destino}`);
-			ok = this.mover_cursor(celda_destino);
-			if(!ok) throw Error(`Error "Mover" a celda-destino ${celda_destino}`);
-			ok = this.paste_ghost();
-			if(!ok) throw Error(`Error "Paste" en celda-destino ${celda_destino}`);
-			return ok;
-
-		} catch (error) {
-			console.log(`Error Cut-Paste celda_destino( ${celda_destino} ):::` + error);
-			return false;
-		}
 	}
-	/** ## 4 ACCIONES: mover(celda_origen) + copy + mover(celda_destino) + paste 
-	 * ### • copy siempre crea elementos nuevos.	
-	 * 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-	 * FALTA VALIDAR SI AL HACER PASTE HAY ELEMENTOS EN LA BALDOSA DESTINO Y SI SE MACHACA O NO.
-	 * */
-	copy_paste(celda_origen='A0', celda_destino='A0'){
-		try {
-			const Casper = this.d_ghost
-			// ┌■■ Validamos si tenemos rango ghost
-			if(!Casper || Casper == {} )  throw('Error. No hay Fantasma!!');
-			if(!Casper.celda_inicio || !Casper.celda_fin) throw('Error. No encuentro celda_inicio o celda_fin!!');
-			if(!Casper.geo  || !Casper.items)  throw('Error. No encuentro geometria delta o items!!');
-			if(!Casper.values || Casper.values == {}) throw('Error. No encuentro values!!');
-			if(!celda_destino) throw('Error. Para mover y pegar tienes que tener celda_destino');
-			if(celda_destino === celda_origen ) return;
-
-			// ┌■■ Proceso:			
-			let ok = false;
-			ok = this.mover_cursor(celda_origen)
-			if(!ok) throw Error(`Error en "Mover" a celda-origen ${celda_origen}`);
-			ok = this.copy_ghost();
-			if(!ok) throw Error(`Error en "Copiar" celda-origen: ${celda_origen}`);
-			ok = this.mover_cursor(celda_destino);
-			if(!ok) throw Error(`Error en "Mover" a celda-destino ${celda_destino}`);
-			ok = this.paste_ghost();
-			if(!ok) throw Error(`Error en "Paste" en celda-destino ${celda_destino}`);
-			
-			return ok;
-		} catch (error) {
-			console.log(`❌ Error Copy-Paste 👻, celda-destino ${celda_destino} :::` , error);
-			return false;
-		}
+	
+	/**
+	 * Genera una línea formateada tipo: ---- texto ----
+	 * @param {number} x - La longitud total deseada de la cadena.
+	 * @param {string} texto - El texto central (ej. "salon").
+	 * @param {number} num_espacios - Cantidad de espacios totales (por defecto 2).
+	 */
+	__generar_linea_formateada(x, texto, num_espacios = 2) {
+		const longitudTexto = texto.length;
+		const totalGuiones = Math.max(0, x - longitudTexto - num_espacios);
+		const izq = Math.floor(totalGuiones / 2);
+		const der = totalGuiones - izq;
+		const espacios = " ".repeat(Math.ceil(num_espacios / 2));
+		return `${'▬'.repeat(izq)}${espacios}${texto}${espacios}${'▬'.repeat(der)}`;
 	}
 	
 	/** ### • Si entra un "objeto-elemento" [lo retorna], 
@@ -2499,6 +2503,30 @@ class Rango_Ghost extends Working_Rangos{
 			}	
 		}
 	}
+
+	/** ## obtiene las Coordenadas con offset.
+	 * ### 'celda'(str) normalmente 'celda_inicio' de un rango.
+	 * ### 'delta._y' es el desplazamiento vertical de la nueva-poisicion con respecto a la celda de entrada. 
+	 * ### 'delta._x' es el desplazamiento horizontal de la nueva-poisicion con respecto a la celda de entrada. 
+	 * ## [RETORNO] la celda resultado de aplicarle ese delta.
+	 * ```javascript
+	 * this.__get_coord_abs(A0, {delta_y:1, delta_x:0}) ► A1
+	 * this.__get_coord_abs(A0, {delta_y:2, delta_x:0}) ► A2
+	 * this.__get_coord_abs(A0, {delta_y:0, delta_x:1}) ► B0
+	 * ``` 	 */
+	_get_coord_abs(celda, delta){
+		// USAMOS LA FUNCIÓN NATIVA: Convertimos "A2" -> {fila: 2, columna: 0}
+		const pos = this.X_to_fc(celda);
+		// Aplicamos el delta geométrico
+		const nueva_columna = pos.columna + delta.delta_x;
+		const nueva_fila = pos.fila + delta.delta_y;
+		// Reconstruimos la coordenada string (0 -> A, 1 -> B...)
+		// Nota: Si dispones de una función inversa tipo 'fc_to_X(f, c)', sería ideal usarla aquí.
+		// const letra_columna = String.fromCharCode(nueva_columna + 65);
+		const celda_retorno = this.X_to_celda(nueva_fila, nueva_columna);
+		return celda_retorno ? celda_retorno : '';
+	}
+
 	
 }
 
@@ -2885,35 +2913,35 @@ class Reserva_Range_Mapper {
 		this.func_indice_a_celda = indice_a_celda;
 		this.func_crear_ficha = crear_ficha;
 		this.func_celdas_a_limites = celdas_a_limites;
-		this.func_calcular_dimension = calcular_dimension;
+		this.func_get_dimension_ci_cf = calcular_dimension;
 	}
 
 	/** ### Las reservas del Salon se convierten en un array de rangos.
-	 * @param {Array} reservas - 
-	 * @param {Object} indices - 
-	 * @param {Object} dimension - 
+	 * @param {Array} reservas - [{ reservadores: ['mesa_0'], clientes: ['silla_1', 'silla_2'] }, ...]
+	 * @param {Object} indices - mesa_0: 5, silla_1: 6, silla_2: 7, ...
+	 * @param {Object} dimension - {filas: 10, columnas: 10}
 	 */
 	reservas_a_rangos(reservas, indices, dimension) {
 		if (!Array.isArray(reservas) || reservas.length === 0) return [];
 		if (!indices || typeof indices !== 'object' || Object.keys(indices).length === 0) return [];
 		if (!dimension || !Number.isInteger(dimension.filas) || !Number.isInteger(dimension.columnas)) return [];
 
-		const elemento_por_celda = this._crear_indice_de_celdas(indices, dimension);
+		const celda_elemento = this._crear_indice_de_celdas(indices, dimension);
 		const rangos = [];
 
 		for (const reserva of reservas) {
 			const reservadores = Array.isArray(reserva?.reservadores) ? reserva.reservadores : [];
 			const clientes = Array.isArray(reserva?.clientes) ? reserva.clientes : [];
-
+			// ┌■■ Es ronin?
 			if (reservadores.length === 0 && clientes.length > 0) {
-				const rangos_ronin = this._crear_rangos_ronin(clientes, elemento_por_celda);
+				const rangos_ronin = this._crear_rangos_ronin(clientes, celda_elemento);
 				if (rangos_ronin.length > 0) rangos.push(rangos_ronin);
 				continue;
 			}
-
+			// ┌■■ Todos los elementos de la reserva en un array.
 			const elementos = [...reservadores, ...clientes].filter(Boolean);
 			if (elementos.length === 0) continue;
-			const rango = this._crear_rango_de_reserva( elementos, elemento_por_celda);	
+			const rango = this._crear_rango_de_reserva( elementos, celda_elemento);	
 				
 			if (rango) rangos.push(rango);
 		}
@@ -2930,27 +2958,28 @@ class Reserva_Range_Mapper {
 	_crear_indice_de_celdas(indices, dimension) {
 		// Primero conservamos la relación histórica celda -> elemento. Si dos
 		// elementos comparten índice, el último es el que ocupa esa celda.
-		const elemento_por_celda = {};
+		const celda_elemento = {};
 
 		for (const [elemento, indice] of Object.entries(indices)) {
 			const celda = this.func_indice_a_celda(indice, dimension);
-			if (celda) elemento_por_celda[celda] = elemento;
+			if (celda) celda_elemento[celda] = elemento;
 		}
 
-		return elemento_por_celda;
+		return celda_elemento;
 	}
 
 	/**
-	 * Crea rangos para clientes que no tienen reservadores.
-	 * @param {Array} clientes - Lista de clientes sin reservadores.
-	 * @param {Object} elemento_por_celda - Mapa de celdas a elementos.
-	 * @returns {Array} - Lista de rangos creados.
+	 * ### ronin son los clientes sin reservadores.
+	 * ### Se devuelve un array de rangos de 1x1(cada cliente).
+	 * @param {Array} clientes - ['silla_1', 'silla_2', ...]
+	 * @param {Object} celda_elemento - {B0: 'silla_1', B1: 'mesa_0', ...}
+	 * @returns {Array} - 
 	 */
-	_crear_rangos_ronin(clientes, elemento_por_celda) {
-		const rangos = [];
+	_crear_rangos_ronin(clientes, celda_elemento) {
+		const rangos_ronin = [];
 
 		for (const cliente of clientes) {
-			const entrada = Object.entries(elemento_por_celda)
+			const entrada = Object.entries(celda_elemento)
 				.find(([, elemento]) => elemento === cliente);
 			if (!entrada) continue;
 			const [celda] = entrada;
@@ -2959,23 +2988,23 @@ class Reserva_Range_Mapper {
 			if (!rango) continue;
 
 			rango.values = { [celda]: cliente };
-			rangos.push(rango);
+			rangos_ronin.push(rango);
 		}
 
-		return rangos;
+		return rangos_ronin;
 	}
 
 	/**
 	 * Crea un rango para una reserva dada.
-	 * @param {Array} elementos - Lista de elementos de la reserva.
-	 * @param {Object} elemento_por_celda - Mapa de celdas a elementos.
+	 * @param {Array} elementos - ['silla_1', 'mesa_0', ...]
+	 * @param {Object} celda_elemento - {B0: 'silla_1', B1: 'mesa_0', ...}
 	 * @returns {Object|null} - Rango creado o null si no es válido.
 	 */
-	_crear_rango_de_reserva(elementos, elemento_por_celda) {
-		const elementos_reservados = new Set(elementos);
-
+	_crear_rango_de_reserva(elementos, celda_elemento) {
+		const elementos_reservados = new Set(elementos);	// Quita duplicados.
+		// // dict: {'B0': 'silla_1', 'B1': 'mesa_0', ...}
 		const values = Object.fromEntries(
-			Object.entries(elemento_por_celda)
+			Object.entries(celda_elemento)
 				.filter(([, elemento]) => elementos_reservados.has(elemento)),
 		);
 
@@ -2985,13 +3014,13 @@ class Reserva_Range_Mapper {
 		const limites = this.func_celdas_a_limites(celdas);
 		if (!limites) return null;
 
-		const dimension = this.func_calcular_dimension(limites.celda_inicio, limites.celda_fin);
+		const dimension = this.func_get_dimension_ci_cf(limites.celda_inicio, limites.celda_fin);
 		if (!dimension) return null;
 
 		const rango = this.func_crear_ficha(limites.celda_inicio, dimension);
 		if (!rango) return null;
 
-		rango.values = values;
+		rango.values = values;	// dict: {'B0': 'silla_1', 'B1': 'mesa_0', ...}
 		return rango;
 	}
 	
@@ -3038,7 +3067,7 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 		try {
 			const dimension_fc = this._normalizar_dimension(dimension_aplicada);
 			if (!dimension_fc) {
-				dimension = this._normalizar_dimension(this.ref_Salon.filas, this.ref_Salon.columnas);
+				// dimension = this._normalizar_dimension(this.ref_Salon.filas, this.ref_Salon.columnas);
 				return [];
 			}
 			return this.reserva_range_mapper.reservas_a_rangos(arr_reservas, dicc_indices ,dimension_fc);
@@ -3061,7 +3090,7 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 				const union_range = this._get_rango_from_cicf(ci_cf.celda_inicio , ci_cf.celda_fin);
 				if(union_range){
 					const union_name = this._get_nombre_rango('union');
-					this.add_rango(union_name , union_range);
+					this.registrar_ficha(union_name , union_range);
 				}
 			}
 		});

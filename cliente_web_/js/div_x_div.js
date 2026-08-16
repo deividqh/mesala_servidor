@@ -11886,7 +11886,7 @@ class Rango_Ghost extends Working_Rangos{
 	}
 
 	/** ## Pone el cursor en 'A0' con una dimension '1x1' con values {}, solo items y geo y preparado para ser activado por ghost() */
-	reset_ghost(){
+	eliminar_$marco(){
 		ficha = this._get_ficha_vacia();
 		if(!ficha) return null;
 		ficha.celda_inicio = 'A0';

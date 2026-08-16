@@ -5070,35 +5070,36 @@ class Foto_CRUD{
 			// ┌• Cachamos el registro para conseguir el slug-publico del salon abierto.
 			// ┌• Lo 'cacho' de BDD pq el user puede hacer cambios en la ficha antes de  querer cargar un elemento.
 			const foto_select = await this._get_foto_from_BDD(foto_id);		
-			if(foto_select) {
-				this.foto_work = foto_select;
-				this._set_UI_ojo(this.foto_work);		// ┌• icono-camara
-			}else{
-				this._set_UI_ojo();							// ┌• Limpiar icono-camara
-				throw('Error Al cargar foto de BD');
-			}
-			// ┌••••        •••••••••
-			const FW = this.foto_work || null;
+			if(!foto_select) throw(`❌ Error Al cargar foto de BD ::: ${foto_id}`);
+			const foto_bdd = foto_select;
+
+			this._set_UI_ojo(this.foto_work);		// ┌• icono-camara
 
 			// ┌•• •••••••••           •• •••••••••••••
 			// ┌■■ DIMENSION del Salon en BASE DE DATOS.
-			const filas_bdd = FW.filas;
-			const columnas_bdd = FW.columnas;
+			const filas_bdd = foto_bdd.filas;
+			const columnas_bdd = foto_bdd.columnas;
 			
 			// ┌•• •••••••••          •• •••••
 			// ┌■■ DIMENSION del Salon en 'Salon'
 			const filas_salon = Salon.filas;
 			const columnas_salon = Salon.columnas;
+
+			if(filas_bdd !== filas_salon || columnas_bdd !== columnas_salon){
+				Alertas_UI._NotA("Dimensiones Distintas", `<br>■ Dimension <b>Salon:</b> ${filas_salon}x${columnas_salon}<br>■ Dimension <b>Foto:</b> ${filas_bdd}x${columnas_bdd}`, "warning");
+				console.log(`Dimensiones Distintas:  ■ Dimension Salon: ${filas_salon}x${columnas_salon}  ■ Dimension Foto: ${filas_bdd}x${columnas_bdd}`);
+				// return;
+			}
 			
 			// 🧩 Cacho los RANGOS desde la Base de datos: la Reserva "no está" o "no tiene pq estar" sobre la mesa.
-			const rango_s_en_BDD = Ranget._reservas_a_rangos(FW?.dicc_reservas, FW?.dicc_indices, {filas:filas_bdd, columnas:columnas_bdd});
+			const rango_s_en_BDD = Ranget._reservas_a_rangos(foto_bdd?.dicc_reservas, foto_bdd?.dicc_indices, {filas:filas_bdd, columnas:columnas_bdd});
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
-					const ghostizado = Ranget.crear_ghost(rango);	
+					const ghostizado = Ranget.crear_$marco(rango);	
 					const nombre_f = Ranget._nombrar_rango_anonimo(ghostizado);
 					// ┌• Impongo 'cut' para que ghost suelte SU el elemento en el salon y no Haga un clon. revisar "stt.paste"
-					Ranget.paste_ghost(true, false, true);									
-					Ranget.api_delete(nombre_f);
+					Ranget.pegar_$marco(true, false, true);									
+					Ranget.eliminar_rango(nombre_f);
 				});
 			}
 
@@ -5107,9 +5108,9 @@ class Foto_CRUD{
 			// 🔳🔳🔳🔳🔳🔳 CARGA  de  SALON SEGURA 🔳🔳🔳🔳🔳🔳
 
 			// ┌■ Cacho los datos que nos interesan para cargar las sillas y las mesas.
-			const d_indices = FW.dicc_indices;
-			const d_mensajes = FW.dicc_mensajes;
-			const d_alergias = FW.dicc_alergias;
+			const d_indices = foto_bdd.dicc_indices;
+			const d_mensajes = foto_bdd.dicc_mensajes;
+			const d_alergias = foto_bdd.dicc_alergias;
 
 			// ┌• INDICES
 			Salon._load_elementos_en_Salon(d_indices);
@@ -5122,11 +5123,12 @@ class Foto_CRUD{
 			console.log(" • • • • • • • •  FIN CARGAR ELEMENTOS");
 			Alertas_UI._NotA('✅ Foto Cargada con Exito', 'Listo para empezar!', 'success', 1500);
 
-			this.foto_work = FW;
+			this.foto_work = foto_bdd;
 
 		} catch (error) {
 			console.log(`❌ Error ::: __cargar_elementos_en_Salon ::: foto_id ► ${foto_id}`)
 			console.error(error);
+			this._set_UI_ojo();
 			return;
 		}
 	}
