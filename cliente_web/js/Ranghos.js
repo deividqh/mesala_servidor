@@ -1708,7 +1708,7 @@ class Rango_Ghost extends Working_Rangos{
 			values_element_rango_ori = Object.fromEntries(
 				Object.entries(valores_rango_ori).map(([celda, id]) => [
 					celda, 
-					this._X_to_element(id) || id,
+					this.#_normaliza_elemento(id) || id,
 				])
 			);
 		}
@@ -2146,13 +2146,18 @@ class Rango_Ghost extends Working_Rangos{
 	}
 
 	/**
-	 * Prepara el diccionario que consumirá pegar_$marco.
-	 * Cortar conserva los mismos nodos; copiar crea nodos nuevos en cada llamada.
+	 * Tiene que retornar celda_elemento= {'C1':<obj_C1>, 'C2':<obj_C2> , 'D1':<obj_D1>, ....}
+	 * Cortar conserva los mismos nodos.
+	 * Copiar crea nodos nuevos en cada llamada.
+	 * Crear, cuando se crea un ghost, se activa la accion='crear'
 	 */
 	pre_pegado() {
+		// ┌■ Validacion 
 		if (!this.d_ghost?.values) return null;
 		if (this.accion === 'cortar' && this.num_pegar > 0) return null;
 		if (!['cortar', 'copiar', 'crear'].includes(this.accion)) return null;
+		
+		// ┌■  
 		const celda_elemento = {};
 		const celdas = Object.keys(this.d_ghost.items || this.d_ghost.values);
 		for (const celda of celdas) {
@@ -2166,7 +2171,7 @@ class Rango_Ghost extends Working_Rangos{
 				continue;
 			}
 			if (this.accion === 'crear') {
-				celda_elemento[celda] = this._X_to_element(elemento_origen) || null;
+				celda_elemento[celda] = this.#_normaliza_elemento(elemento_origen) || null;
 				continue;
 			}
 			if (this.accion === 'copiar') {
@@ -2174,7 +2179,9 @@ class Rango_Ghost extends Working_Rangos{
 				const id_key = elemento_origen.dataset?.id_key;
 				if (!id_key) return null;
 				elemento_copiado.id = Herramientas.get_dom_secuency(id_key);
+
 				this.ref_Salon._saloniza_elemento(elemento_copiado);
+				
 				celda_elemento[celda] = elemento_copiado;
 				continue;
 			}
@@ -2199,21 +2206,34 @@ class Rango_Ghost extends Working_Rangos{
 			if (!baldosa || typeof elemento !== 'object') return false;
 			elementos_a_pegar.push({ baldosa, elemento });
 		}
+		// ┌■ Esta es la acción que pega en el Salon los elementos.
 		elementos_a_pegar.forEach(({ baldosa, elemento }) => baldosa.appendChild(elemento));
+
 		// ┌■ Estado:
 		this.num_pegar += 1;
 		
 		// ┌■ Post-Pegado:
-		this.post_pegado();
+		this.post_pegado(elementos_a_pegar);
 		
 		// ┌■ Informe Consola:
 		this.informe_consola('Paste');
 		return true;
 	}
 
-	/** acciones a realizar después del pegado. */
-	post_pegado(){
-		console.log(`┌•••• Post-Pegado:  accion: ${this.accion}  num-pegar: ${this.num_pegar}\n`);
+	/** ### acciones a realizar después del pegado(salonizar el elemento.)
+	 * @param {Array} elementos_pegados [{baldosa:<obj_Gran_Salon_34>, elemento:<obj_silla_5>}, ...]	*/
+	post_pegado(elementos_pegados){
+		elementos_pegados.forEach(({ baldosa, elemento }) => console.log(`${baldosa.id} - ${elemento.id}`));
+		
+		if (this.accion === 'cortar') {
+			console.log('Post pegado - cortar');
+		}
+		if (this.accion === 'crear') {
+			console.log('Post pegado - crear');
+		}
+		if (this.accion === 'copiar') {
+			console.log('Post pegado - copiar');	
+		}
 	}
 	
 	/** ## 4 ACCIONES: mover + cut + mover + paste */
@@ -2378,19 +2398,17 @@ class Rango_Ghost extends Working_Rangos{
 	 * const tres = X_to_elemento_('silla_1'); // ► crea <element div>, lo saloniza, lo devuelve.
 	 * array_elementos.map(elemento=>{ _crear_y_salonizar(elemento) }); // ► si son ids, ahora son elementos, si son elementos, lo siguen siendo y si no existen los crea.
 	 * ```	 * */
-	_X_to_element(elemento){
+	#_normaliza_elemento(elemento){
 		const Salon = this.ref_Salon;
 
 		if (typeof elemento == 'string' && elemento.trim != '') {
-			// Si entra como string lo trato como id, ahora vamos a ver si existe como Dom html en el Salon or hay que crearlo:
+			// ┌■■ Si entra como string lo trato como id, 
+			// Existe en DOM en el Salon or hay que crearlo??
 			const id_del_elemento = elemento;
 			elemento = document.getElementById(id_del_elemento);
-			// Si existe, lo Retorno, el objetivo de esta funcion es retornar un elemento si o si.
 			if(elemento) return elemento;
 
-			
-			// Pruebas del 16ago 🔥🔥🔥🔥🔥🔥🔥🔥
-			// Intento obtener un elemento del menu Side_Elementos para poder clonar.
+			// ┌■■ Obtener un elemento del menu Side_Elementos para poder clonar.
 			// Crear una funcion get_elemento_menu('mesa') o get_elemento_menu('mesa_0') en Side_Elementos
 			const search_by_id = (idkey =>{
 				const z_keys = Catalogo.get_keys();
@@ -2399,7 +2417,6 @@ class Rango_Ghost extends Working_Rangos{
 					if(id_del_elemento.startsWith(id_key)) key_menu=id_key;
 				});
 				return key_menu;
-
 			});
 
 			const key_menu = search_by_id(id_del_elemento);
@@ -2407,25 +2424,14 @@ class Rango_Ghost extends Working_Rangos{
 				console.log(':( Not posible .... for now.');
 				return null;
 			}
-			const $elemento_menu = Salon.Side_Elementos.get_elemento_menu(key_menu);
+			const $elemento_menu = Salon.Side_Elementos.get_elemento_menu(key_menu);			
 			if(!$elemento_menu) return null;
 			const new_elemento = $elemento_menu.cloneNode(true);
 			new_elemento.id = id_del_elemento;
-			 if(!new_elemento) return;  // . . . continue
-			Salon._saloniza_elemento(new_elemento);
-			return new_elemento;	
-			
-			// 🔥🔥🔥🔥🔥🔥🔥🔥
-			
-			// Pasas por aqui sólo Si elemento no existe como DOM en Salon, es string ► me pasas un id a crear:
-			// • creo un clon del elemento, le asigno el div pasado y  lo salonizo.
-			// const menu_element = Salon?._what_player_menu(id_del_elemento);					
-			// if(!menu_element) return; 	// . . . continue 
-			// const new_elemento = menu_element.cloneNode(true);
-			// new_elemento.id = id_del_elemento;
-			//  if(!new_elemento) return;  // . . . continue
+			if(!new_elemento) return null; 
+
 			// Salon._saloniza_elemento(new_elemento);
-			// return new_elemento;
+			return new_elemento;				
 
 		}else if(typeof(elemento) == 'object'){
 			const id_del_elemento = elemento?.id ? elemento.id : '';			
