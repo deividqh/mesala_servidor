@@ -2178,9 +2178,7 @@ class Rango_Ghost extends Working_Rangos{
 				const elemento_copiado = elemento_origen.cloneNode(true);
 				const id_key = elemento_origen.dataset?.id_key;
 				if (!id_key) return null;
-				elemento_copiado.id = Herramientas.get_dom_secuency(id_key);
-
-				this.ref_Salon._saloniza_elemento(elemento_copiado);
+				elemento_copiado.id = Herramientas.get_dom_secuency(id_key);				
 				
 				celda_elemento[celda] = elemento_copiado;
 				continue;
@@ -2217,22 +2215,24 @@ class Rango_Ghost extends Working_Rangos{
 		
 		// ┌■ Informe Consola:
 		this.informe_consola('Paste');
-		return true;
+		
+		// ┌■ Retorna :
+		return elementos_a_pegar;
 	}
 
 	/** ### acciones a realizar después del pegado(salonizar el elemento.)
 	 * @param {Array} elementos_pegados [{baldosa:<obj_Gran_Salon_34>, elemento:<obj_silla_5>}, ...]	*/
 	post_pegado(elementos_pegados){
-		elementos_pegados.forEach(({ baldosa, elemento }) => console.log(`${baldosa.id} - ${elemento.id}`));
+		elementos_pegados.forEach(({ baldosa, elemento }) => this.ref_Salon._saloniza_elemento(elemento) );
 		
 		if (this.accion === 'cortar') {
-			console.log('Post pegado - cortar');
+			// console.log('Post pegado - cortar');
 		}
 		if (this.accion === 'crear') {
-			console.log('Post pegado - crear');
+			// console.log('Post pegado - crear');
 		}
 		if (this.accion === 'copiar') {
-			console.log('Post pegado - copiar');	
+			// console.log('Post pegado - copiar');	
 		}
 	}
 	

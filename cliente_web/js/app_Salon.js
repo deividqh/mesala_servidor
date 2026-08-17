@@ -1447,15 +1447,13 @@ class e_Salon extends Tablero_Touch {
 		return true;
 	}
 
-	// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 	/** 
 	 * ### Entra un id de mesa o silla pej: 'mesa_2' desde un rango y devuelve el elemento del menu equivalente (div mesa menu) 
 	 * @param {String|object} el, puede ser id(string) u objeto ya que uso _to_element para unificar.
 	 * ```javascript
-	 * const $el_menu = this._what_player_menu('silla_0')
-	 * $console.log('id_catalogo:', $el_menu.id )
-	 * ```
-	*/
+	 * const $el_menu = this._what_player_menu('silla_0');
+	 * console.log('id_catalogo:', $el_menu.id );
+	 * ```	*/
 	_what_player_menu(el){		
 		
 		// ┌■■ Cacho entrada.
@@ -1484,9 +1482,9 @@ class e_Salon extends Tablero_Touch {
 
 /** 
  * ### * 1.-maneja el offCanvas de configuracion del salon. 		
- * 				* 2.-Tambien se usa para quien soy y validar_dicc_config.    
- * 				* 3.-Actualiza el numero de Columnas de salon	(IMPORTANTE) 
- * 				* 4.-Ver la Información del Salon y dicc_config inicial
+ * 		* 2.-Tambien se usa para quien soy y validar_dicc_config.    
+ * 		* 3.-Actualiza el numero de Columnas de salon	(IMPORTANTE) 
+ * 		* 4.-Ver la Información del Salon y dicc_config inicial
  */
 class Configuracion_Salon {
 	/**
