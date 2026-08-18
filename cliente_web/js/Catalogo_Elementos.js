@@ -157,7 +157,7 @@ class Catalogo {
      * Acceso seguro a una propiedad específica.
      * Ejemplo: Catalogo.get('mesa', 'visual', 'css')
      */
-    static get(...niveles) {
+    static get_z(...niveles) {
         if (niveles.length === 0) return this.#DATA; // Si no se especifica nada, devolvemos el catálogo completo.
 
         let actual = this.#DATA;
@@ -177,17 +177,63 @@ class Catalogo {
         return actual;
     }
 
-    static _from_id_to_catalogo(id) {
-        // const es_dom = document.getElementById(id);
-        // if (!es_dom) return null;
+    /**
+     * Acceso seguro a una propiedad específica.
+     * Ejemplo: Catalogo.get('mesa', 'visual', 'css')
+     * Obtiene un elemento del catálogo o una propiedad anidada.
+     * El primer argumento admite tanto una clave (`mesa`) como un id de instancia (`mesa_0`).
+     *
+     * @example Catalogo.get('mesa')
+     * @example Catalogo.get('mesa_0', 'rol')
+     * @example Catalogo.get('mesa', 'visual', 'css')
+     * @returns {*} El valor encontrado o null si la clave o la ruta no existen.
+     */
+    static get(...niveles) {
+        if (niveles.length === 0) return this.#DATA; // Si no se especifica nada, devolvemos el catálogo completo.
 
-        const id_keys = Catalogo.get_keys();
+        const [identificador, ...ruta] = niveles;
+        const es_clave_catalogo = Object.hasOwn(this.#DATA, identificador);
+        let actual = es_clave_catalogo
+            ? this.#DATA[identificador]
+            : Catalogo._from_id_to_catalogo(identificador);
+        if (!actual) return null;
+        for (const clave of ruta) {
+            if (actual === null || typeof actual !== 'object' || !Object.hasOwn(actual, clave)) {
+                return null;
+            }
+            actual = actual[clave];
+        }
+        return actual;
+    }
+
+
+    static _from_id_to_catalogo(id) {
+
+        // const id_keys = Catalogo.get_keys();
+        if (typeof id !== 'string') return null;
+
+        // Primero se prueban las claves más específicas. Así, una futura clave
+        // `mesa_redonda` no quedará eclipsada por la clave más corta `mesa`.
+        const id_keys = Catalogo.get_keys().sort((a, b) => b.length - a.length);
+
         for (const id_key of id_keys) {
-            if (id.startsWith(id_key)) {
+            // if (id.startsWith(id_key)) {
+            if (id.startsWith(`${id_key}_`)) {
                 return this.#DATA[id_key];
             }
         }
         return null;
+    }
+    
+    /** ### entra un id y sale un id_key o '' */
+    static from_id_to_key(id) {
+        const id_keys = Catalogo.get_keys();
+        for (const id_key of id_keys) {
+            if (id.startsWith(id_key)) {
+                return id_key;
+            }
+        }
+        return '';
     }
 
     /**

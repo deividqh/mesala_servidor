@@ -282,9 +282,6 @@ class e_Salon extends Tablero_Touch {
 			Alertas_UI._NotA('✅ App Cargada con Exito', 'Listo para empezar!', 'success', 1500);
 		}
 		
-		// ┌■■ USA(BORRAR)
-		// const ok_api_a = this.api_alergias();
-		// const ok_api_m = this.api_mensajes();
 	}
 
 	/** 
@@ -337,7 +334,7 @@ class e_Salon extends Tablero_Touch {
 		// ■■ Actualizo las Reservas:
 		this.RegisteR();	
 		
-		// ■■ 🈴🈴
+		// ■■ 
 		const MA = Catalogo.get_motor('motor_alergias');
 		const MM = Catalogo.get_motor('motor_mensajes');
 
@@ -384,7 +381,6 @@ class e_Salon extends Tablero_Touch {
 		if(logica){
 			const ids_reserva = Object.values(this.reservas[index_reserva] || {}).flat();
 			
-			// 🈴🈴🈴🈴🈴🈴🈴🈴🈴🈴🈴🈴🈴🈴🈴🈴
 			const MA = Catalogo.get_motor('motor_alergias');
 			const MM = Catalogo.get_motor('motor_mensajes');
 
@@ -401,11 +397,9 @@ class e_Salon extends Tablero_Touch {
 					this._reset_seleccion_elemento();
 				}, { once: true });
 			}
-
 		} else {
 			this._reset_seleccion_elemento();	
 		}
-
 	}
 
 	/**
@@ -443,9 +437,6 @@ class e_Salon extends Tablero_Touch {
 		document.querySelectorAll('.estiloBaldosas.baldosa_onplay_seleccionada').forEach((baldosa) => {
 			baldosa.classList.remove('baldosa_onplay_seleccionada');
 		});
-
-		// player.classList.add('elemento_onplay_seleccionado');
-		// player.closest('.estiloBaldosas')?.classList.add('baldosa_onplay_seleccionada');
 	}
 
 	_get_indice_en_reserva_s(id_elemento){	
@@ -461,8 +452,7 @@ class e_Salon extends Tablero_Touch {
 	 * 	* Añade un Event Listener ​👂​👂 para el click en el nuevo elemento.
 	 * ```javascript
 	 * this.elemento_nuevo_to_Salon_(objDrag, objDrop, data__tipo);			
-	 * ```
-	*/
+	 * ```	*/
 	elemento_nuevo_to_Salon(item_menu = null, baldosa_matriz = null){
 		// const CFG = this.dicc_config;
 		// if (!CFG) return;
@@ -538,7 +528,7 @@ class e_Salon extends Tablero_Touch {
 	 * ```
 	 * *  **false**, si hay algún error.	*/
 	#crear_fichas_onplay(rol_busca='central') {
-		// ┌•• Obtiene la lista de baldosas que contienen hijos (mesas o sillas)
+		// ┌•• Obtiene la lista de MyDiv(baldosas) que contienen hijos (mesas o sillas)
 		const lista_baldosas_onplay = this._get_mydivs_onplay();
 		if (!lista_baldosas_onplay || lista_baldosas_onplay.length === 0) return [];
 		
@@ -560,8 +550,9 @@ class e_Salon extends Tablero_Touch {
 			const elemento_onplay = document.getElementById(id_contenido);
 			if (!elemento_onplay) return [];
 
-			// ■■ Obtenemos el rol del elemento en catalogo.
+			// ■■ 🔥🔥🔥🔥🔥🔥 Obtenemos el rol del elemento en catalogo 🔥🔥🔥🔥🔥🔥
 			const rol_elemento_onplay = this.#get_rol_en_catalogo(elemento_onplay);
+			// ■ ■ ■ 
 
 			// ■■ match por rol_busca.			
 			if(rol_elemento_onplay && rol_elemento_onplay === rol_busca ) {
@@ -574,17 +565,15 @@ class e_Salon extends Tablero_Touch {
 		});
 		return array_fichas; 
 	}
-
+	
 	#get_rol_en_catalogo(elemento_dom){
 		if(!elemento_dom) return null;
-		const key_catalogo = elemento_dom.dataset.id_key;
-		if(!key_catalogo) return null;
-		const rol = Catalogo.get(key_catalogo, "rol");
+		const key_elemento = elemento_dom.dataset.id_key;
+		if(!key_elemento) return null;
+		// ■■ 🔥🔥🔥🔥🔥🔥  
+		const rol = Catalogo.get(key_elemento, "rol");
 		return rol || null;
 	}
-
-	
-
 	
 	/**  
 	 * ###  RESERVAS 
@@ -718,8 +707,7 @@ class e_Salon extends Tablero_Touch {
 	 * { mesas: ['Mesa_1']          , 	sillas: ['Silla_1', 'Silla_2, Silla_3'] }, 
 	 * . . .
 	 * {mesas: [], 		sillas: ['Silla_6', 'Silla_7'] } ]
-	 * ```
-	 */
+	 * ```	 */
 	_get_array_dicc_reservas(matriz_reservas, lista_info_mesas) {
 		// ┌•• Validacion		
 		if (!matriz_reservas || matriz_reservas.length === 0) {
@@ -1207,11 +1195,11 @@ class e_Salon extends Tablero_Touch {
 			
 			// Contenido del diccionario separando
 			const api_indices = Object.entries(dicc_api_indices);			
-			api_indices.forEach(([id_el, i_baldosa]) => {
-				
-				const baldosa = this._get_baldosa(i_baldosa);
+			
+			api_indices.forEach(([id_el, i_baldosa]) => {				
+				const $baldosa = this._get_baldosa(i_baldosa);
 				// ┌■■ Verificamos que la baldosa de destino esté vacía
-				if (this.is_baldosa_vacia(baldosa) == false) 
+				if (this.is_baldosa_vacia($baldosa) == false) 
 					return;
 				
 				let element_menu_to_clone = null;
@@ -1228,7 +1216,7 @@ class e_Salon extends Tablero_Touch {
 				this._add_listeners_movimiento(clon_item);
 
 				// ┌■■ Añade el clon  a la baldosa.
-				baldosa.appendChild(clon_item);           
+				$baldosa.appendChild(clon_item);           
 				
 				// ┌■■ CAMBIA DE CLASE PARA NO HEREDAR EL ESTILO DEL MENU....
 				clon_item.className = "";
@@ -1424,19 +1412,24 @@ class e_Salon extends Tablero_Touch {
 	 * elemento(div_html): es un div clonado del menu de elementos.
 	*/
 	_saloniza_elemento(elemento){
+		if (!elemento) return;
 		const el = e_Salon._to_element(elemento);
 		const id_el = elemento.id;
 		if(!id_el) return;
+		
+		el.draggable = true;
 		// ┌• Valida a si el elemento existe en el catalogo
 		const catalogo_el = Catalogo.get(id_el);
 		if(!catalogo_el) return;
+		// Tengo que conseguir el id_key del elemento para asignarlo al el.dataset.id_key del elemento.
+		const key_catlog = Catalogo.from_id_to_key(id_el);
+		
+		el.dataset.id_key = key_catlog ? key_catlog : el.dataset.id_key;
 		
 		el.title = el.id;
-
-		el.draggable = true;
 		
-		// ┌• CAMBIA DE CLASE PARA NO HEREDAR EL ESTILO DEL MENU....
-		el.className = "";
+		el.className = "";		
+		el.classList.add(el.dataset.id_key);
 		el.classList.add('class_onplay');
 		el.classList.add(`${el.dataset.id_key}_onplay`);
 
@@ -5088,16 +5081,28 @@ class Foto_CRUD{
 			
 			// 🧩 Cacho los RANGOS desde la Base de datos: la Reserva "no está" o "no tiene pq estar" sobre la mesa.
 			// SIMPLIFICAR CARGANDO rango_matriz. comprobar dimensiones y que hacer cuando cambian.
-			const rango_s_en_BDD = Ranget._reservas_a_rangos(foto_bdd?.dicc_reservas, foto_bdd?.dicc_indices, {filas:filas_bdd, columnas:columnas_bdd});
+			const rango_s_en_BDD = Ranget._reservas_a_rangos(foto_bdd?.dicc_reservas, 
+															 foto_bdd?.dicc_indices, 
+															 {filas:filas_bdd, columnas:columnas_bdd});
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
-					const ghostizado = Ranget.crear_$marco(rango);	
-					const nombre_f = Ranget._nombrar_rango_anonimo(ghostizado);
+					const marco = Ranget.crear_$marco(rango);	
+					const nombre_f = Ranget._nombrar_rango_anonimo(marco);
+					
+					// diccionario {'b0':<obj_silla_0>. ...}
+					const celda_s_elemento = Ranget.pre_pegado_marco();
+
 					Ranget.pegar_$marco();
 					Ranget.eliminar_rango(nombre_f);
+
+					// aqui puedo salonizar_elemento de celda_s_elemento..??
+					// Lo que pretendoo es excluir rangos de usar metodos de Salon.
+					Object.values(celda_s_elemento).forEach(elemento => {
+						Salon._saloniza_elemento(elemento);
+					});
+
 				});
 			}
-
 
 			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
 			// 🔳🔳🔳🔳🔳🔳 CARGA  de  SALON SEGURA 🔳🔳🔳🔳🔳🔳
