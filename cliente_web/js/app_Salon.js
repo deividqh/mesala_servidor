@@ -86,15 +86,15 @@ class e_Salon extends Tablero_Touch {
 				columnas_aplicadas, dicc_config.filas );		
 				
 		// 💥💥💥💥💥💥💥💥
-		const z_catalogo = Catalogo.get();				// Catalogo entero
-		// const z_silla = Catalogo.get("silla");	
-		// const z_silla_zero = Catalogo.get("silla_0");
-		// const z_silla_logica = Catalogo.get("silla", "logica");
-		// const z_silla_id = Catalogo.get("silla", "id");
-		// const z_silla_visual = Catalogo.get("silla", 'visual');
-		// const z_silla_visual_css = Catalogo.get("silla", 'visual', "css");
-		// const z_visual_css = Catalogo.get('visual', "css"); 	 // NULL		
-		// const z_get_logica = Catalogo.get('logica'); 			// NULL		
+		const z_catalogo = Catalogo.get_catalogo_completo();				// Catalogo entero
+		// const z_silla = Catalogo.get_elemento("silla");
+		// const z_silla_zero = Catalogo.get_elemento("silla_0");
+		// const z_silla_logica = Catalogo.get_propiedad("silla", "logica");
+		// const z_silla_id = Catalogo.get_propiedad("silla", "id");
+		// const z_silla_visual = Catalogo.get_propiedad("silla", 'visual');
+		// const z_silla_visual_css = Catalogo.get_propiedad("silla", 'visual', "css");
+		// const z_visual_css = Catalogo.get_propiedad('visual', "css"); 	 // NULL
+		// const z_get_logica = Catalogo.get_elemento('logica'); 			// NULL
 
 		// const z_grupo = Catalogo.get_distinto_s("grupo");
 		// const z_visual = Catalogo.get_distinto_s('visual');
@@ -364,7 +364,7 @@ class e_Salon extends Tablero_Touch {
 		this.index_reserva = index_reserva;			
 
 		// ┌■ Solo pasan los Grupo players
-		const ctlg_el = Catalogo.get(id_key_el);
+		const ctlg_el = Catalogo.get_elemento(id_key_el);
 		if (!ctlg_el || ctlg_el.grupo !== 'player') 
 			return;
 		
@@ -571,7 +571,7 @@ class e_Salon extends Tablero_Touch {
 		const key_elemento = elemento_dom.dataset.id_key;
 		if(!key_elemento) return null;
 		// ■■ 🔥🔥🔥🔥🔥🔥  
-		const rol = Catalogo.get(key_elemento, "rol");
+		const rol = Catalogo.get_rol(key_elemento);
 		return rol || null;
 	}
 	
@@ -625,7 +625,7 @@ class e_Salon extends Tablero_Touch {
 		let arr_retorno = [];
 		for(const el of arr_onplay_nodes){
 			const idkey = el.dataset.id_key;
-			const rol_el = Catalogo.get(idkey)?.rol;
+			const rol_el = Catalogo.get_rol(idkey);
 			if (rol_el === rol_busca) {
 				arr_retorno.push(el?.id);
 			}
@@ -1241,7 +1241,7 @@ class e_Salon extends Tablero_Touch {
 
         Object.entries(dicc_api_mensajes).forEach(([id, mensaje]) => {
             const id_key = id_keys.find(k => id.startsWith(k));
-            const item_catalogo = id_key ? Catalogo.get(id_key) : null;
+			const item_catalogo = id_key ? Catalogo.get_elemento(id_key) : null;
 
 			// Validamos que exista en el catálogo y que tenga el motor de mensajes activo
             if (!item_catalogo || !item_catalogo.logica || !item_catalogo.logica.motor_mensajes) {
@@ -1267,7 +1267,7 @@ class e_Salon extends Tablero_Touch {
         Object.entries(dicc_api_alergias).forEach(([id, alergia_s]) => {
             // ■ Buscamos la clave base en el catálogo para este ID
             const id_key = id_keys.find(k => id.startsWith(k));
-            const item_catalogo = id_key ? Catalogo.get(id_key) : null;
+			const item_catalogo = id_key ? Catalogo.get_elemento(id_key) : null;
 
             // ■ Validamos si el elemento existe en el catálogo y tiene activo el motor de alergias
             if (!item_catalogo || !item_catalogo.logica || !item_catalogo.logica.motor_alergias ) {
@@ -1419,7 +1419,7 @@ class e_Salon extends Tablero_Touch {
 		
 		el.draggable = true;
 		// ┌• Valida a si el elemento existe en el catalogo
-		const catalogo_el = Catalogo.get(id_el);
+		const catalogo_el = Catalogo.get_elemento(id_el);
 		if(!catalogo_el) return;
 		// Tengo que conseguir el id_key del elemento para asignarlo al el.dataset.id_key del elemento.
 		const key_catlog = Catalogo.from_id_to_key(id_el);
@@ -2032,7 +2032,7 @@ class Configuracion_Salon {
 	_pintar_catalogo_players() {
 		if (!this.$catalogo_players) return;
 
-		const catalogo = Catalogo.get();
+		const catalogo = Catalogo.get_catalogo_completo();
 		const filas_catalogo = Object.entries(catalogo).map(([id_key, item]) => ({
 			id_key,
 			grupo: item?.grupo || 'none',
@@ -2362,7 +2362,7 @@ class Configuracion_Salon {
 			// 💥💥💥💥💥💥💥💥
 			// ■ Identificar el ROL del elemento a colocar (central, cliente...)
             const key_item = id_keys.find(k => item.id.startsWith(k));
-            const item_catalogo = key_item ? Catalogo.get(key_item) : null;
+			const item_catalogo = key_item ? Catalogo.get_elemento(key_item) : null;
             const mi_rol = item_catalogo ? item_catalogo.rol : null;
 
 			// ■ Calculamos dónde caería esta pieza
@@ -2391,7 +2391,7 @@ class Configuracion_Salon {
                 
                 // Obtenemos el rol del vecino
                 const key_vecino = id_keys.find(k => vecino_id.startsWith(k));
-                const vecino_catalogo = key_vecino ? Catalogo.get(key_vecino) : null;
+				const vecino_catalogo = key_vecino ? Catalogo.get_elemento(key_vecino) : null;
                 const rol_vecino = vecino_catalogo ? vecino_catalogo.rol : null;
 
                 // Si el vecino es decoración o estructura, no interactúa con los players (no hay conflicto)
@@ -5038,40 +5038,34 @@ class Foto_CRUD{
 		if(!Salon || !CFG || !Ranget) 
 			return;
 
-		// ┌■■ De Salon a los rangos abiertos.
+		// ┌■ De Salon a los rangos abiertos.
 		Ranget.pull_all();
-
-		// ┌■ Busca la foto en la lista de fotos
-		// const photo = this.lista_fotos_RUD.find(reg => reg.id === foto_id);
-		// if(!photo) return;
-		
 		// ┌■ Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
 		CFG.limpiar_Salon();		
 		// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos
 		this._ocultar_offcanvas_abiertos();
 
 		try {
-			// ┌•• Buscamos Datos en BDD:
-			// ┌• Cachamos el registro para conseguir el slug-publico del salon abierto.
+			// ┌■■ Datos en BDD:
+			// ------------------
+			// ┌• Cacho el registro para conseguir el slug-publico del salon abierto.
 			// ┌• Lo 'cacho' de BDD pq el user puede hacer cambios en la ficha antes de  querer cargar un elemento.
 			const foto_select = await this._get_foto_from_BDD(foto_id);		
-			if(!foto_select) 
+			if(!foto_select) {
 				throw(`❌ Error Al cargar foto de BD ::: ${foto_id}`);
-
+			}
 			const foto_bdd = foto_select;
 
-			this._set_UI_ojo(foto_bdd);		// ┌• icono-camara
-
-			// ┌•• •••••••••           •• •••••••••••••
-			// ┌■■ DIMENSION del Salon en BASE DE DATOS.
+			// ┌■■ DIMENSIONES
+			// -----------------
+			// ┌■■ Dimension del Salon en BASE DE DATOS.
 			const filas_bdd = foto_bdd.filas;
 			const columnas_bdd = foto_bdd.columnas;
-			
-			// ┌•• •••••••••          •• •••••
-			// ┌■■ DIMENSION del Salon en 'Salon'
+			// ┌■■ Dimension del Salon en 'Salon'
 			const filas_salon = Salon.filas;
 			const columnas_salon = Salon.columnas;
-
+			
+			// ┌■■ Comparo Dimensiones.
 			if(filas_bdd !== filas_salon || columnas_bdd !== columnas_salon){
 				Alertas_UI._NotA("Dimensiones Distintas", `■ Dimension <b>Salon:</b> ${filas_salon}x${columnas_salon}<br>■ Dimension <b>Foto:</b> ${filas_bdd}x${columnas_bdd}`, "warning");
 				console.log(`Dimensiones Distintas:  ■ Dimension Salon: ${filas_salon}x${columnas_salon}  ■ Dimension Foto: ${filas_bdd}x${columnas_bdd}`);
@@ -5079,6 +5073,8 @@ class Foto_CRUD{
 				throw('Dimensiones Distintas');
 			}
 			
+			// ┌■■ RANGOS
+			// -----------
 			// 🧩 Cacho los RANGOS desde la Base de datos: la Reserva "no está" o "no tiene pq estar" sobre la mesa.
 			// SIMPLIFICAR CARGANDO rango_matriz. comprobar dimensiones y que hacer cuando cambian.
 			const rango_s_en_BDD = Ranget._reservas_a_rangos(foto_bdd?.dicc_reservas, 
@@ -5088,15 +5084,11 @@ class Foto_CRUD{
 				rango_s_en_BDD.forEach(rango =>{					
 					const marco = Ranget.crear_$marco(rango);	
 					const nombre_f = Ranget._nombrar_rango_anonimo(marco);
-					
-					// diccionario {'b0':<obj_silla_0>. ...}
-					const celda_s_elemento = Ranget.pre_pegado_marco();
-
 					Ranget.pegar_$marco();
 					Ranget.eliminar_rango(nombre_f);
 
-					// aqui puedo salonizar_elemento de celda_s_elemento..??
-					// Lo que pretendoo es excluir rangos de usar metodos de Salon.
+					// diccionario {'b0':<obj_silla_0>. ...}
+					const celda_s_elemento = Ranget.pre_pegado_marco();
 					Object.values(celda_s_elemento).forEach(elemento => {
 						Salon._saloniza_elemento(elemento);
 					});
@@ -5104,25 +5096,30 @@ class Foto_CRUD{
 				});
 			}
 
-			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
-			// 🔳🔳🔳🔳🔳🔳 CARGA  de  SALON SEGURA 🔳🔳🔳🔳🔳🔳
+			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
+			// 🔳🔳🔳🔳🔳 CARGA de SALON 🔳🔳🔳🔳🔳
 
 			// ┌■ Cacho los datos que nos interesan para cargar las sillas y las mesas.
 			const d_indices = foto_bdd.dicc_indices;
 			const d_mensajes = foto_bdd.dicc_mensajes;
 			const d_alergias = foto_bdd.dicc_alergias;
 
-			// ┌• INDICES
+			// ┌■ INDICES
 			// Salon._load_elementos_en_Salon(d_indices);
-			// ┌• MENSAJES
+			// ┌■ MENSAJES
 			Salon._load_mensajes_en_Salon(d_mensajes);
-			// ┌• ALERGIAS
+			// ┌■ ALERGIAS
 			Salon._load_alergias_en_Salon(d_alergias);
-			// ┌•• SIEMPRE REGISTRAR LAS RESERVAS DESPUES DE CARGAR.
+
+			// ┌■ REGISTRAR.
 			Salon.RegisteR();
 			console.log(" • • • • • • • •  FIN CARGAR ELEMENTOS");
 			Alertas_UI._NotA('✅ Foto Cargada con Exito', 'Listo para empezar!', 'success', 1500);
-
+			
+			// ┌■ Icono-navbar info foto.
+			this._set_UI_ojo(foto_bdd);		
+			
+			// ┌■ Me guardo la ultima foto.
 			this.foto_work = foto_bdd;
 
 		} catch (error) {
@@ -5708,7 +5705,7 @@ class Side_Elementos {
 		this.$sidebar.dataset.sideLocked = 'false';
 
 		// Consultar la nueva fuente de la verdad
-        const elementos_catalogo = Catalogo.get();
+		const elementos_catalogo = Catalogo.get_catalogo_completo();
 		
 		const contenedor_elementos = document.createElement('div');
 		contenedor_elementos.className = 'side_lista_elementos';

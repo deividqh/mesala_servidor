@@ -778,7 +778,7 @@ class Matriz_to_MyDiv extends Matriz_Plana {
 			}
 			const el_dom = document.getElementById(id_el);
 			if(!el_dom) continue;       
-			const item_en_catalogo = Catalogo.get(id_el);
+			const item_en_catalogo = Catalogo.get_elemento(id_el);
 			// ■ match x rol
 			if(rol_busca === item_en_catalogo.rol) {
 				arr_encontrados.push(id_el);
@@ -1735,7 +1735,7 @@ class Tablero_Drop extends Matriz_to_MyDiv{
 		// ■■ GUARDA EL id_key ('mesa', 'silla', 'taburete') en catalogo.
 		ev.dataTransfer.setData("id_key", this.id_key); 
 		
-		const ds_t = Catalogo.get(this.objeto_drag.dataset.id_key)
+		const ds_t = Catalogo.get_elemento(this.objeto_drag.dataset.id_key);
 	}
 
 	/**

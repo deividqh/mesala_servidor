@@ -4,12 +4,12 @@
  * 
  *  // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
     // 💥 EJEMPLOS DE LLAMADAS DESDE PROGRAMA:
-    // const z_catalogo = Catalogo.get();
-    // const z_silla = Catalogo.get("silla");
-    // const z_silla_id = Catalogo.get("silla", "id");
-    // const z_silla_visual = Catalogo.get("silla", 'visual');
-    // const z_silla_visual_css = Catalogo.get("silla", 'visual', "css");
-    // const z_visual_css = Catalogo.get('visual', "css"); 	// NULL		
+    // const z_catalogo = Catalogo.get_catalogo_completo();
+    // const z_silla = Catalogo.get_elemento("silla");
+    // const z_silla_id = Catalogo.get_propiedad("silla", "id");
+    // const z_silla_visual = Catalogo.get_propiedad("silla", 'visual');
+    // const z_silla_visual_css = Catalogo.get_propiedad("silla", 'visual', "css");
+    // const z_visual_css = Catalogo.get_propiedad('visual', "css"); 	// NULL
 
     // const z_grupo = Catalogo.get_distinto_s("grupo");
     // const z_visual = Catalogo.get_distinto_s('visual');
@@ -151,51 +151,27 @@ class Catalogo {
     static get_motor(clave_logica) {
         return this.#MOTORES[clave_logica] || null;
     }
-    
-    
-    /**
-     * Acceso seguro a una propiedad específica.
-     * Ejemplo: Catalogo.get('mesa', 'visual', 'css')
-     */
-    static get_z(...niveles) {
-        if (niveles.length === 0) return this.#DATA; // Si no se especifica nada, devolvemos el catálogo completo.
-
-        let actual = this.#DATA;
-
-        for (const clave of niveles) {
-            // ■ Testeo si clave es un id de un elemento del DOM y si existe, lo obtenemos.
-            const item_catalog = Catalogo._from_id_to_catalogo(clave);
-            if (item_catalog)   return item_catalog;                        
-
-            // ■ No es un id de DOM y buscamos las claves.
-            if (actual !== null && typeof actual === 'object' && clave in actual) {
-                actual = actual[clave];
-            } else {
-                return null; // Ruta no encontrada
-            }
-        }
-        return actual;
+    /** Devuelve el catálogo completo. */
+    static get_catalogo_completo() {
+        return this.#DATA;
     }
-
     /**
-     * Acceso seguro a una propiedad específica.
-     * Ejemplo: Catalogo.get('mesa', 'visual', 'css')
-     * Obtiene un elemento del catálogo o una propiedad anidada.
-     * El primer argumento admite tanto una clave (`mesa`) como un id de instancia (`mesa_0`).
-     *
-     * @example Catalogo.get('mesa')
-     * @example Catalogo.get('mesa_0', 'rol')
-     * @example Catalogo.get('mesa', 'visual', 'css')
-     * @returns {*} El valor encontrado o null si la clave o la ruta no existen.
+     * Devuelve un elemento del catálogo a partir de su clave (`mesa`) o id (`mesa_0`).
+     * @returns {Object|null}
      */
-    static get(...niveles) {
-        if (niveles.length === 0) return this.#DATA; // Si no se especifica nada, devolvemos el catálogo completo.
-
-        const [identificador, ...ruta] = niveles;
+    static get_elemento(identificador) {
         const es_clave_catalogo = Object.hasOwn(this.#DATA, identificador);
-        let actual = es_clave_catalogo
+        return es_clave_catalogo
             ? this.#DATA[identificador]
             : Catalogo._from_id_to_catalogo(identificador);
+    }
+     /**
+     * Devuelve una propiedad simple o anidada de un elemento del catálogo.
+     * @example Catalogo.get_propiedad('mesa', 'visual', 'css')
+     * @returns {*|null}
+     */
+    static get_propiedad(identificador, ...ruta) {
+        let actual = Catalogo.get_elemento(identificador);
         if (!actual) return null;
         for (const clave of ruta) {
             if (actual === null || typeof actual !== 'object' || !Object.hasOwn(actual, clave)) {
@@ -205,6 +181,34 @@ class Catalogo {
         }
         return actual;
     }
+
+     /** Devuelve el rol de negocio de un elemento del catálogo. */
+    static get_rol(identificador) {
+        return Catalogo.get_propiedad(identificador, 'rol');
+    }
+    
+    /**
+     * Obtiene un elemento del catálogo o una propiedad anidada.
+     * El primer argumento admite tanto una clave (`mesa`) como un id de instancia (`mesa_0`).
+     * @returns {*} El valor encontrado o null si la clave o la ruta no existen.
+     */
+    // static get(...niveles) {
+    //     if (niveles.length === 0) return this.#DATA; // Si no se especifica nada, devolvemos el catálogo completo.
+
+    //     const [identificador, ...ruta] = niveles;
+    //     const es_clave_catalogo = Object.hasOwn(this.#DATA, identificador);
+    //     let actual = es_clave_catalogo
+    //         ? this.#DATA[identificador]
+    //         : Catalogo._from_id_to_catalogo(identificador);
+    //     if (!actual) return null;
+    //     for (const clave of ruta) {
+    //         if (actual === null || typeof actual !== 'object' || !Object.hasOwn(actual, clave)) {
+    //             return null;
+    //         }
+    //         actual = actual[clave];
+    //     }
+    //     return actual;
+    // }
 
 
     static _from_id_to_catalogo(id) {
@@ -630,7 +634,7 @@ class Logica_Catalogo  {
         const id_key = $el_dom.dataset.id_key;
         if(!id_key) return null;
 
-        const ctlg_el = Catalogo.get(id_key);
+        const ctlg_el = Catalogo.get_elemento(id_key);
         if (!ctlg_el || !ctlg_el.logica) return null;
         
         // ⚠️⚠️ ALERTA .... Elegir una 
@@ -772,7 +776,7 @@ class Logica_Catalogo  {
      */
     #get_icono(id_key) {
         if (!id_key) return '';
-        const ctlg_el = Catalogo.get(id_key);
+        const ctlg_el = Catalogo.get_elemento(id_key);
         return ctlg_el?.visual?.content || '';
     }
 

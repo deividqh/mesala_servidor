@@ -280,7 +280,7 @@ class Motor_Mensajes extends Interfaz_Custom_Motores{
 	_es_rol(id_elemento = '' , rol_busca='central') {
 		const elemento_dom = e_Salon._to_element(id_elemento);
 		const id_catalogo = elemento_dom?.dataset?.id_key || id_elemento.split('_')[0];
-		const match_rol = Catalogo.get(id_catalogo)?.rol === rol_busca;
+		const match_rol = Catalogo.get_rol(id_catalogo) === rol_busca;
 		return match_rol
 	}
 
@@ -320,7 +320,7 @@ class Motor_Mensajes extends Interfaz_Custom_Motores{
 			col_id.className = 'sumatorio-id';
 			col_mensaje.className = 'sumatorio-msg';
 			// • Cacha el catalogo de cada central(mesa, mesa_redonda, ...)
-			const ctlg_el = Catalogo.get(id);		
+			const ctlg_el = Catalogo.get_elemento(id);	
 			const svg_ico = ctlg_el.visual.content;	
 			// • Asigno valores al dom
 			col_ico.innerHTML = svg_ico;			
