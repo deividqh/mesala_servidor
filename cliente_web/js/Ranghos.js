@@ -152,7 +152,6 @@ class Working_Celdas {
 			return indice;
 		}
 		return false;
-		// return indice !== null && indice < this.ref_Salon.matriz_plana.length ? indice : false;
 	}
 	
 
@@ -854,10 +853,18 @@ class Working_Rangos  extends Working_Celdas{
 			}		
 		}
 
-		/** ## Devuelve el div que corresponde a una celda en la matriz. */
+		/**
+		 * ### Devuelve el elemento_div de la baldosa que corresponde a una celda.
+		 * @param {string} celda Referencia de celda, por ejemplo: 'B0', 'C3' o 'H15'.
+		 * @returns {HTMLElement|null} El div de la baldosa o null si la celda no es válida.
+		 */
 		celda_to_baldosa(celda){
-			const myDiv = this.ref_Salon[this.X_to_indice(celda)];
-			if(myDiv) return myDiv?.elemento_div;
+			if (typeof celda !== 'string') return null;
+
+			const indice = this.X_to_indice(celda);
+			if (indice === false) return null;
+
+			return this.ref_Salon?.matriz_plana?.[indice]?.elemento_div ?? null;
 		}
 
 		/** ## Hace una Copia de un rango registrado. 
@@ -1832,14 +1839,11 @@ class Rango_Ghost extends Working_Rangos{
             reset: "\x1b[0m",
             bright: "\x1b[1m",
             dim: "\x1b[2m",
-            underscore: "\x1b[4m",
             cyan: "\x1b[36m",
             green: "\x1b[32m",
             yellow: "\x1b[33m",
-            magenta: "\x1b[35m",
             red: "\x1b[31m",
             gray: "\x1b[90m",
-            bgBlack: "\x1b[40m",
         };
 		/** ### Devuelve un array de str con la linea que tiene que escribir, cruza celdas con values en Salon y Rango 
 		 * ### • 1 llamada por 'Salon' y otra por 'Rango'		*/
@@ -2155,7 +2159,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * Copiar crea nodos nuevos en cada llamada.
 	 * Crear, cuando se crea un ghost, se activa la accion='crear'
 	 */
-	pre_pegado_marco() {
+	get_celda_s_elemento_del_marco() {
 		// ┌■ Validacion: 
 		if (!this.marco?.values) return null;
 		if (!['cortar', 'copiar', 'crear'].includes(this.accion)) return null;
@@ -2204,7 +2208,7 @@ class Rango_Ghost extends Working_Rangos{
 	*/
 	pegar_$marco() {
 		// ┌■ Previo a Pegar
-		const celda_elemento = this.pre_pegado_marco();
+		const celda_elemento = this.get_celda_s_elemento_del_marco();
 		// ┌■ Validacion:
 		if (!celda_elemento || typeof celda_elemento !== 'object' || Array.isArray(celda_elemento)) return false;
 		
@@ -2212,44 +2216,20 @@ class Rango_Ghost extends Working_Rangos{
 		const elementos_a_pegar = [];
 		for (const [celda, elemento] of Object.entries(celda_elemento)) {
 			if (!elemento) continue;
-			const indice = this.X_to_indice(celda);
-			const baldosa = indice === false ? null : this.ref_Salon.matriz_plana[indice]?.elemento_div;
-			if (!baldosa || typeof elemento !== 'object') return false;
-			elementos_a_pegar.push({ baldosa, elemento });
+			const cuadrado = this.celda_to_baldosa(celda);
+			if (!cuadrado || typeof elemento !== 'object') return false;
+			elementos_a_pegar.push({ cuadrado, elemento });
 		}
 		// ┌■■ Esta es la acción que pega en el Salon los elementos.
 		elementos_a_pegar.forEach(({ baldosa, elemento }) => baldosa.appendChild(elemento));
 
 		// ┌■ Estado:
 		this.num_pegar += 1;
-		
-		// ┌■ Post-Pegado:
-		this.post_pegado(elementos_a_pegar);
-		
 		// ┌■ Informe Consola:
 		this.informe_consola('Paste');
 		
 		// ┌■ Retorna : {baldosa:<obj_baldosa1, elemento:<obj_silla_5>, .... }
 		return elementos_a_pegar;
-	}
-
-	/** ### acciones a realizar después del pegado(salonizar el elemento.)
-	 * @param {Array} elementos_pegados [{baldosa:<obj_Gran_Salon_34>, elemento:<obj_silla_5>}, ...]	*/
-	post_pegado(elementos_pegados){
-
-		// elementos_pegados.forEach(({ baldosa, elemento }) => 
-		// 	this.ref_Salon._saloniza_elemento(elemento) 
-		// );
-		
-		if (this.accion === 'cortar') {
-			// console.log('Post pegado - cortar');
-		}
-		if (this.accion === 'crear') {
-			// console.log('Post pegado - crear');
-		}
-		if (this.accion === 'copiar') {
-			// console.log('Post pegado - copiar');	
-		}
 	}
 	
 	/** ## 4 ACCIONES: mover + cut + mover + paste */
@@ -2283,8 +2263,7 @@ class Rango_Ghost extends Working_Rangos{
 	}
 	/** ## 4 ACCIONES: mover(celda_origen) + copy + mover(celda_destino) + paste 
 	 * ### • copy siempre crea elementos nuevos.	
-	 * 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-	 * FALTA VALIDAR SI AL HACER PASTE HAY ELEMENTOS EN LA BALDOSA DESTINO Y SI SE MACHACA O NO.
+	 * ### De base se Machaca cuando se pega. 
 	 * */
 	comb_copy_paste(celda_origen='A0', celda_destino='A0'){
 		try {
@@ -2415,7 +2394,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * array_elementos.map(elemento=>{ _crear_y_salonizar(elemento) }); // ► si son ids, ahora son elementos, si son elementos, lo siguen siendo y si no existen los crea.
 	 * ```	 * */
 	#_normaliza_elemento(elemento){
-		const Salon = this.ref_Salon;
+		const side_elementos = this.ref_Salon.Side_Elementos;
 
 		if (typeof elemento == 'string' && elemento.trim != '') {
 			// ┌■■ Si entra como string lo trato como id, 
@@ -2440,7 +2419,7 @@ class Rango_Ghost extends Working_Rangos{
 				console.log(':( Not posible .... for now.');
 				return null;
 			}
-			const $elemento_menu = Salon.Side_Elementos.get_elemento_menu(key_menu);			
+			const $elemento_menu = side_elementos.get_elemento_menu(key_menu);			
 			if(!$elemento_menu) 
 				return null;
 			const new_elemento = $elemento_menu.cloneNode(true);
@@ -3025,7 +3004,6 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 		try {
 			const dimension_fc = this._normalizar_dimension(dimension_aplicada);
 			if (!dimension_fc) {
-				// dimension = this._normalizar_dimension(this.ref_Salon.filas, this.ref_Salon.columnas);
 				return [];
 			}
 			return this.reserva_range_mapper.reservas_a_rangos(arr_reservas, dicc_indices ,dimension_fc);

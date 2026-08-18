@@ -5088,7 +5088,7 @@ class Foto_CRUD{
 					Ranget.eliminar_rango(nombre_f);
 
 					// diccionario {'b0':<obj_silla_0>. ...}
-					const celda_s_elemento = Ranget.pre_pegado_marco();
+					const celda_s_elemento = Ranget.get_celda_s_elemento_del_marco();
 					Object.values(celda_s_elemento).forEach(elemento => {
 						Salon._saloniza_elemento(elemento);
 					});
