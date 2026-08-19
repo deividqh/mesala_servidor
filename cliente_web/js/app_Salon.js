@@ -281,7 +281,73 @@ class e_Salon extends Tablero_Touch {
 		}else{
 			Alertas_UI._NotA('✅ App Cargada con Exito', 'Listo para empezar!', 'success', 1500);
 		}
+
+		// 🟥 ┌•••  🟥🟥🟥🟥🟥🟥🟥			
+		// 🧩 Crea un ghost a partir de una dimension string desde A0.
+		const rango_dim = this.eRdS.crear_$marco('3x4');
+		// 🧩 Ahora ghost va a cambiar a una dimension de 5x6 desde A0.
+		const marco_reasig = this.eRdS.crear_$marco({filas:5, columnas:6});			
 		
+		// 🧩 (Cuando le paso un rango nombrado hace un previo pull de los elementos).
+		// 🧩 Trabaja con arrays de Rangos formando un rango que lo engloba y values e items de cada uno de ellos sin mas info.
+		// ?????? PROBLEMAS CON LOS ARRAYS. ????????????????????????????????????????????????
+		// const marco_de_pares = this.eRdS.crear_$marco('rango_pares');
+
+		// 🧩 Prueba de copia de un rango nombrado.
+		const copia = this.eRdS._copy_rango('rango_columna_0', 'rango_colum_one');
+		// 🧩 Creo un marco de rango_matriz.
+		const marco_matriz = this.eRdS.crear_$marco('rango_matriz');			
+		// 🧩 Convierto en un rango el ghost_3 creado.
+		const to_rango = this.eRdS.X_to_rango(marco_reasig);
+		this.eRdS.informe_marco_consola();
+		// 🧩 La prueba consiste en coger la Letra que me ha pasado el Usuario en may, calcular la columna, 
+		// 🧩 hacer un sub-rango desde esa letra cuenta la dimension actual(8/16/24) según donde estemos(movil)		
+		// 🧩 ahora hay que adaptar sub-rango para que pueda cachar rangos directamente???
+		// const sub_r = this.eRdS.sub_rango("new", {filas:3, columnas:4}, 'C2');
+		
+		// let ok_g = null;
+		// 🧩 ok_g = this.eRdS.comb_copy_paste('A3' , 'B5');
+		// 🧩 ok_g=this.eRdS.mover_cursor('A1');
+		// 🧩 ok_g=this.eRdS.comb_cut_paste('D3' , 'F6');
+		// 🧩 ok_g=this.eRdS.mover_cursor('E11');
+		// 🧩 ok_g=this.eRdS.pegar_$marco();						
+		// 🟥 ┌••• FINAL DEL PUENTE DE PRUEBAS 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+		
+	}
+
+	/**
+	 * Resuelve un elemento que se quiere colocar en el salón.
+	 * La creación desde el catálogo pertenece a Salon, no a los rangos.
+	 * @param {String|HTMLElement} elemento Elemento existente o su identificador.
+	 * @returns {HTMLElement|null}
+	 */
+	resolver_elemento(elemento) {
+		if (typeof elemento === 'string' && elemento.trim() !== '') {
+			// ┌■■ Viene como ID
+			const id_elemento = elemento.trim();
+			const $el_dom = document.getElementById(id_elemento);
+			if ($el_dom) return $el_dom;
+			
+			// ┌■■ Viene como elemento que hay que crear.
+			let key_menu = '';
+			for (const key of Catalogo.get_keys()) {
+				if (id_elemento.startsWith(key)) key_menu = key;
+			}
+			if (!key_menu) return null;
+
+			const elemento_menu = this.Side_Elementos?.get_elemento_menu(key_menu);
+			if (!elemento_menu) return null;
+
+			const nuevo_elemento = elemento_menu.cloneNode(true);
+			nuevo_elemento.id = id_elemento;
+			return nuevo_elemento;
+		}
+
+		if (!elemento || typeof elemento !== 'object') return null;
+		if (!elemento.id) {
+			elemento.id = Herramientas.get_dom_secuency('id_anonimo');
+		}
+		return elemento;
 	}
 
 	/** 
@@ -5072,6 +5138,8 @@ class Foto_CRUD{
 				// return;
 				throw('Dimensiones Distintas');
 			}
+
+			console.log( `\n• • • • • • • •  INI CARGAR ELEMENTOS: + ${foto_id} ► ${foto_bdd.titulo}`);
 			
 			// ┌■■ RANGOS
 			// -----------

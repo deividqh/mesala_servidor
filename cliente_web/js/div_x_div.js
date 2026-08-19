@@ -431,7 +431,7 @@ class Matriz_Plana extends Work_ClassName {
 	 * * {5, 3} ► matriz 5x3  
 	 * * {0, 0} ► error.
 	 */
-	_get_limites_matriz_plana() {
+	get_dimension_matriz() {
 		if (!this || typeof this !== 'object') return { filas: 0, columnas: 0 };
 		// Columnas
 		const cols = this.columnas; 
