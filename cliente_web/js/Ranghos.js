@@ -607,7 +607,7 @@ class Rango_Repository {
 	guardar(nombre_fuente, nombre_rango, rango) {
 		const diccionario = this.fuentes[nombre_fuente];
 		if (!diccionario || typeof nombre_rango !== 'string' || nombre_rango.trim() === '') return false;
-		if (!rango || typeof rango !== 'object') return false;
+		if (!rango || typeof rango !== 'object' || Array.isArray(rango)) return false;
 
 		diccionario[nombre_rango] = rango;
 		return rango;
@@ -667,9 +667,8 @@ class Working_Rangos  extends Working_Celdas{
 			this.rango_repository = new Rango_Repository();
 			this.rango_repository.registrar_fuente('rangos', this.d_rangos);
 			
-			// ■■ Inicializa los rangos basicos (rango_matriz, rango_filas, rango_columnas, rango_pares, rango_impares) 
-			// y los registra en this.d_rangos.
-			this._init_rangos_basicos(true, true, true, true, true);
+			// ■■ Inicializa los rangos FIX y los registra en this.d_rangos.
+			this._init_rangos_basicos(true, true, true);
         }
 		
 		/** ### Crea nombre secuencial del nombre_rango. Empieza la cuenta en rango_0  */
@@ -794,29 +793,11 @@ class Working_Rangos  extends Working_Celdas{
 			try {
 				const rango_en_d = this.read_rango(nombre_rango);
 				if(!rango_en_d) throw(`Rango: ${nombre_rango} Not Found`)
-				let values_rango = {};
-				if (Array.isArray(rango_en_d)){
-					// Si el rango de nombre rangos es un array.
-					// Si el Rango "es un array" de Rangos, es posible que pueda ser pares/nones, u otro's. 
-					// para que funcione para 'todos', los items tienen que ser los items de cada rango y doy un acumulado.
-					let sumatorio_values = {};
-					for(const rango of rango_en_d){
-						// Creo un rango anonimo que elimino inmediatamente.
-						const new_nombre = this._get_nombre_rango('temporal');
-						const new_rango = this.crear_rango(new_nombre, rango.celda_inicio, rango.dimension, false, false);
-						const new_values = this._get_values(new_nombre, false);
-						this.eliminar_rango(new_nombre)
-						// acumulado de values.
-						sumatorio_values = {...sumatorio_values, ...new_values};
-					}	
-					values_rango = sumatorio_values;
-					
-				}else{
-					// Obtiene los valores de la matriz(hijos??).
-					values_rango = this._get_values(nombre_rango , show_all);					
-					// Reasignación para obtener los datos actualizados. 
-					rango_en_d.values = values_rango || {};
-				}
+				
+				// Obtiene los valores de la matriz(hijos??).
+				values_rango = this._get_values(nombre_rango , show_all);					
+				// Reasignación para obtener los datos actualizados. 
+				rango_en_d.values = values_rango || {};				
 
 				return values_rango;			
 			} catch (error) {
@@ -873,58 +854,23 @@ class Working_Rangos  extends Working_Celdas{
 			return diccionario_to_inspect[new_nombre_rango];
 		}
 
-		/** Entra como nombre o como ficha rango. 
-		 * Sale el nombre del rango. (string) para poder acceder 
-		 * Como ghost es un rango que no se crea en d_rangos, al nombrar_rango_anonimo se crea un rango en d_rangos.
-		 * Lo uso para guardar marco en d_rangos. */
-		_nombrar_rango_anonimo(rango){
-			let filas = -1;
-			let columnas = -1;
-			let celda_s_id_rango = null;
-			let rango_ori  = null
-
-			if(typeof rango === 'string'){
-				// ■ 'nombre_rango' de d_rangos
-				rango_ori = this.read_rango(rango);
-				if(rango_ori){				
-					filas = rango_ori.dimension.filas;
-					columnas = rango_ori.dimension.columnas;
-					// ┌■ cargo los valores en el rango, pero solo los que tienen datos.
-					this.to_pull(rango, false);	
-					return rango;
-				}
-			}else if (typeof rango === 'object'){
-				const ficha_rango = rango;
-				if(ficha_rango.celda_inicio && ficha_rango.celda_fin && ficha_rango.geo ) {
-					// ■ Objeto rango.
-					const anonimo = this._get_nombre_rango('anonimo');		
-					this.registrar_ficha(anonimo, ficha_rango);
-					// Validacion estricta.
-					return anonimo;
-				}
-			}
-			
-		}
+		
 		
 		/**
-		 * ### Genera los rangos automáticos solicitados: Filas, Columnas, Matriz, Pares y Nones.
-		 * 				Se debe llamar tras crear la matriz o si cambian sus dimensiones drásticamente.
-		 * @param {Boolean} is_matriz , true, crea rango_matriz 
+		 * ### Genera los rangos FIXED solicitados: Filas, Columnas, Matriz.
+		 * ### Se debe llamar tras crear la matriz o si cambian sus dimensiones drásticamente.
+		 * @param {Boolean} b_rango_matriz , true, crea rango_matriz 
 		 * @param {Boolean} filas , true, crea rango_fila_[0,1,2...]  , un rango_fila por cada fila de la matriz_plana. 
 		 * @param {Boolean} columnas , true, crea rango_columna_[0,1,2...]  , un rango_fila por cada columna de la matriz_plana. 
 		 */
-		_init_rangos_basicos(is_matriz=true, filas=true, columnas = true, pares = true, nones = true) {
+		_init_rangos_basicos(b_rango_matriz=true, filas=true, columnas = true) {
 			const MatriZ = this.ref_Salon.matriz_plana;
 			if (MatriZ.length === 0) return;
-
-			// const W_celda = new Working_Celdas(this.ref_matriz); // Para formatear nombres A1, B2...
-			// const total_filas = this.ref_Salon.total_filas();
-			// const total_cols = this.ref_Salon.columnas;
 			const { filas: total_filas, columnas: total_cols } = this.ref_Salon.get_dimension_matriz();
 			const ultimo_indice = MatriZ.length - 1;
 
 			// ┌■ RANGO MATRIZ COMPLETA ... Desde (0,0) hasta la última celda real ocupada
-			if (is_matriz) {
+			if (b_rango_matriz) {
 				const celda_i = this.X_to_celda(0, 0);
 				const celda_f = this.X_to_celda(ultimo_indice);
 				const dimension = this._get_dimension(celda_i, celda_f);
@@ -963,35 +909,12 @@ class Working_Rangos  extends Working_Celdas{
 							break;
 						}
 					}
-					// guardar_rango(`rango_fila_${f}`, inicio, fin);
 					const dimension = this._get_dimension(inicio, fin);
 					this.crear_rango(`rango_fila_${f}`, inicio, dimension, true);
 				}
 			}
 
-			// ┌■ PARES E IMPARES (NONES)
-			if (pares || nones) {
-				const coleccion_pares = [];
-				const coleccion_nones = [];
-				let celda='';
-				for (let i = 0; i <= ultimo_indice; i++) {
-					celda = this.X_to_celda(i);
-					const entrada = { celda_inicio: celda, celda_fin: celda };
-
-					if (i % 2 === 0 && pares) coleccion_pares.push(celda);
-					if (i % 2 !== 0 && nones) coleccion_nones.push(celda);
-				}
-				
-				const rangos_pares = coleccion_pares.map( (celda, index) => { return this.crear_rango(`pares_${index}`, celda, {filas:1, columnas:1}, true) });
-				if (rangos_pares) this.rango_repository.guardar('rangos', 'rango_pares', rangos_pares);
-				
-				const rangos_nones = coleccion_nones.map( (celda, index) => { return this.crear_rango(`nones_${index}`, celda, {filas:1, columnas:1} , true) });
-				if (rangos_nones) this.rango_repository.guardar('rangos', 'rango_nones', rangos_nones);
-
-				coleccion_pares.forEach( (par, i) =>{ this.eliminar_rango(`pares_${i}`); });
-				coleccion_nones.forEach( (impar, i) =>{ this.eliminar_rango(`nones_${i}`); });
-				
-			}
+			
 			// ■ Log
 			console.log("​​​🧩​ Rangos Básicos ​Generados  • • • ✔️   listar() para ver");
 			
@@ -1053,19 +976,6 @@ class Working_Rangos  extends Working_Celdas{
 		const rango_en_d = this.read_rango(nombre_rango.trim());
 		if (!rango_en_d) return null;
 		
-		// ┌•• •••••    •••••••••••
-		// ┌■■ Array or Rectangular?
-		if (Array.isArray(rango_en_d)){
-			// 🔥 Si el Rango "es un array" de Rangos, es posible que pueda ser pares/nones, u otro's. 
-			// 🔥 para que funcione para 'todos', los items tienen que ser los items de cada rango y doy un acumulado.
-			let sumatorio_items = {};
-			for(const rango of rango_en_d){
-				const items = rango.items;
-				sumatorio_items = {...sumatorio_items, ...items};
-			}
-
-			return sumatorio_items;
-		}
 		// ┌■■ Rangos rectangulares
 		const inicio = this._celda_to_fc(rango_en_d.celda_inicio);
 		const fin = this._celda_to_fc(rango_en_d.celda_fin);
@@ -1459,8 +1369,8 @@ class Working_Rangos  extends Working_Celdas{
 		return arr_retorno;
 	}	
 
-	/** ## Devuelve un array de los nombres de las celdas de un rango 
-	 * * @param {String} nombre_rango  'rango_matriz', 'rango_fila_2', 'pares', 'nones', etc.
+	/** ## Devuelve un array de los nombres de las celdas de un rango RECTANGULAR 
+	 * * @param {String} nombre_rango  'rango_matriz', 'rango_fila_2', etc.
 	*/
 	_get_celdas(nombre_rango = 'rango_matriz'){
 		if(String(nombre_rango).trim() === '') 
@@ -1470,13 +1380,7 @@ class Working_Rangos  extends Working_Celdas{
 		const rango = this.read_rango(nombre_rango);
 		if (!rango) return null;
 		
-		// ┌• X Si viene un [ARRAY de Rangos] 
-		if (Array.isArray(rango)) {
-			const rango_filtrado = rango.filter(ran => typeof ran === 'string' && ran.trim() !== '');
-			return rango_filtrado || this._get_ficha_vacia() || {};
-		}
-		
-		// ┌• X Si viene como rango
+		// ┌• Obtiene las celdas ya asociadas a la ficha.
 		if (rango?.items && typeof rango.items === 'object') {
 			return Object.keys(rango.items);
 		}
@@ -1576,6 +1480,55 @@ class Working_Rangos  extends Working_Celdas{
 		};
 		return ficha_rango;
 	}	
+
+	registra_rango_matriz(ultimo_indice_matriz){
+		const celda_i = this.X_to_celda(0, 0);
+		const celda_f = this.X_to_celda(ultimo_indice_matriz);
+		const dimension = this._get_dimension(celda_i, celda_f);
+		this.crear_rango('rango_matriz', celda_i, dimension, true);
+		return this.d_rangos['rango_matriz'] || null;
+	}
+	registra_rango_columna_s(total_filas, total_cols){
+		let contador = 0;
+		for (let c = 0; c < total_cols; c++) {
+			const inicio = this.X_to_celda(0, c);
+			let fin = inicio;
+			for (let f = total_filas - 1; f >= 0; f--) {
+				const indice = this.X_to_indice(f, c);
+				if (indice !== false) {
+					fin = this.X_to_celda(indice);
+					break;
+				}
+			}
+			const dimension = this._get_dimension(inicio, fin);
+			this.crear_rango(`rango_columna_${c}`, inicio, dimension, true);
+			contador = c+1;
+		}
+		return contador;
+	}
+	registra_rango_filas(){
+		let contador = 0;
+		for (let f = 0; f < total_filas; f++) {
+			const inicio = this.X_to_celda(f, 0);
+			let fin = inicio;
+			
+			for (let c = total_cols - 1; c >= 0; c--) {
+				const indice = this.X_to_indice(f, c);
+				if (indice !== false) {
+					fin = this.X_to_celda(indice);
+					break;
+				}
+			}
+			const dimension = this._get_dimension(inicio, fin);
+			this.crear_rango(`rango_fila_${f}`, inicio, dimension, true);
+			contador = f+1;
+		}
+		return contador;
+	}
+	registra_rango_primera_columna(){}
+	registra_rango_ultima_columna(){}
+	registra_rango_primera_fila(){}
+	registra_rango_ultima_fila(){}
 	
 	// get d_rangos(){ return this.d_rangos || {}; }
 	get diccionario(){ return this.d_rangos || {}; }
@@ -1610,7 +1563,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * ghost({celda_inicio:'A0', celda_fin:'E2', dimension:{filas:3, columnas:5} , geo:{}, items:{}, values:{} });
 	 * ```	 */
 	crear_$marco(argumento){
-		if(!argumento) return null;
+		if(!argumento || Array.isArray(argumento)) return null;
 		// ┌••••••••••••••••••••••••••••••••••••••••••
 		// ┌• El parametro de entrada puede ser:
 		// 		1- una dimension en formato '3x4' o {filas:int, columnas:int} 
@@ -1619,13 +1572,7 @@ class Rango_Ghost extends Working_Rangos{
 		let columnas = -1;
 		
 		let rango_ori  = null;
-		if (Array.isArray(argumento)) {
-			// ┌■■ Puede ser: 'union' / 'pares' / 'nones' / 'sillas_ronin' / 'interseccion'
-			// ┌■■ Entra un Array!!! de Rangos
-			const new_ghost = this._crear_ghost_desde_array(argumento);
-			if(!new_ghost) throw Error('ghost::: crear desde array error.')
-
-		}else if(typeof argumento === 'string'){
+		if(typeof argumento === 'string'){
 			// ┌■■ Puede ser una dimesión o un nombre de rango.
 			const dimension_fc = this._normalizar_dimension(argumento);
 			if(dimension_fc) {
@@ -1637,25 +1584,7 @@ class Rango_Ghost extends Working_Rangos{
 			} else { 			
 				// ┌■ 'nombre_rango' en d_rangos 
 				rango_ori = this.read_rango(argumento);
-				if(rango_ori && Array.isArray(rango_ori)){
-					// 🔥 Es rango basico array de Rangos (rango_pares, rango_nones) 🔥
-					const values_argumento = this.to_pull(argumento);	
-					const new_ghost = this._crear_ghost_desde_array(rango_ori);
-					new_ghost.values = values_argumento;
-					
-					// Si es un array nombrado y es array cambia items y pasa a tener solo las celdas implicadas.
-					let d_new_items={}
-					Object.entries(new_ghost.items).forEach(([celda, baldosa])=>{
-						const celdas_match = Object.keys(values_argumento);
-						if(celdas_match.includes(celda)){
-							d_new_items[celda] = baldosa;
-						}
-					});
-					new_ghost.items = d_new_items;
-					
-					this.marco = new_ghost;			
-
-				}else if(rango_ori && !Array.isArray(rango_ori)){				
+				if(rango_ori){
 					// ┌■ cargo los valores en el Rango, pero solo los que tienen datos.
 					this.to_pull(argumento, false);	
 					this.marco = rango_ori;
@@ -1668,7 +1597,7 @@ class Rango_Ghost extends Working_Rangos{
 			if(argumento.celda_inicio && argumento.celda_fin && argumento.geo ) {
 				// ■ Objeto rango.
 				rango_ori = argumento;
-				this._crear_ghost_desde_rango(rango_ori);
+				this._crear_marco_desde_rango(rango_ori);
 			}else if(argumento.filas && argumento.columnas){
 				// ■ Objeto dimension.
 				filas = argumento?.filas;
@@ -1689,7 +1618,7 @@ class Rango_Ghost extends Working_Rangos{
 	/** ### Crea un marco desde un rango ya creado. 
 	 * ### Además convierte los id's de values en objetos  
 	 * ### Siempre un Rango Rectangular */
-	_crear_ghost_desde_rango(ficha_rango){
+	_crear_marco_desde_rango(ficha_rango){
 		// ┌■■ El proceso consiste en llenar de datos this.marco(celda_inicio, celda_fin, dimension, geo, values, items)
 		// Para esto creo un rango en d_rangos con crear, esto llena (celda_ini, celda_fin, dimension y geo.). 
 		// Luego, reasigno values.
@@ -1703,7 +1632,7 @@ class Rango_Ghost extends Working_Rangos{
 		let celda_s_element={};
 		for (const celda in celda_s_id) {
 			const id = celda_s_id[celda];
-			celda_s_element[celda] = this.#_normaliza_elemento(id);
+			celda_s_element[celda] = this.#_normalizar_elemento(id);
 		}
 		// ┌■■ Re-asigno 'values', pero ahora con los elementos_dom en lugar de con los 'id's'
 		this.marco = ficha_rango;
@@ -1725,8 +1654,6 @@ class Rango_Ghost extends Working_Rangos{
 		const ghost_name = this._get_nombre_rango('ghost');		
 		const ficha = this._get_ficha_vacia();
 		
-		// ┌■ Registro el Rango  con datos vacios
-		// this.d_rangos[ghost_name] = ficha;
 		this.rango_repository.guardar('rangos', ghost_name, ficha);
 		// ┌■ Relleno los datos necesarios para obtener geo, items y values. 
 		this.d_rangos[ghost_name].celda_inicio = ci;
@@ -1755,54 +1682,6 @@ class Rango_Ghost extends Working_Rangos{
 		return this.marco;
 	}
 
-	/** ## Hace el tratamiento de array de un ghost {@link crear_$marco} */
-	_crear_ghost_desde_array(argumento){
-		const array_rangos = argumento;
-		let sumatorio_values = {};
-		let sumatorio_items = {};
-		// Cachada del sumatorio de values e items del total de rangos.
-		array_rangos.forEach(rango_x => {
-			// Verificamos que el rango tenga la estructura esperada
-			if (rango_x.values && rango_x.items) {
-				// Fusionamos las propiedades de cada rango en los sumatorios
-				sumatorio_values = { ...sumatorio_values, ...rango_x.values };
-				sumatorio_items  = { ...sumatorio_items, ...rango_x.items };
-			}
-		});
-		// Obtenemos las llaves (F0, B1, etc.) de cualquiera de los sumatorios
-		const sumatorio_celdas = Object.keys(sumatorio_items);
-		// Opcional: Validación simple
-		if (Object.keys(sumatorio_values).length !== sumatorio_celdas.length) {
-			console.log("⚠️ ghost::: Discrepancia entre valores e ítems . . . pero seguimos");
-		}
-		// sumatorio_values -> {F0: 'silla_13', B1: 'silla_2', ...} 
-		// sumatorio_items  -> {F0: 'Gran-Salon_5', B1: 'Gran-Salon_9', ...}
-		// sumatorio_celdas -> ["F0", "B1", "F1", "B6", "F6", "B7"]
-
-		// ┌■ Obtengo la celda_inicio y celda_fin del supuesto rango_unico
-		const cicf = this.__get_cicf_from_celdas(sumatorio_celdas);
-		if(!cicf) throw Error('ghost::: calculo columna_inicio - columna-fin');
-		
-		// Monto el rango como si solo hubiera uno:
-		const dimension_total = this._get_dimension(cicf.celda_inicio, cicf.celda_fin);
-		
-		// Creo el rango para 'cachar geo' y asignarle los valores e items asignados en sumatorio.
-		const nombre_total = this._get_nombre_rango('universal');
-		const rango_total = this.crear_rango(nombre_total, cicf.celda_inicio,  dimension_total, false, true);
-		if(!rango_total) throw Error('ghost::: Error en crear_rango desde Array');
-		this.eliminar_rango(nombre_total);
-		
-		rango_total.values = sumatorio_values;
-		rango_total.items  = sumatorio_items;
-		
-		this.marco = rango_total;
-
-		
-		return this.marco;
-	}
-
-	
-	
 	/** ### Devuelve el contenido actual del ghost
 	 * @param {String} accion  'Mover' | 'Ghost' | 'Cortar' | 'Copiar' | 'Pegar' | 'Volver' | 'Reset' 
 	 * @param {Number} separacion  Espacio de separación entre las matrices (La separación dinámica)
@@ -1878,10 +1757,10 @@ class Rango_Ghost extends Working_Rangos{
 		const GAP = ' '.repeat(separacion); 
         
 		// ┌• Obtener  values e items  'en Salon'     
-        const nombre_g = this._nombrar_rango_anonimo(this.marco);
-        const d_values_salon  = this._get_values(nombre_g, false, true);
-        const d_items_salon = this._get_items(nombre_g, false);
-        this.eliminar_rango(nombre_g);
+        const nombre_marco = this.registrar_marco_en_rangos();
+        const d_values_salon  = this._get_values(nombre_marco, false, true);
+        const d_items_salon = this._get_items(nombre_marco, false);
+        this.eliminar_rango(nombre_marco);
 
 		// ┌• Array de string 'B4:silla_3','A4:mesa_1', . . .   del Salon
 		let values_rango = '';
@@ -2060,10 +1939,10 @@ class Rango_Ghost extends Working_Rangos{
 	 * ### • VOY A INTENTAR 'CORTAR' LOS ELEMENTOS DIRECTAMENTE PORQUE GHOST VIVE EN EL DOM. NO SE GUARDA.
 	*/	
 	cortar_$marco() {
-		const ghost_name = this._nombrar_rango_anonimo(this.marco);
+		const nombre_marco = this.registrar_marco_en_rangos();
 		try {
 			// Obtener los elementos del DOM directamente y no el id del elemento usando el tercer parámetro en true
-			const elementos_r = this._get_values(ghost_name, false, true);
+			const elementos_r = this._get_values(nombre_marco, false, true);
 			// Acción de CORTAR: Remover los elementos del DOM + Cachar celda:elemento en d_values.
 			const d_values = {};
 			Object.keys(this.marco.items || {}).forEach(celda => {
@@ -2081,12 +1960,12 @@ class Rango_Ghost extends Working_Rangos{
 			this.accion = 'cortar';
 			// 🍏
 			this.informe_marco_consola(this.accion);
-			this.eliminar_rango(ghost_name);
+			this.eliminar_rango(nombre_marco);
 			
 			return d_values;		
 		} catch (error) {
 			console.log(error);
-			this.eliminar_rango(ghost_name);
+			this.eliminar_rango(nombre_marco);
 			return false;			
 		}
 	}
@@ -2159,12 +2038,12 @@ class Rango_Ghost extends Working_Rangos{
 			}
 			// ┌■■ un clon del elemento-menu es el que hay que pegar.
 			if (this.accion === 'crear') {
-				celda_elemento[celda] = this.#_normaliza_elemento(elemento_origen) || null;
+				celda_elemento[celda] = this.#_normalizar_elemento(elemento_origen) || null;
 				continue;
 			}
 			// ┌■■ el elemento_dom es el que se tiene que pegar.
 			if (this.accion === 'cortar') {
-				celda_elemento[celda] = this.#_normaliza_elemento(elemento_origen) || null;
+				celda_elemento[celda] = this.#_normalizar_elemento(elemento_origen) || null;
 				continue;
 			}
 			// ┌■■ un clon del elemento_dom es el que se tiene que pegar.
@@ -2182,7 +2061,7 @@ class Rango_Ghost extends Working_Rangos{
 	}
 
 
-	/** Pega cada elemento en su celda. La preparación y comprobación de las baldosas son externas. 
+	/** Pega los values del marco en las baldosas dom.
 	 * devuleve un array de diccionario {baldosa:<obj_baldosa1, elemento:<obj_silla_5>, .... }
 	*/
 	pegar_$marco() {
@@ -2372,9 +2251,9 @@ class Rango_Ghost extends Working_Rangos{
 	 * const tres = X_to_elemento_('silla_1'); // ► crea <element div>, lo saloniza, lo devuelve.
 	 * array_elementos.map(elemento=>{ _crear_y_salonizar(elemento) }); // ► si son ids, ahora son elementos, si son elementos, lo siguen siendo y si no existen los crea.
 	 * ```	 * */
-	#_normaliza_elemento(elemento){		
-		if (typeof this.ref_Salon?.resolver_elemento !== 'function') return null;
-		return this.ref_Salon.resolver_elemento(elemento);
+	#_normalizar_elemento(elemento){		
+		if (typeof this.ref_Salon?.api_normalizar_el_player !== 'function') return null;
+		return this.ref_Salon.api_normalizar_el_player(elemento);
 	}
 
 	/** ## obtiene las Coordenadas con offset.
@@ -2400,6 +2279,22 @@ class Rango_Ghost extends Working_Rangos{
 		return celda_retorno ? celda_retorno : '';
 	}
 
+	/** 
+	 * ### registro la ficha del marco en d_rangos.
+	 * ### Este proceso vale para hacer operaciones con el marco como un rango de working_Rangos
+	 * */
+	registrar_marco_en_rangos(){
+		if (this.marco){
+			// ┌■ Objeto rango.
+			const nombre_marco = this._get_nombre_rango('marco');		
+			this.registrar_ficha(nombre_marco, this.marco);
+			// ┌■
+			return nombre_marco;
+		}else{
+			return '';
+		}
+		
+	}
 	
 }
 
@@ -2746,11 +2641,11 @@ class Wedding_Rangos extends Rango_Ghost{
 				Ran = this._crear_ghost_desde_dimension(dimension_fc.filas, dimension_fc.columnas);
 			} else{
 				// ■ 'nombre_rango' en d_rangos
-				Ran = this._crear_ghost_desde_rango(argumento);
+				Ran = this._crear_marco_desde_rango(argumento);
 			}
 		}else if(typeof argumento === 'object' && argumento.celda_inicio && argumento.celda_fin && argumento.geo){
 			// ■ Rango Anonimo con ficha completa.
-			Ran = this._crear_ghost_desde_rango(argumento);
+			Ran = this._crear_marco_desde_rango(argumento);
 		}else{
 			// ■ No se reconoce el formato de entrada.
 			return this._get_ficha_vacia();		
@@ -2896,6 +2791,8 @@ class Reserva_Range_Mapper {
 		rango.values = values;	// dict: {'B0': 'silla_1', 'B1': 'mesa_0', ...}
 		return rango;
 	}
+
+
 	
 }
 
@@ -3006,6 +2903,13 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 		Object.keys(this.d_reservas).forEach(nombre_rango => { this.to_pull(nombre_rango); });
 		return true;
 	}	
+
+	/** ### Entra una reserva y devuelve las baldosas del rango de la reserva.
+	* ### Tengo que pasar la reserva a rango  y 
+	* ### en el rango.items con los ids de las baldosas */
+	get_baldosas_reserva(id_el){
+	}
+	
 	
 }
 

@@ -246,11 +246,11 @@ class e_Salon extends Tablero_Touch {
 			silla_14: 45, silla_16: 54, silla_15: 52, mesa_5: 53, silla_19: 61 , 
 			mesa_6: 75, silla_21: 74, silla_20: 76,  			
 		};
-		const d_mensajs_mock = {silla_0: "Cliente Especial", 
-								mesa_0: 'Reserva Miguel Garrido', 
-								silla_2: 'Cliente Pesado', 
-								mesa_2: 'Mr Smith Jr', 
-								mesa_4: 'Quiere 5 sillas. No sabe cuantos van a venir. 3 mesas', 
+		const d_mensajs_mock = {silla_0: "Una mesa es una reserva.", 
+			mesa_0: 'Cuando juntas mesas, forman una sola reserva tb.', 
+			silla_2: 'Todas las sillas sueltas tb forman tb una reserva: Ronin', 
+			mesa_2: 'Los clientes(sillas, taburetes...) tienen alergias, las reservas NO.', 
+								mesa_4: 'Se pueden poner mensajes en las mesas(reservas) y en las sillas(clientes)', 
 		};
 		
 		const d_alergias_mock = {silla_0: ['soja', 'lacteos'], 
@@ -258,15 +258,19 @@ class e_Salon extends Tablero_Touch {
 								silla_21:['pescado'] ,
 								silla_18:['gluten']
 		};
-		
+							
+		// 💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥 fin mocks.
+
 		// ┌■■ CARGA LOS ELEMENTOS EN EL SALON (UI)
 		const ok_elements = this._load_elementos_en_Salon(d_indices_mock);
+		
 		// ┌■■ REGISTRA LOS ELEMNTOS RECIEN CARGADOS
 		this.RegisteR();
-
+		
+		// this.CFG.api_re_posicionar();				
+		
 		// ┌■■ REGISTRA EL MOTOR DE ALERGIAS  (PESTAÑA DE LOGICA) 
 		// const MA = Catalogo.get_motor('motor_alergias');
-		// this.CFG.api_re_posicionar();				
 		const ok_alerg = this._load_alergias_en_Salon(d_alergias_mock);		
 		// console.log(JSON.stringify(MA.d_data, null, 2)); 
 		
@@ -316,12 +320,12 @@ class e_Salon extends Tablero_Touch {
 	}
 
 	/**
-	 * Resuelve un elemento que se quiere colocar en el salón.
-	 * La creación desde el catálogo pertenece a Salon, no a los rangos.
+	 * ### Resuelve/Devuelve un elemento que se quiere colocar en el salón. Si no Existe, lo Crea.
+	 * ### Usado en Rangos para obtener elementos.
 	 * @param {String|HTMLElement} elemento Elemento existente o su identificador.
 	 * @returns {HTMLElement|null}
 	 */
-	resolver_elemento(elemento) {
+	api_normalizar_el_player(elemento) {
 		if (typeof elemento === 'string' && elemento.trim() !== '') {
 			// ┌■■ Viene como ID
 			const id_elemento = elemento.trim();
@@ -349,6 +353,30 @@ class e_Salon extends Tablero_Touch {
 		}
 		return elemento;
 	}
+
+	/** 
+	 * @param {String} id_elemento Entra un string ( id de elemento, id_key, dataset.id_key )
+	 * ### Retorna {HTMLObjectElement} Sale un clon de un elemento del menú Side_Elementos(factoría de elementos a clonar).	 
+	 * */
+	api_get_clon_menu(id_elemento=''){
+		let key_menu = '';
+		for (const key of Catalogo.get_keys()) {
+			if (id_elemento.startsWith(key)) key_menu = key;
+		}
+		if (!key_menu) return null;
+
+		const elemento_menu = this.Side_Elementos?.get_elemento_menu(key_menu);
+		if (!elemento_menu) return null;
+
+		const nuevo_elemento = elemento_menu.cloneNode(true);
+		nuevo_elemento.id = Herramientas.get_dom_secuency(key_menu);
+		
+		// ┌■ Saloniza(asignar dataset.id_key, clases_css, listenners)
+		this._saloniza_elemento(nuevo_elemento);
+		
+		return nuevo_elemento;
+	}
+
 
 	/** 
 	 entorno:{tipo='MOVIL', es_tactil=false, ancho_ventana=558}
@@ -1493,6 +1521,7 @@ class e_Salon extends Tablero_Touch {
 		el.dataset.id_key = key_catlog ? key_catlog : el.dataset.id_key;
 		
 		el.title = el.id;
+		el.style.visibility = 'visible';
 		
 		el.className = "";		
 		el.classList.add(el.dataset.id_key);
@@ -1857,8 +1886,8 @@ class Configuracion_Salon {
 	 */
 	api_re_posicionar(gap=0) {		
 		const Salon = this.Salon || null;
-		const Ranget = this.Salon.eRdS || null; 
-		if (!Salon || !(Salon instanceof e_Salon) || !Ranget || !(Ranget instanceof El_Rango_del_Salon)) {			
+		const RAN = this.Salon.eRdS || null; 
+		if (!Salon || !(Salon instanceof e_Salon) || !RAN || !(RAN instanceof El_Rango_del_Salon)) {			
 			return null;
 		}
 		// ┌••••••••••••••••••••••• 
@@ -1908,7 +1937,7 @@ class Configuracion_Salon {
 				const MAX_INTENTOS = 500;  
 				while (!is_colocado && intentos < MAX_INTENTOS) {
 					intentos++;
-					let rango_free = Ranget._busca_dimension_free(dim_ficha, cursor);					
+					let rango_free = RAN._busca_dimension_free(dim_ficha, cursor);					
 					// Si no hay hueco desde el cursor, RE-INTENTO desde A0
 					if (!rango_free) {
 						if (cursor !== 'A0') {
@@ -1922,7 +1951,7 @@ class Configuracion_Salon {
 					// ┌•• Validacion de Vecinos / Politica del Posicionamiento.
 					if (this._es_posicion_conflictiva(rango_free, ficha_geo, ids_reserva)) { 
 						// ◘◘◘ CONFLICTO: Avanzamos el cursor 1 posición y reintentamos(continue)
-						const siguiente_celda = Ranget.plus(rango_free.celda_inicio, 1); 
+						const siguiente_celda = RAN.plus(rango_free.celda_inicio, 1); 
 						if (!siguiente_celda) {
 							// throw new Error("💯 Fin del tablero alcanzado buscando hueco sin conflictos. 💯");
 							break;
@@ -1934,10 +1963,10 @@ class Configuracion_Salon {
 					// ┌•• Si llegamos aquí: No es posicion-conflictiva y Colocamos Fisicamente.
 					const celda_base_destino = rango_free.celda_inicio;
 					ficha_geo.items.forEach(item => {
-						const celda_destino = Ranget.suma_fc(celda_base_destino, item.delta_y, item.delta_x);
+						const celda_destino = RAN.suma_fc(celda_base_destino, item.delta_y, item.delta_x);
 						
 						if (celda_destino) {
-							const indice_matriz = Ranget.X_to_indice(celda_destino);
+							const indice_matriz = RAN.X_to_indice(celda_destino);
 							const baldosa = this.Salon._get_baldosa(indice_matriz);
 							
 							if (baldosa) {
@@ -1952,17 +1981,17 @@ class Configuracion_Salon {
 					
 					// ┌••          ••••••••               ••••••           ••••••    
 					// ┌•• Preparar -Cursor- para La Siguiente Reserva con  margin = 0 (byDef)
-					const ini_fc = Ranget.X_to_fc(rango_free.celda_inicio);
-					const fin_fc = Ranget.X_to_fc(rango_free.celda_fin); 
+					const ini_fc = RAN.X_to_fc(rango_free.celda_inicio);
+					const fin_fc = RAN.X_to_fc(rango_free.celda_fin); 
 					
 					// ┌■ margin = 0 es justito, margin = 1 es con un espacio de separación.
-					// const next_celda = Ranget._fc_to_celda(ini_fc.fila, fin_fc.columna + 2);	  // Original. Justito.
-					const next_celda = Ranget._fc_to_celda(ini_fc.fila, fin_fc.columna + 2 + gap);
+					// const next_celda = RAN._fc_to_celda(ini_fc.fila, fin_fc.columna + 2);	  // Original. Justito.
+					const next_celda = RAN._fc_to_celda(ini_fc.fila, fin_fc.columna + 2 + gap);
 					if (next_celda) {
 						cursor = next_celda;
 					} else {
 						
-						const next_row = Ranget._fc_to_celda(fin_fc.fila + 1, 0);
+						const next_row = RAN._fc_to_celda(fin_fc.fila + 1, 0);
 						cursor = next_row ? next_row : 'A0';
 					}
 					is_colocado = true; 
@@ -2511,7 +2540,7 @@ class Configuracion_Salon {
 	 */
 	_procesar_geometria_relativa(foto_reservas) {
 		const arr_retorno = [];
-		const Ranget = this.Salon.eRdS;
+		const RAN = this.Salon.eRdS;
 
 		foto_reservas.forEach((reserva, i) => {
 			// 1. Identificar todos los IDs de la reserva
@@ -2554,9 +2583,9 @@ class Configuracion_Salon {
 			// ┌•• Recolectar coordenadas 
 			ids_items.forEach(id => {
 				// ┌•• Clase Rango para consultar la celda. Si la matriz está vacía, no se procesa.
-				const celda = Ranget._search_celda(id); 
+				const celda = RAN._search_celda(id); 
 				if (celda) {
-					const fc = Ranget._celda_to_fc(celda);
+					const fc = RAN._celda_to_fc(celda);
 					if (fc.fila < minF) minF = fc.fila;
 					if (fc.fila > maxF) maxF = fc.fila;
 					if (fc.columna < minC) minC = fc.columna;
@@ -2589,7 +2618,7 @@ class Configuracion_Salon {
 
 				if (celda_original && elemento_dom) {
 					// ┌•• Usamos la celda original para calcular el delta
-					const fc_item = Ranget._celda_to_fc(celda_original);
+					const fc_item = RAN._celda_to_fc(celda_original);
 					
 					// ┌•• Calculamos el Delta (Distancia desde la esquina superior izquierda del rango)
 					const delta_y = fc_item.fila - minF;
@@ -4975,18 +5004,18 @@ class Foto_CRUD{
 	_set_payload_create(valores_offcanvas) {
 		
 		// ┌•• Cacho el rango_matriz
-		const Ranget  = this?.Salon?.eRdS;
-		if(!Ranget) return;
+		const RAN  = this?.Salon?.eRdS;
+		if(!RAN) return;
 		
 		// ┌•• Le hace una foto al salón en este momento
 		const dicc_api_foto = this.Salon?.api_foto();
 		const dimension = this.Salon.dimension;		
 		
 		// ┌•• Cacho los rangos de las reservas de la foto.
-		const rangos_reservas = Ranget._reservas_a_rangos(dicc_api_foto.reservas || [], dicc_api_foto.indices, dimension || null);
+		const rangos_reservas = RAN._reservas_a_rangos(dicc_api_foto.reservas || [], dicc_api_foto.indices, dimension || null);
 		// ┌•• Cacho el Rango Matriz.
-		Ranget.to_pull('rango_matriz');
-		const rango_matriz = Ranget?.d_rangos["rango_matriz"];
+		RAN.to_pull('rango_matriz');
+		const rango_matriz = RAN?.d_rangos["rango_matriz"];
 
 		const rango_tot = {reservas: rangos_reservas , matriz: rango_matriz};
 		
@@ -5099,13 +5128,13 @@ class Foto_CRUD{
 	async _accion_cargar_elementos_en_Salon(foto_id) {
 		const Salon = this.Salon || null;
 		const CFG = this?.Salon?.CFG;			
-		const Ranget = this?.Salon?.eRdS || null;
+		const RAN = this?.Salon?.eRdS || null;
 		// ┌■ Validacion
-		if(!Salon || !CFG || !Ranget) 
+		if(!Salon || !CFG || !RAN) 
 			return;
 
 		// ┌■ De Salon a los rangos abiertos.
-		Ranget.pull_all();
+		RAN.pull_all();
 		// ┌■ Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
 		CFG.limpiar_Salon();		
 		// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos
@@ -5145,18 +5174,19 @@ class Foto_CRUD{
 			// -----------
 			// 🧩 Cacho los RANGOS desde la Base de datos: la Reserva "no está" o "no tiene pq estar" sobre la mesa.
 			// SIMPLIFICAR CARGANDO rango_matriz. comprobar dimensiones y que hacer cuando cambian.
-			const rango_s_en_BDD = Ranget._reservas_a_rangos(foto_bdd?.dicc_reservas, 
+			const rango_s_en_BDD = RAN._reservas_a_rangos(foto_bdd?.dicc_reservas, 
 															 foto_bdd?.dicc_indices, 
 															 {filas:filas_bdd, columnas:columnas_bdd});
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
-					const marco = Ranget.crear_$marco(rango);	
-					const nombre_f = Ranget._nombrar_rango_anonimo(marco);
-					Ranget.pegar_$marco();
-					Ranget.eliminar_rango(nombre_f);
+					RAN.crear_$marco(rango);	
+					const nombre_marco = RAN.registrar_marco_en_rangos();
+					RAN.pegar_$marco();
+					RAN.eliminar_rango(nombre_marco);
 
 					// diccionario {'b0':<obj_silla_0>. ...}
-					const celda_s_elemento = Ranget.get_celda_s_elemento_del_marco();
+					const celda_s_elemento = RAN.get_celda_s_elemento_del_marco();
+					// ┌■ Los elementos tienen las clases y dataset del menu. Esto las cambia.
 					Object.values(celda_s_elemento).forEach(elemento => {
 						Salon._saloniza_elemento(elemento);
 					});
@@ -5203,8 +5233,8 @@ class Foto_CRUD{
 	 * ### • Si hay cambiio de dimensiones gestiona las opciones	 */
 	async __el_portero_de_carga(modelo_salon, filas_salon, columnas_salon, filas_bdd, columnas_bdd){
 		
-		const Ranget = this.Salon.eRdS || null;
-		if(!Ranget) return;
+		const RAN = this.Salon.eRdS || null;
+		if(!RAN) return;
 		const Salon = this.Salon || null;
 		if(!Salon) return;
 		const CFG = this.Salon?.CFG;			// Configuracion_Salon
@@ -5227,8 +5257,7 @@ class Foto_CRUD{
 			msg += `<br><br><h5>Al cargar este salón se perderá el trabajo actual no guardado.</h5>`;				
 			const label = `<br><br>Escribe la Columna de Inicio Desde la foto ${photo.filas}x${photo.columnas}`;
 			
-			Ranget.api_crear("", celda_inicio_rango_open, dimension, false, false);
-			// let celda_s = 
+			RAN.crear_rango("", celda_inicio_rango_open, dimension, false, false);
 			
 			const entre_estos = ['A0', 'B0', 'C0', 'D0', 'E0'];
 			const retorno = await Alertas_UI.CombIN(`${titulo}`, `${msg}`, `${label}`, entre_estos, "warning", 'A0');
@@ -5237,8 +5266,8 @@ class Foto_CRUD{
 			// Extrae fila y columna de los datos de la resupuesta de usuario:
 			const match = celda_inicio_rango_open.trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
 			if (!match) return null;			
-			fila = Ranget._entero_positivo(match[2]);
-			columna = Ranget._AZ_to_numcol(match[1]);
+			fila = RAN._entero_positivo(match[2]);
+			columna = RAN._AZ_to_numcol(match[1]);
 
 		}else{
 			// ┌•• Mensaje Confirmacion - Dimension
