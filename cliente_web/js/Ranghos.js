@@ -1550,17 +1550,18 @@ class Rango_Ghost extends Working_Rangos{
 		this.num_pegar = 0;		    // cuenta el numero de pastes realizados desde el ultimo 'cut | copy'
     }
 
-	/** ## Un Rango 'ghost' es un marco 'invisible' que se coloca sobre el Salon Cogiendo, Yendo, Viniendo y Pegando.
+	/** 
+	 * ## Un Rango 'marco'(ghost) es un marco 'invisible' que se coloca sobre el Salon Cogiendo, Yendo, Viniendo y Pegando.
 	 * ### • El parametro de entrada puede ser:
 	 * #### 1- Dimension en formato '3x4' o {filas:int, columnas:int} , y generará un rango de 3 filas y 4 columnas desde 'A0'
-	 * #### 2- Nombre_rango(string)  del diccionario de rangos. 'ghostiza' el rango posicionandose encima y tomando sus datos.
-	 * #### 3- Un rango anonimo: { celda_inicio:str, celda_fin:str, dimension:{}, geo:{}, items:{}, values:{} }
+	 * #### 2- Nombre_rango(string)  del diccionario de rangos 'lo enmarca' posicionandose encima y tomando sus datos.
+	 * #### 3- Una ficha-rango: { celda_inicio:str, celda_fin:str, dimension:{}, geo:{}, items:{}, values:{} }
 	 * #### Devuelve el nombre del ghost recien creado o null. 
 	 * ```javascript
-	 * ghost('3x4');
-	 * ghost({filas:3, columnas:4});
-	 * ghost('rango_fila_2');	
-	 * ghost({celda_inicio:'A0', celda_fin:'E2', dimension:{filas:3, columnas:5} , geo:{}, items:{}, values:{} });
+	 * crear_marco('3x4'); ► Crea un marco con ci('A0')	 de dimension 3x4
+	 * crear_marco({filas:3, columnas:4});	► ► Crea un marco con ci('A0')	 de dimension 3x4
+	 * crear_marco('rango_fila_2');	► Crea un marco si rango_fila_2 está registrado en this.d_rangos
+	 * crear_marco(celda_inicio:'A2', dimension:{filas:3, columnas:4}); ► Crea un marco con ci('A2') de dimension 3x4
 	 * ```	 */
 	crear_$marco(argumento){
 		if(!argumento || Array.isArray(argumento)) return null;
@@ -1607,7 +1608,6 @@ class Rango_Ghost extends Working_Rangos{
 		}
 
 		this.num_pegar = 0;
-		// 🍏
 		this.accion = 'crear';
 		this.informe_marco_consola('Crear');
 		// ┌■ RETORNO
@@ -1812,10 +1812,10 @@ class Rango_Ghost extends Working_Rangos{
         const BARRAINI = `${F.bright}${F.green}${BARRA}${F.reset}`;
         const BARRAFIN = `${F.bright}${F.gray}${LINEA}${F.reset}\n`;
 		const BASTON = `${F.bright}${F.gray}┌■■${F.reset}`;
-		const action = `${BASTON}${F.red} ACCION${F.reset}: ${this.accion}`;
+		const action = `${BASTON}${F.cyan} ACCION${F.reset}: ${this.accion}`;
 		
 		// ┌■ Cabecera (Techo)
-        console.log(`${BARRAINI} ► " ${F.red}${accion}${F.reset} "`);
+        console.log(`${BARRAINI} ► " ${F.cyan}${accion}${F.reset} "`);
 		
 		// ┌■ Imprimir las matrices lado a lado
 		linea_s_to_print.forEach(linea =>{console.log(linea)});
@@ -1827,14 +1827,14 @@ class Rango_Ghost extends Working_Rangos{
         console.log(` ${F.bright}${F.gray}${under_salon}${GAP}${under_rango}${F.reset}`);
         
 		// ┌■ Metadatos
-		const ci = `${BASTON} CELDA_${F.red}INI${F.reset}: "${this.marco.celda_inicio}"`;
-		const cf = `${BASTON} CELDA_${F.red}FIN${F.reset}: "${this.marco.celda_fin}"`;
-		const dim = `${BASTON} ${F.red}DIM${F.reset}: ( ${this.marco.dimension.filas} x ${this.marco.dimension.columnas} )`;
-		const geo = `${BASTON} ${F.red}GEO${F.reset}: ${this.marco.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
-		const items = `${BASTON} ${F.red}ITEMS${F.reset}: ${this.marco.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
-		const paste = `${F.gray}┌■■${F.reset} Nº ${F.red}PASTEs${F.reset}: ${this.num_pegar}`;
-		const values_rango_str = `${BASTON} VALUES ${F.red}RANGO${F.reset}: ${F.bright}${F.red}■ ${F.reset}${values_rango}${F.bright}${F.red}█▀▄█${F.reset}`;
-		const values_salon_str = `${BASTON} VALUES ${F.red}SALON${F.reset}: ${F.bright}${F.red}■ ${F.reset}${values_salon}${F.bright}${F.red}█▀▄█${F.reset}`;
+		const ci = `${BASTON} CELDA_${F.cyan}INI${F.reset}: "${this.marco.celda_inicio}"`;
+		const cf = `${BASTON} CELDA_${F.cyan}FIN${F.reset}: "${this.marco.celda_fin}"`;
+		const dim = `${BASTON} ${F.cyan}DIM${F.reset}: ( ${this.marco.dimension.filas} x ${this.marco.dimension.columnas} )`;
+		const geo = `${BASTON} ${F.cyan}GEO${F.reset}: ${this.marco.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
+		const items = `${BASTON} ${F.cyan}ITEMS${F.reset}: ${this.marco.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
+		const paste = `${F.gray}┌■■${F.reset} Nº ${F.cyan}PASTEs${F.reset}: ${this.num_pegar}`;
+		const values_rango_str = `${BASTON} VALUES ${F.cyan}RANGO${F.reset}: ${F.bright}${F.cyan}■ ${F.reset}${values_rango}${F.bright}${F.cyan}█▀▄█${F.reset}`;
+		const values_salon_str = `${BASTON} VALUES ${F.cyan}SALON${F.reset}: ${F.bright}${F.cyan}■ ${F.reset}${values_salon}${F.bright}${F.cyan}█▀▄█${F.reset}`;
 		// ┌■ Los imprimo.
 		console.log(`${ci}  ${cf}  ${dim}  ${geo}  ${items}`);
 		console.log(`${action} ${paste}`);
