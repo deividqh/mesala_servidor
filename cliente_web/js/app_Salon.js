@@ -301,9 +301,8 @@ class e_Salon extends Tablero_Touch {
 		const copia = this.eRdS._copy_rango('rango_columna_0', 'rango_colum_one');
 		// 🧩 Creo un marco de rango_matriz.
 		const marco_matriz = this.eRdS.crear_$marco('rango_matriz');			
-		// 🧩 Convierto en un rango el ghost_3 creado.
-		const to_rango = this.eRdS.X_to_rango(marco_reasig);
-		this.eRdS.informe_marco_consola();
+		// 🧩 Informe de lo que contiene el rango_matriz recien creado.
+		this.eRdS.informe_marco_consola("Informe rango_matriz", 5);
 		// 🧩 La prueba consiste en coger la Letra que me ha pasado el Usuario en may, calcular la columna, 
 		// 🧩 hacer un sub-rango desde esa letra cuenta la dimension actual(8/16/24) según donde estemos(movil)		
 		// 🧩 ahora hay que adaptar sub-rango para que pueda cachar rangos directamente???
@@ -1133,87 +1132,6 @@ class e_Salon extends Tablero_Touch {
 		const MA = Catalogo.get_motor('motor_alergias');
 		const d_alergias  = MA?.d_data || {};
   		return d_alergias;
-	}
-
-
-
-	/** 🚫
-	 * ### Genera una \"foto\" del salón fusionando reservas con posiciones y la configuración limpia.
-	 * ### TODO EN UNO.
-	 * #### VER api_foto() MÁS ABAJO.				
-	 * @returns     
-	 * ```javascript
-	 * { config: {..}, reservas: [ { mesas:[{mesa_0:{..., indice}}], ... } ] }
-	 * ```
-	 */
-	api_foto_all_one(){
-
-		// ■■■■■■ DATOS DE ENTRADA
-		const reservas_raw = this.api_reservas();
-		const dicc_api_reservas = Array.isArray(reservas_raw) ? reservas_raw : [];		
-		const dicc_api_indices = this.api_indices() || {};
-
-		const agregarIndice = (coleccion = {}) => {
-			if (!coleccion || typeof coleccion !== 'object') return {};
-			const salida = {};
-			for (const elementoId in coleccion) {
-				if (!elementoId) continue;
-				const detalles = coleccion[elementoId] || {};
-				salida[elementoId] = {
-					...detalles,
-					indice: dicc_api_indices[elementoId] ?? null
-				};
-			}
-			return salida;
-		};
-
-		// Procesa todas las reservas para agregar índices
-		const reservas_con_indices = dicc_api_reservas.map((reserv = {}) => ({
-			reservadores: agregarIndice(reserv.reservadores),
-			clientes: agregarIndice(reserv.clientes)
-		}));		
-
-		// ■■■■■■ CONFIGURACION
-		
-		// Limpia y estructura la configuración
-		const CFG = this.dicc_config || {};
-		const sanitizeDomRef = (valor) => {
-			if (!valor) return null;
-			if (typeof valor === 'string') return valor;
-			if (typeof valor === 'object') {
-				if ('id' in valor && valor.id) return valor.id;
-				return null;
-			}
-			return null;
-		};
-
-		// Devuelve una copia simple de un valor (objeto o primitivo)
-		const cloneSimple = (valor) => {
-			if (!valor || typeof valor !== 'object') return valor ?? null;
-			try {
-				return JSON.parse(JSON.stringify(valor));
-			} catch (error) {
-				return null;
-			}
-		};
-
-		// Limpia y estructura la configuración
-		const config_limpio = {
-			family: CFG.salon.family ?? '',
-			columnas: CFG.salon.columnas ?? this.columnas ?? null,
-			filas: CFG.salon.filas ?? this.filas ?? null,
-			div_maestro: sanitizeDomRef(CFG.salon.div_maestro),
-			contenedor: CFG.salon.contenedor ?? '',
-			tipos: cloneSimple(Catalogo.get_keys()) || {},
-			clases_css: cloneSimple(CFG.salon.clases_css) || {},
-			rutas: cloneSimple(CFG.salon.rutas) || {},
-		};
-		
-		// ■■■■■■ RETORNO FINAL
-		return {
-			configuracion: config_limpio,
-			reservas: reservas_con_indices
-		};
 	}
 
 	/**
@@ -5056,8 +4974,7 @@ class Foto_CRUD{
 	}
 
 	/**
-	 * 
-	 */
+	 * Normalización de la ficha de BDD.	 */
 	_set_payload_update_ficha(valores_ficha_salon){
 		if(!valores_ficha_salon) return false;
 		const vfs = valores_ficha_salon;
@@ -5168,10 +5085,11 @@ class Foto_CRUD{
 				throw('Dimensiones Distintas');
 			}
 
-			console.log( `\n• • • • • • • •  INI CARGAR ELEMENTOS: + ${foto_id} ► ${foto_bdd.titulo}`);
+			console.log( `\n█ █ █ █ █ █ █ █ █ █ █ █  INI CARGAR ELEMENTOS: + ${foto_id} ► ${foto_bdd.titulo}`);
 			
-			// ┌■■ RANGOS
-			// -----------
+			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
+			// 🔳🔳🔳🔳🔳 CARGA de SALON 🔳🔳🔳🔳🔳
+
 			// 🧩 Cacho los RANGOS desde la Base de datos: la Reserva "no está" o "no tiene pq estar" sobre la mesa.
 			// SIMPLIFICAR CARGANDO rango_matriz. comprobar dimensiones y que hacer cuando cambian.
 			const rango_s_en_BDD = RAN._reservas_a_rangos(foto_bdd?.dicc_reservas, 
@@ -5194,15 +5112,12 @@ class Foto_CRUD{
 				});
 			}
 
-			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
-			// 🔳🔳🔳🔳🔳 CARGA de SALON 🔳🔳🔳🔳🔳
-
 			// ┌■ Cacho los datos que nos interesan para cargar las sillas y las mesas.
 			const d_indices = foto_bdd.dicc_indices;
 			const d_mensajes = foto_bdd.dicc_mensajes;
 			const d_alergias = foto_bdd.dicc_alergias;
 
-			// ┌■ INDICES
+			// ┌■ INDICES ( Sustituto seguro de Rangos)
 			// Salon._load_elementos_en_Salon(d_indices);
 			// ┌■ MENSAJES
 			Salon._load_mensajes_en_Salon(d_mensajes);
@@ -5211,7 +5126,7 @@ class Foto_CRUD{
 
 			// ┌■ REGISTRAR.
 			Salon.RegisteR();
-			console.log(" • • • • • • • •  FIN CARGAR ELEMENTOS");
+			console.log("█ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ FIN CARGAR ELEMENTOS");
 			Alertas_UI._NotA('✅ Foto Cargada con Exito', 'Listo para empezar!', 'success', 1500);
 			
 			// ┌■ Icono-navbar info foto.

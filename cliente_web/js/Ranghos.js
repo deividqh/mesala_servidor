@@ -668,7 +668,7 @@ class Working_Rangos  extends Working_Celdas{
 			this.rango_repository.registrar_fuente('rangos', this.d_rangos);
 			
 			// ■■ Inicializa los rangos FIX y los registra en this.d_rangos.
-			this._init_rangos_basicos(true, true, true);
+			this._set_rangos_fijos(true, true, true);
         }
 		
 		/** ### Crea nombre secuencial del nombre_rango. Empieza la cuenta en rango_0  */
@@ -815,6 +815,7 @@ class Working_Rangos  extends Working_Celdas{
 		 * ### • ficha ► es una ficha-rango completa.
 		 * ### ■ devuelve 'nombre_rango' si se completó con exito y false si no se completó con exito. 	*/
 		registrar_ficha(nombre_rango, ficha){
+			if(!this._validar_ficha(ficha)) return {};
 			if(ficha && ficha.celda_inicio && ficha.celda_fin && ficha.geo && ficha.items  ){		
 				if(!nombre_rango || typeof nombre_rango != 'string' || nombre_rango.trim() === ''){
 					nombre_rango = this._get_nombre_rango('rango', this.d_rangos);
@@ -822,6 +823,19 @@ class Working_Rangos  extends Working_Celdas{
 				const rango = ficha;
 				return this.rango_repository.guardar('rangos', nombre_rango, rango) ? nombre_rango : false;
 			}		
+		}
+
+		/** ### Valida que es la entrada es una ficha-rango. 
+		 * ### Devuelve True o False		 */
+		_validar_ficha(ficha_rango){
+			if(typeof ficha_rango === 'object' && 
+					ficha_rango.celda_inicio && ficha_rango.celda_fin && 
+					ficha_rango.dimension && 
+					ficha_rango.geo && ficha_rango.items && 
+					ficha_rango.values ){
+				return true;
+			}
+			return false;
 		}
 
 		/**
@@ -856,69 +870,7 @@ class Working_Rangos  extends Working_Celdas{
 
 		
 		
-		/**
-		 * ### Genera los rangos FIXED solicitados: Filas, Columnas, Matriz.
-		 * ### Se debe llamar tras crear la matriz o si cambian sus dimensiones drásticamente.
-		 * @param {Boolean} b_rango_matriz , true, crea rango_matriz 
-		 * @param {Boolean} filas , true, crea rango_fila_[0,1,2...]  , un rango_fila por cada fila de la matriz_plana. 
-		 * @param {Boolean} columnas , true, crea rango_columna_[0,1,2...]  , un rango_fila por cada columna de la matriz_plana. 
-		 */
-		_init_rangos_basicos(b_rango_matriz=true, filas=true, columnas = true) {
-			const MatriZ = this.ref_Salon.matriz_plana;
-			if (MatriZ.length === 0) return;
-			const { filas: total_filas, columnas: total_cols } = this.ref_Salon.get_dimension_matriz();
-			const ultimo_indice = MatriZ.length - 1;
-
-			// ┌■ RANGO MATRIZ COMPLETA ... Desde (0,0) hasta la última celda real ocupada
-			if (b_rango_matriz) {
-				const celda_i = this.X_to_celda(0, 0);
-				const celda_f = this.X_to_celda(ultimo_indice);
-				const dimension = this._get_dimension(celda_i, celda_f);
-				this.crear_rango('rango_matriz', celda_i, dimension, true);
-			}
-			
-			// ┌■ RANGOS POR COLUMNA
-			if (columnas) {
-				for (let c = 0; c < total_cols; c++) {
-					const inicio = this.X_to_celda(0, c);
-					let fin = inicio;
-					for (let f = total_filas - 1; f >= 0; f--) {
-						const indice = this.X_to_indice(f, c);
-						if (indice !== false) {
-							fin = this.X_to_celda(indice);
-							break;
-						}
-					}
-					// guardar_rango(`rango_columna_${c}`, inicio, fin);
-					
-					const dimension = this._get_dimension(inicio, fin);
-					this.crear_rango(`rango_columna_${c}`, inicio, dimension, true);
-				}
-			}
-			
-			// ┌■ RANGOS POR FILA
-			if (filas) {
-				for (let f = 0; f < total_filas; f++) {
-					const inicio = this.X_to_celda(f, 0);
-					let fin = inicio;
-					
-					for (let c = total_cols - 1; c >= 0; c--) {
-						const indice = this.X_to_indice(f, c);
-						if (indice !== false) {
-							fin = this.X_to_celda(indice);
-							break;
-						}
-					}
-					const dimension = this._get_dimension(inicio, fin);
-					this.crear_rango(`rango_fila_${f}`, inicio, dimension, true);
-				}
-			}
-
-			
-			// ■ Log
-			console.log("​​​🧩​ Rangos Básicos ​Generados  • • • ✔️   listar() para ver");
-			
-	}
+		
 
 	/** ## Obtiene una Matriz relativa a un Rango que contiene la geometría del rango. . . 
 	 * Usada en  {@link crear_rango}  para la formación de un rango.
@@ -1481,14 +1433,44 @@ class Working_Rangos  extends Working_Celdas{
 		return ficha_rango;
 	}	
 
+	/**
+	 * ### Registra los rangos fijos de matriz, filas, columnas, bordes y celdas extremas.
+	 * ### Se debe llamar tras crear la matriz o si cambian sus dimensiones drásticamente.
+	 */
+	_set_rangos_fijos() {
+		const { filas: total_filas, columnas: total_cols } = this.ref_Salon.get_dimension_matriz();
+		if (!Number.isInteger(total_filas) || !Number.isInteger(total_cols)) return null;
+		if (total_filas <= 0 || total_cols <= 0) return null;
+
+		const ultimo_indice = this.ref_Salon.matriz_plana.length - 1;
+		
+		this.registra_rango_matriz(ultimo_indice);
+		this.registra_rango_columna_s(total_filas, total_cols);
+		this.registra_rango_filas(total_filas, total_cols);
+		this.registra_rango_primera_columna();
+		this.registra_rango_ultima_columna(total_cols);
+		this.registra_rango_primera_fila();
+		this.registra_rango_ultima_fila(total_filas);
+		this.registra_rango_primera_celda();
+		this.registra_rango_ultima_celda(ultimo_indice);
+		
+		// ■ Log
+		console.log("​​​🧩​ Rangos Básicos ​Generados  • • • ✔️   listar() para ver");
+		return this.d_rangos;	
+	}
+
 	registra_rango_matriz(ultimo_indice_matriz){
+		if (!Number.isInteger(ultimo_indice_matriz) || ultimo_indice_matriz < 0) return null;
 		const celda_i = this.X_to_celda(0, 0);
 		const celda_f = this.X_to_celda(ultimo_indice_matriz);
 		const dimension = this._get_dimension(celda_i, celda_f);
-		this.crear_rango('rango_matriz', celda_i, dimension, true);
-		return this.d_rangos['rango_matriz'] || null;
+
+		return dimension ? this.crear_rango('rango_matriz', celda_i, dimension) : null;
 	}
 	registra_rango_columna_s(total_filas, total_cols){
+		if (!Number.isInteger(total_filas) || !Number.isInteger(total_cols)) return 0;
+		if (total_filas <= 0 || total_cols <= 0) return 0;
+
 		let contador = 0;
 		for (let c = 0; c < total_cols; c++) {
 			const inicio = this.X_to_celda(0, c);
@@ -1501,12 +1483,14 @@ class Working_Rangos  extends Working_Celdas{
 				}
 			}
 			const dimension = this._get_dimension(inicio, fin);
-			this.crear_rango(`rango_columna_${c}`, inicio, dimension, true);
-			contador = c+1;
+			if (dimension && this.crear_rango(`rango_fila_${c}`, inicio, dimension)) contador++;
 		}
 		return contador;
 	}
-	registra_rango_filas(){
+	registra_rango_filas(total_filas, total_cols){
+		if (!Number.isInteger(total_filas) || !Number.isInteger(total_cols)) return 0;
+		if (total_filas <= 0 || total_cols <= 0) return 0;
+
 		let contador = 0;
 		for (let f = 0; f < total_filas; f++) {
 			const inicio = this.X_to_celda(f, 0);
@@ -1520,15 +1504,53 @@ class Working_Rangos  extends Working_Celdas{
 				}
 			}
 			const dimension = this._get_dimension(inicio, fin);
-			this.crear_rango(`rango_fila_${f}`, inicio, dimension, true);
-			contador = f+1;
+			if (dimension && this.crear_rango(`rango_fila_${f}`, inicio, dimension)) contador++;
 		}
 		return contador;
 	}
-	registra_rango_primera_columna(){}
-	registra_rango_ultima_columna(){}
-	registra_rango_primera_fila(){}
-	registra_rango_ultima_fila(){}
+
+
+	_registrar_rango_fijo_desde(nombre_origen, nombre_destino){
+		const origen = this.read_rango(nombre_origen);
+		if (!origen) return null;
+		return this.crear_rango(nombre_destino, origen.celda_inicio, origen.dimension);
+	}
+
+	registra_rango_primera_columna(){
+		return this._registrar_rango_fijo_desde('rango_columna_0', 'rango_primera_columna');
+	}
+
+	registra_rango_ultima_columna(total_cols){
+		if (!Number.isInteger(total_cols) || total_cols <= 0) return null;
+		return this._registrar_rango_fijo_desde(
+			`rango_columna_${total_cols - 1}`,
+			'rango_ultima_columna'
+		);
+	}
+
+	registra_rango_primera_fila(){
+		return this._registrar_rango_fijo_desde('rango_fila_0', 'rango_primera_fila');
+	}
+
+	registra_rango_ultima_fila(total_filas){
+		if (!Number.isInteger(total_filas) || total_filas <= 0) return null;
+		return this._registrar_rango_fijo_desde(
+			`rango_fila_${total_filas - 1}`,
+			'rango_ultima_fila'
+		);
+	}
+
+	registra_rango_primera_celda(){
+		const primera_celda = this.X_to_celda(0);
+		return primera_celda ? this.crear_rango('rango_primera_celda', primera_celda, '1x1') : null;
+	}
+
+	registra_rango_ultima_celda(ultimo_indice_matriz){
+		if (!Number.isInteger(ultimo_indice_matriz) || ultimo_indice_matriz < 0) return null;
+		const ultima_celda = this.X_to_celda(ultimo_indice_matriz);
+		return ultima_celda ? this.crear_rango('rango_ultima_celda', ultima_celda, '1x1') : null;
+	}
+
 	
 	// get d_rangos(){ return this.d_rangos || {}; }
 	get diccionario(){ return this.d_rangos || {}; }
@@ -1584,7 +1606,6 @@ class Rango_Ghost extends Working_Rangos{
 				if(rango_ori){
 					// ┌■ cargo los valores en el Rango, pero solo los que tienen datos.
 					this.to_pull(argumento, false);	
-					// this.marco = rango_ori;
 					this._crear_marco_desde_rango(rango_ori);
 
 				}else{
@@ -1618,7 +1639,7 @@ class Rango_Ghost extends Working_Rangos{
 	_crear_marco_desde_rango(ficha_rango){
 		// ┌■■ El marco tiene su propia ficha: un rango registrado debe conservar
 		// sus ids, mientras que el marco trabaja siempre con elementos del DOM.
-		if(!this.#_validar_ficha(ficha_rango)) return {};
+		if(!this._validar_ficha(ficha_rango)) return {};
 		this.marco = {
 			...ficha_rango,
 			values: this.#_normalizar_values_marco(ficha_rango.values)
@@ -1668,16 +1689,7 @@ class Rango_Ghost extends Working_Rangos{
 		return this.marco;
 	}
 
-	#_validar_ficha(ficha_rango){
-		if(typeof ficha_rango === 'object' && 
-				ficha_rango.celda_inicio && ficha_rango.celda_fin && 
-				ficha_rango.dimension && 
-				ficha_rango.geo && ficha_rango.items && 
-				ficha_rango.values ){
-			return true;
-		}
-		return false;
-	}
+	
 
 	/** ### Devuelve el contenido actual del ghost
 	 * ### Hay que cachar los datos del Salon y compararlos con los de Marco:
@@ -1695,7 +1707,7 @@ class Rango_Ghost extends Working_Rangos{
         };
 		// ┌■ Literales Constantes     
 		const MARGEN = '  ';
-        const BARRA = `${'■ '.repeat(10+4)}`;
+        const BARRA = `${'■ '.repeat(3+4)}`;
 		const LINEA = `${'— '.repeat(10+4)}`;
         const BARRAINI = `${F.bright}${F.green}${BARRA}${F.reset}`;
         const BARRAFIN = `${F.bright}${F.gray}${LINEA}${F.reset}\n`;
@@ -1818,7 +1830,7 @@ class Rango_Ghost extends Working_Rangos{
 
 		// ┌■■■■■ RENDERIZADO HACIA CONSOLA ■■■■■┐	
 
-        console.log(`${BARRAINI} ► " ${F.yellow}${titulo}${F.reset}"\n`);
+        console.log(`\n​​​🧩 Titulo: ${F.yellow}${titulo}${F.reset}`);
 		
 		// ┌■ Imprimir las matrices lado a lado
 		linea_s_to_print.forEach(linea =>{console.log(linea)});		
@@ -1832,7 +1844,7 @@ class Rango_Ghost extends Working_Rangos{
 		console.log(`${action} ${paste}`);
 		console.log(`${values_rango_str}`);
 		console.log(`${values_salon_str}`);
-		console.log(`${BARRAFIN}`);		
+		// console.log(`${BARRAFIN}`);		
     }
 	
 	/** ## EL Cursor SE MUEVE 
@@ -1881,15 +1893,6 @@ class Rango_Ghost extends Working_Rangos{
 						? this.marco.values[celda_old]
 						: null;
 	
-				// --- C. Actualización de ITEMS (Grid Destino) ---
-				// Calculamos el ID del DOM correspondiente a la nueva celda
-				// Asumimos el estándar: ID = "NombreContenedor_" + indice
-				// const indice = this.X_to_indice(celda_new);
-				// // Nota: Verifica si tu prefijo es "Gran-Salon_" o variable. 
-				// // Si es dinámico, úsalo desde this.prefijo o similar. Aquí uso el estándar detectado.
-				// new_items[celda_new] = `Gran-Salon_${indice}`; 
-
-
 				new_items[celda_new] = this.celda_to_baldosa(celda_new);
 			}	
 	
@@ -2319,13 +2322,13 @@ class Rango_Ghost extends Working_Rangos{
  * ### CLASE HIJA DE RANGOS. Operaciones Especiales. 
  *  ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘
 */
-class Wedding_Rangos extends Rango_Ghost{
+class Wedding_Rangos {
 	/**
 	 * ## Trata las operaciones que se pueden hacer con dos rangos. Macro de Trabajo sobre Rangos.
 	 * ### Union, Intersección, _is_continuos, 	 */
 	constructor(instancia_matriz_plana = null) {			
 		if (!instancia_matriz_plana) return null;		
-		super(instancia_matriz_plana);	
+		// super(instancia_matriz_plana);	
 
 		this.rangos = {app:{}, temp:{}, basic:{}};		
     }	
@@ -2808,14 +2811,12 @@ class Reserva_Range_Mapper {
 		rango.values = values;	// dict: {'B0': 'silla_1', 'B1': 'mesa_0', ...}
 		return rango;
 	}
-
-
-	
 }
 
 
 /** ## Clase para trabajar con Rangos especificamente de salon(reservas_a_rangos__ por ejemplo) */
-class El_Rango_del_Salon extends Wedding_Rangos{
+// class El_Rango_del_Salon extends Wedding_Rangos{
+class El_Rango_del_Salon extends Rango_Ghost{
 	constructor(instancia_Salon = null){
 		if (!instancia_Salon) return null;		
 		// ┌■ Llamamos al padre.
