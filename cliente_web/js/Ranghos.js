@@ -795,7 +795,7 @@ class Working_Rangos  extends Working_Celdas{
 				if(!rango_en_d) throw(`Rango: ${nombre_rango} Not Found`)
 				
 				// Obtiene los valores de la matriz(hijos??).
-				values_rango = this._get_values(nombre_rango , show_all);					
+				const values_rango = this._get_values(nombre_rango , show_all);					
 				// Reasignación para obtener los datos actualizados. 
 				rango_en_d.values = values_rango || {};				
 
@@ -1565,10 +1565,6 @@ class Rango_Ghost extends Working_Rangos{
 	 * ```	 */
 	crear_$marco(argumento){
 		if(!argumento || Array.isArray(argumento)) return null;
-		// ┌••••••••••••••••••••••••••••••••••••••••••
-		// ┌• El parametro de entrada puede ser:
-		// 		1- una dimension en formato '3x4' o {filas:int, columnas:int} 
-		// 		2- nombre_rango(string)  or  un rango anonimo: { celda_inicio:str, celda_fin:str, dimension:{}, geo:{}, items:{}, values:{} }
 		let filas =  -1;
 		let columnas = -1;
 		
@@ -1580,7 +1576,7 @@ class Rango_Ghost extends Working_Rangos{
 				// ■ dimension {filas:3, columnas:4}
 				filas = dimension_fc.filas;
 				columnas = dimension_fc.columnas;
-				this._crear_ghost_desde_dimension(filas, columnas);
+				this._crear_marco_desde_dimension(filas, columnas);
 
 			} else { 			
 				// ┌■ 'nombre_rango' en d_rangos 
@@ -1588,7 +1584,8 @@ class Rango_Ghost extends Working_Rangos{
 				if(rango_ori){
 					// ┌■ cargo los valores en el Rango, pero solo los que tienen datos.
 					this.to_pull(argumento, false);	
-					this.marco = rango_ori;
+					// this.marco = rango_ori;
+					this._crear_marco_desde_rango(rango_ori);
 
 				}else{
 					return this._get_ficha_vacia() || null;
@@ -1603,7 +1600,7 @@ class Rango_Ghost extends Working_Rangos{
 				// ■ Objeto dimension.
 				filas = argumento?.filas;
 				columnas = argumento?.columnas;
-				this._crear_ghost_desde_dimension(filas, columnas);
+				this._crear_marco_desde_dimension(filas, columnas);
 			}
 		}
 
@@ -1619,31 +1616,19 @@ class Rango_Ghost extends Working_Rangos{
 	 * ### Además convierte los id's de values en objetos  
 	 * ### Siempre un Rango Rectangular */
 	_crear_marco_desde_rango(ficha_rango){
-		// ┌■■ El proceso consiste en llenar de datos this.marco(celda_inicio, celda_fin, dimension, geo, values, items)
-		// Para esto creo un rango en d_rangos con crear, esto llena (celda_ini, celda_fin, dimension y geo.). 
-		// Luego, reasigno values.
-		const celda_s_id = ficha_rango.values;
-		if(!celda_s_id){
-			this.marco = ficha_rango;
-			return this.marco;
-		}
-		// ┌• Aseguramos que le pasa los elementos en lugar de los id's... 
-		// ┌• RECUERDA ► "[marco] maneja elementos, [rangos] maneja id's"			
-		let celda_s_element={};
-		for (const celda in celda_s_id) {
-			const id = celda_s_id[celda];
-			celda_s_element[celda] = this.#_normalizar_elemento(id);
-		}
-		// ┌■■ Re-asigno 'values', pero ahora con los elementos_dom en lugar de con los 'id's'
-		this.marco = ficha_rango;
-		this.marco.values = celda_s_element;		// this.marco.values = this._get_values(ghost_name, false, true);
-
+		// ┌■■ El marco tiene su propia ficha: un rango registrado debe conservar
+		// sus ids, mientras que el marco trabaja siempre con elementos del DOM.
+		if(!this.#_validar_ficha(ficha_rango)) return {};
+		this.marco = {
+			...ficha_rango,
+			values: this.#_normalizar_values_marco(ficha_rango.values)
+		};
 		// ┌■■ Retorno
 		return this.marco;
 	}
 
 	/** Un rango desde una dimension se crea SIEMPRE en 'A0' como celda de inicio */
-	_crear_ghost_desde_dimension(filas, columnas){
+	_crear_marco_desde_dimension(filas, columnas){
 		// ┌■ El proceso es el siguiente:
 		// Se pone el cursor(celda_inicio) en A0. Se calcula la dimension y el rango. Luego se puede calcular geo, items y values
 		const new_dimension = {filas:filas, columnas:columnas};
@@ -1663,14 +1648,15 @@ class Rango_Ghost extends Working_Rangos{
 		// ┌■ Obtengo geo.
 		const geo = this._get_geo(ghost_name);
 		// ┌■ Obtengo items.
-		const items = this._get_items(ghost_name);
+		const items = this._get_items(ghost_name, true);
 		// ┌■ Obtengo values.(del Salon directamente)
 		const values = this._get_values(ghost_name, false , true);
 		
 		// ┌■ Asigno los valores
 		this.d_rangos[ghost_name].geo =  geo ? geo : {};
-		this.d_rangos[ghost_name].items = items ? items : {};
-		this.d_rangos[ghost_name].values = values ? values : {};
+		// this.d_rangos[ghost_name].items = items ? items : {};
+		this.d_rangos[ghost_name].items = this.#_normalizar_items_marco(items);
+		this.d_rangos[ghost_name].values = this.#_normalizar_values_marco(values);
 		
 		// ┌■ Lo asigno a ghost 
 		this.marco = this.d_rangos[ghost_name];
@@ -1682,24 +1668,39 @@ class Rango_Ghost extends Working_Rangos{
 		return this.marco;
 	}
 
+	#_validar_ficha(ficha_rango){
+		if(typeof ficha_rango === 'object' && 
+				ficha_rango.celda_inicio && ficha_rango.celda_fin && 
+				ficha_rango.dimension && 
+				ficha_rango.geo && ficha_rango.items && 
+				ficha_rango.values ){
+			return true;
+		}
+		return false;
+	}
+
 	/** ### Devuelve el contenido actual del ghost
-	 * @param {String} accion  'Mover' | 'Ghost' | 'Cortar' | 'Copiar' | 'Pegar' | 'Volver' | 'Reset' 
+	 * ### Hay que cachar los datos del Salon y compararlos con los de Marco:
+	 * @param {String} titulo  'Mover' | 'Ghost' | 'Cortar' | 'Copiar' | 'Pegar' | 'Volver' | 'Reset' 
 	 * @param {Number} separacion  Espacio de separación entre las matrices (La separación dinámica)
 	 * @returns {Array}  Array de strings representando la matriz del ghost y el salon
 	 */
-    informe_marco_consola(accion = '', separacion = 15) {
-        const margin = '  ';
-
-        const F = {
-            reset: "\x1b[0m",
-            bright: "\x1b[1m",
-            dim: "\x1b[2m",
-            cyan: "\x1b[36m",
-            green: "\x1b[32m",
-            yellow: "\x1b[33m",
-            red: "\x1b[31m",
-            gray: "\x1b[90m",
+    informe_marco_consola(titulo = '', separacion = 15) {
+		// ┌■ Espacio de separación entre las matrices(La separación dinámica)
+		const GAP = ' '.repeat(separacion); 
+		// ┌■ Colores usados
+		const F = {
+			reset: "\x1b[0m", bright: "\x1b[1m", dim: "\x1b[2m",cyan: "\x1b[36m",green: "\x1b[32m",
+            yellow: "\x1b[33m",red: "\x1b[31m",gray: "\x1b[90m",
         };
+		// ┌■ Literales Constantes     
+		const MARGEN = '  ';
+        const BARRA = `${'■ '.repeat(10+4)}`;
+		const LINEA = `${'— '.repeat(10+4)}`;
+        const BARRAINI = `${F.bright}${F.green}${BARRA}${F.reset}`;
+        const BARRAFIN = `${F.bright}${F.gray}${LINEA}${F.reset}\n`;
+		const BASTON = `${F.bright}${F.gray}┌■■${F.reset}`;
+
 		/** ### Devuelve un array de str con la linea que tiene que escribir, cruza celdas con values en Salon y Rango 
 		 * ### • 1 llamada por 'Salon' y otra por 'Rango'		*/
         const representar_matriz = (array_celdas, arr_values=[]) => {
@@ -1712,50 +1713,48 @@ class Rango_Ghost extends Working_Rangos{
 			filas.forEach(num => {
                 const filaVisual = [];
                 columnas.forEach(letra => {
-                    const idCelda = `${letra}${num}`;
-					const idCeldaPadded = idCelda.padEnd(ANCHO_CELDA, ' '); // Normaliza a 4 caracteres
-					const id_celda_padded_centrada = centrar(idCelda, 5, ' ');
-                    if (array_celdas.includes(idCelda)) {
-                        if(arr_values.includes(idCelda))
+                    const celda = `${letra}${num}`;
+					const idCeldaPadded = celda.padEnd(ANCHO_CELDA, ' '); // Normaliza a 4 caracteres
+					const id_celda_padded_centrada = centrar(celda, 5, ' ');
+                    if (array_celdas.includes(celda)) {
+                        if(arr_values.includes(celda))
                             filaVisual.push(`${F.bright}${F.green}${id_celda_padded_centrada}${F.reset}`);
                         else
                             filaVisual.push(id_celda_padded_centrada);
                     }else{
 						// Mantiene la estructura si falta alguna celda intermedia
                         // filaVisual.push(' '.repeat(ANCHO_CELDA));
+						return;
 					}
                 });
-                const fila_str = `${margin}${filaVisual.join('|')}`;
+                const fila_str = `${MARGEN}${filaVisual.join('|')}`;
                 array_retorno_str.push(fila_str);
             });
             return array_retorno_str;
         };
+		/** ### Formato centrado */
 		const centrar = (texto, longitud, relleno = " ") => {
 			return texto
 				.padStart(Math.floor((longitud + texto.length) / 2), relleno)
 				.padEnd(longitud, relleno);
 		};
 		/** ### Entra un str y devuelve la longitud real sin los caracteres de color */
-		const get_real_length = (str) => {
+		const get_longitud_limpia = (str) => {
 			// Esta regex busca el carácter de escape seguido de los corchetes y parámetros
 			const ansiRegex = /\x1b\[[0-9;]*m/g;
 			return str.replace(ansiRegex, '').length;
 		};
-		
+		/** ### Retorna un id. valor puede ser string u objeto. */
 		const obtener_id = (valor) => {
 			if (valor === null || valor === undefined || valor === false) return 'vacío';
 			if (typeof valor === 'string' || typeof valor === 'number') return String(valor);
 			return valor.id || '(elemento sin id)';
 		};
-		
-		const values_ghost = this.marco.values || {};
+		/** ### diccionario {ceda:<elemento>} */
+		const values_marco = this.marco.values || {};
 
-		// ┌■■ PREPARACIÓN DE DATOS  		
-		// ┌■■ Hay que cachar los datos del Salon y compararlos con los de Ghost:
+		// ┌■■■■■ PREPARACIÓN DE DATOS ■■■■■┐	
 
-		// ┌• espacio de separación entre las matrices(La separación dinámica)
-		const GAP = ' '.repeat(separacion); 
-        
 		// ┌• Obtener  values e items  'en Salon'     
         const nombre_marco = this.registrar_marco_en_rangos();
         const d_values_salon  = this._get_values(nombre_marco, false, true);
@@ -1764,30 +1763,31 @@ class Rango_Ghost extends Working_Rangos{
 
 		// ┌• Array de string 'B4:silla_3','A4:mesa_1', . . .   del Salon
 		let values_rango = '';
-		for (const [celda, valor] of Object.entries(values_ghost)) {
+		for (const [celda, valor] of Object.entries(values_marco)) {
 			values_rango += `${celda}: ${obtener_id(valor)}, `;
 		}
 		// ┌• Array de celdas con valor del Salon(this.marco.values)
-		const arr_values = Object.keys(values_ghost);
+		const arr_values = Object.keys(values_marco);
 		
 		// ┌• Asegura celda_inicio y celda_fin con el formato correcto
         if(typeof this.marco.celda_inicio == 'object') this.marco.celda_inicio = this.X_to_celda(this.marco.celda_inicio);
         if(typeof this.marco.celda_fin == 'object') this.marco.celda_fin = this.X_to_celda(this.marco.celda_fin);   
 
-        // ┌• Necesito las celdas del 'Rango' para pasarlas a representar_matriz
-        let celdas_rango = Object.keys(this.marco.items);		
+        // ┌• Celdas del 'Marco'
+        let celdas_marco = Object.keys(this.marco.items);		
         
-        // ┌• Necesito las celdas del 'Salon' para pasarlas a representar_matriz
+        // ┌• Celdas del 'Salon'
+		let celdas_salon = [];
+		for (let celda of Object.keys(d_items_salon)) celdas_salon.push(celda);        
+		
+        // ┌• Values del 'Salon'
 		let values_salon = '';
         for (const [celda, valor] of Object.entries(d_values_salon || {})) {
 			values_salon += `${celda}: ${obtener_id(valor)}, `;
 		}
-
-        let celdas_salon = [];
-        for (let celda of Object.keys(d_items_salon)) celdas_salon.push(celda);        
         
         // ┌• Array de str de Salon - 
-        const lineas_rango = representar_matriz(celdas_rango, arr_values || []);
+        const lineas_rango = representar_matriz(celdas_marco, arr_values || []);
 		const lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon || {}));
 		
 		// ┌• Calcular la 'longitud max de las filas' de la MATRIZ
@@ -1800,42 +1800,34 @@ class Rango_Ghost extends Working_Rangos{
 			linea_s_to_print.push(linea);
         }
 
-		// ■■■ CALCULO DE ANCHOS 		
-		// ┌■■ Longitud maxima de cada linea que suma de las matrices "Salon+Separacion+Rango"
+		// ┌• Longitud maxima de cada linea que suma de las matrices "Salon+Separacion+Rango"
 		let max_l = 0;
-		linea_s_to_print.forEach(linea =>{max_l = Math.max(max_l, get_real_length(linea)) });
+		linea_s_to_print.forEach(linea =>{max_l = Math.max(max_l, get_longitud_limpia(linea)) });
 		const x_matriz = Math.floor((max_l - separacion) / 2);
-
-		// ■■■ RENDERIZADO     
-        const BARRA = `${'■ '.repeat(10+4)}`;
-		const LINEA = `${'— '.repeat(10+4)}`;
-        const BARRAINI = `${F.bright}${F.green}${BARRA}${F.reset}`;
-        const BARRAFIN = `${F.bright}${F.gray}${LINEA}${F.reset}\n`;
-		const BASTON = `${F.bright}${F.gray}┌■■${F.reset}`;
-		const action = `${BASTON}${F.cyan} ACCION${F.reset}: ${this.accion}`;
 		
-		// ┌■ Cabecera (Techo)
-        console.log(`${BARRAINI} ► " ${F.cyan}${accion}${F.reset} "`);
+		// ┌■ Preparo Metadatos
+		const ci = `${BASTON} ${F.yellow}CELDA_INI${F.reset}: "${this.marco.celda_inicio}"`;
+		const cf = `${BASTON} ${F.yellow}CELDA_FIN${F.reset}: "${this.marco.celda_fin}"`;
+		const dim = `${BASTON} ${F.yellow}DIM${F.reset}: ( ${this.marco.dimension.filas} x ${this.marco.dimension.columnas} )`;
+		const geo = `${BASTON} ${F.yellow}GEO${F.reset}: ${this.marco.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
+		const items = `${BASTON} ${F.yellow}ITEMS${F.reset}: ${this.marco.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
+		const action = `${BASTON}${F.yellow} ACCION${F.reset}: ${this.accion}`;
+		const paste = `${F.gray}┌■■${F.reset} Nº ${F.yellow}PASTEs${F.reset}: ${this.num_pegar}`;
+		const values_rango_str = `${BASTON} VALUES ${F.yellow}RANGO${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${values_rango}${F.bright}${F.yellow}█▀▄█${F.reset}`;
+		const values_salon_str = `${BASTON} VALUES ${F.yellow}SALON${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${values_salon}${F.bright}${F.yellow}█▀▄█${F.reset}`;
+
+		// ┌■■■■■ RENDERIZADO HACIA CONSOLA ■■■■■┐	
+
+        console.log(`${BARRAINI} ► " ${F.yellow}${titulo}${F.reset}"\n`);
 		
 		// ┌■ Imprimir las matrices lado a lado
-		linea_s_to_print.forEach(linea =>{console.log(linea)});
+		linea_s_to_print.forEach(linea =>{console.log(linea)});		
+		// ┌■ Linea Base de las Matrices:
+		const under_salon = this.#__generar_linea_formateada(x_matriz, 'SALON',  2);
+		const under_rango = this.#__generar_linea_formateada(x_matriz, 'RANGO',  2);
+        console.log(` ${F.bright}${F.gray}${under_salon}${GAP}${under_rango}${F.reset}`);        
 		
-		// ┌■ Base de las Matrices:
-		const under_salon = this.__generar_linea_formateada(x_matriz, 'SALON',  2);
-		const under_rango = this.__generar_linea_formateada(x_matriz, 'RANGO',  2);
-
-        console.log(` ${F.bright}${F.gray}${under_salon}${GAP}${under_rango}${F.reset}`);
-        
-		// ┌■ Metadatos
-		const ci = `${BASTON} CELDA_${F.cyan}INI${F.reset}: "${this.marco.celda_inicio}"`;
-		const cf = `${BASTON} CELDA_${F.cyan}FIN${F.reset}: "${this.marco.celda_fin}"`;
-		const dim = `${BASTON} ${F.cyan}DIM${F.reset}: ( ${this.marco.dimension.filas} x ${this.marco.dimension.columnas} )`;
-		const geo = `${BASTON} ${F.cyan}GEO${F.reset}: ${this.marco.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
-		const items = `${BASTON} ${F.cyan}ITEMS${F.reset}: ${this.marco.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
-		const paste = `${F.gray}┌■■${F.reset} Nº ${F.cyan}PASTEs${F.reset}: ${this.num_pegar}`;
-		const values_rango_str = `${BASTON} VALUES ${F.cyan}RANGO${F.reset}: ${F.bright}${F.cyan}■ ${F.reset}${values_rango}${F.bright}${F.cyan}█▀▄█${F.reset}`;
-		const values_salon_str = `${BASTON} VALUES ${F.cyan}SALON${F.reset}: ${F.bright}${F.cyan}■ ${F.reset}${values_salon}${F.bright}${F.cyan}█▀▄█${F.reset}`;
-		// ┌■ Los imprimo.
+		// ┌■ imprimo metadatos
 		console.log(`${ci}  ${cf}  ${dim}  ${geo}  ${items}`);
 		console.log(`${action} ${paste}`);
 		console.log(`${values_rango_str}`);
@@ -1843,17 +1835,18 @@ class Rango_Ghost extends Working_Rangos{
 		console.log(`${BARRAFIN}`);		
     }
 	
-	/** ## EL FANTASMA 👻 SE MUEVE 
+	/** ## EL Cursor SE MUEVE 
 	 * ### Se cambia celda_inicio, celda_fin e items. 'geo' no varia y 'values' mantiene los valores anteriores.
-	 * #### • esto provoca que se puedan asignar valores y luego pueda soltarlos. 
-	 
-	 * ### Luego las acciones que se pueden hacer son cut, copy y paste sobre el Salon.
+	
+	 * ### DESPUÉS, las acciones que se pueden hacer son cut, copy y paste sobre el Salon.
 	 * ### mueves el cursor + cut o copy + mueves el cursor + paste.
 	 * ### mueves el cursor + busca_free + mueves el cursor + busca_free....
+	 * 
+	 * ### NOTA: "Al mover el cursor no relleno values para que no machaque los datos si antes he copiado o cortado."
+	 * ### Pero SI actualizo las nuevas celdas(.items) con los valores teniendo en cuenta la posicion.
+	 * ### • esto provoca que se puedan asignar valores y luego pueda soltarlos. 
+	 * ### RECUERDA::: marco tiene unos .items que no corresponden con los values del DOM.
 	 */		
-	// ┌• NOTA: "Al mover el cursor no relleno values para que no machaque los datos si antes he copiado o cortado."
-	// ┌• Pero si actualizo las nuevas celdas con los valores teniendo en cuenta la posicion.
-	// ficha.values = values 	|| {};		
 	mover_cursor(celda_destino) {
 		if(typeof celda_destino == 'string') celda_destino = celda_destino.trim();
 		if(!celda_destino) celda_destino = 'A0';
@@ -1891,11 +1884,14 @@ class Rango_Ghost extends Working_Rangos{
 				// --- C. Actualización de ITEMS (Grid Destino) ---
 				// Calculamos el ID del DOM correspondiente a la nueva celda
 				// Asumimos el estándar: ID = "NombreContenedor_" + indice
-				const indice = this.X_to_indice(celda_new);
-				// Nota: Verifica si tu prefijo es "Gran-Salon_" o variable. 
-				// Si es dinámico, úsalo desde this.prefijo o similar. Aquí uso el estándar detectado.
-				new_items[celda_new] = `Gran-Salon_${indice}`; 
-			}
+				// const indice = this.X_to_indice(celda_new);
+				// // Nota: Verifica si tu prefijo es "Gran-Salon_" o variable. 
+				// // Si es dinámico, úsalo desde this.prefijo o similar. Aquí uso el estándar detectado.
+				// new_items[celda_new] = `Gran-Salon_${indice}`; 
+
+
+				new_items[celda_new] = this.celda_to_baldosa(celda_new);
+			}	
 	
 			// Actualización atómica del estado
 			this.marco.values = new_values;
@@ -1919,21 +1915,7 @@ class Rango_Ghost extends Working_Rangos{
 			return false;
 		}
 	}
-	/** ## Pone el cursor en 'A0' con una dimension '1x1' con values {}, solo items y geo y preparado para ser activado por ghost() */
-	re_init_$marco(){
-		ficha = this._get_ficha_vacia();
-		if(!ficha) return null;
-		ficha.celda_inicio = 'A0';
-		ficha.geo = {delta_y:0, delta_x:0};
-		ficha.items = '🔥🔥 PENDIENTE, HAY QUE HACER UN first_baldosa Y UN last-baldosa DE RANGOS BASIC Y ASIGNARLO AQUI 🔥🔥';
-		
-		this.marco = ficha;
-		
-		// ┌■ VARIABLES DE ESTADO DEL GHOST 💭💭
-		this.num_pegar = 0;
-		this.informe_marco_consola('Re-Init');
-	}
-
+	
 	/** ## CORTA los 'Valores de Salon' donde está posicionado el ghost	 
 	 * ### • Es responsabilidad del programador mover el cursor con 'mover_cursor' para CORTAR valores distintos.
 	 * ### • VOY A INTENTAR 'CORTAR' LOS ELEMENTOS DIRECTAMENTE PORQUE GHOST VIVE EN EL DOM. NO SE GUARDA.
@@ -1986,12 +1968,11 @@ class Rango_Ghost extends Working_Rangos{
 			
 			// Cacha los elementos del Salon directamente:
 			const resultado = {};
-			Object.entries(baldosas).forEach(([celda, id_baldosa]) => {
-					if (!id_baldosa) {
+			Object.entries(baldosas).forEach(([celda, baldosa]) => {
+					if (!baldosa) {
 						resultado[celda] = null;
 						return;
 					}
-					const baldosa = document.getElementById(id_baldosa);
 					const contenido = baldosa?.firstElementChild;
 					resultado[celda] = contenido instanceof HTMLElement ? contenido : null;					
 			});
@@ -2233,13 +2214,49 @@ class Rango_Ghost extends Working_Rangos{
 	 * @param {string} texto - El texto central (ej. "salon").
 	 * @param {number} num_espacios - Cantidad de espacios totales (por defecto 2).
 	 */
-	__generar_linea_formateada(x, texto, num_espacios = 2) {
+	#__generar_linea_formateada(x, texto, num_espacios = 2) {
 		const longitudTexto = texto.length;
 		const totalGuiones = Math.max(0, x - longitudTexto - num_espacios);
 		const izq = Math.floor(totalGuiones / 2);
 		const der = totalGuiones - izq;
 		const espacios = " ".repeat(Math.ceil(num_espacios / 2));
 		return `${'▬'.repeat(izq)}${espacios}${texto}${espacios}${'▬'.repeat(der)}`;
+	}
+
+	/**
+	 * ### Convierte ids y objetos MyDiv en las baldosas DOM que usa un marco.
+	 * ### Conserva las claves de celda y representa con null las baldosas inexistentes.
+	 */
+	#_normalizar_items_marco(items){
+		if (!items || typeof items !== 'object' || Array.isArray(items)) return {};
+
+		const baldosas = {};
+		for (const [celda, item] of Object.entries(items)) {
+			if (item instanceof HTMLElement) {
+				baldosas[celda] = item;
+			} else if (item?.elemento_div instanceof HTMLElement) {
+				baldosas[celda] = item.elemento_div;
+			} else if (typeof item === 'string') {
+				baldosas[celda] = document.getElementById(item);
+			} else {
+				baldosas[celda] = null;
+			}
+		}
+		return baldosas;
+	}
+
+	/**
+	 * ### Convierte los valores de un rango en los elementos DOM que usa un marco.
+	 * ### Devuelve siempre un diccionario nuevo para no modificar el rango de origen.
+	 */
+	#_normalizar_values_marco(values){
+		if (!values || typeof values !== 'object' || Array.isArray(values)) return {};
+
+		const elementos = {};
+		for (const [celda, value] of Object.entries(values)) {
+			elementos[celda] = this.#_normalizar_elemento(value);
+		}
+		return elementos;
 	}
 	
 	/** ### • Si entra un "objeto-elemento" [lo retorna], 
@@ -2638,7 +2655,7 @@ class Wedding_Rangos extends Rango_Ghost{
 
 			if(dimension_fc) {
 				// ■ dimension '3x4'
-				Ran = this._crear_ghost_desde_dimension(dimension_fc.filas, dimension_fc.columnas);
+				Ran = this._crear_marco_desde_dimension(dimension_fc.filas, dimension_fc.columnas);
 			} else{
 				// ■ 'nombre_rango' en d_rangos
 				Ran = this._crear_marco_desde_rango(argumento);
