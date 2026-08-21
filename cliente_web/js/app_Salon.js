@@ -227,16 +227,13 @@ class e_Salon extends Tablero_Touch {
 		// ┌•• Inicia el MODO RESERVA a false.
 		this.is_mode_reserva = false;	
 
-		// ■■■■■■■■■■■■■■■■■■■■■
 		// ​🧩​🧩​  RANGOS 🧩​🧩​​
-		// ■■■■■■■■■■■■■■■■■■■■■
 		const api_rangos = {
 			get_dimension: () => this.get_dimension_matriz(),
 			get_matriz: () => this.matriz_plana,
 			normalizar_elemento: (elemento) => this.api_normalizar_el_player(elemento),
 		};
 		this.eRdS = new El_Rango_del_Salon(api_rangos); // Gestor de rangos con acceso solo a lo que necesita.
-		// this.eRdS = new El_Rango_del_Salon(this); 	// Instanciamos el gestor de RANGOS y CELDAS de la matriz.		
 		
 		// ■ MENSAJE FINAL DE CARGA
 		console.log(`${'█ '.repeat(20)}  • • •  FINALIZADA LA CARGA DE SALON  • • •`);
@@ -276,13 +273,13 @@ class e_Salon extends Tablero_Touch {
 		// this.CFG.api_re_posicionar();				
 		
 		// ┌■■ REGISTRA EL MOTOR DE ALERGIAS  (PESTAÑA DE LOGICA) 
-		// const MA = Catalogo.get_motor('motor_alergias');
 		const ok_alerg = this._load_alergias_en_Salon(d_alergias_mock);		
+		// const MA = Catalogo.get_motor('motor_alergias');
 		// console.log(JSON.stringify(MA.d_data, null, 2)); 
 		
 		// ┌■■ REGISTRA EL MOTOR DE MENSAJES (PESTAÑA DE LOGICA)
-		// const MM = Catalogo.get_motor('motor_mensajes');
 		const ok_msg = this._load_mensajes_en_Salon(d_mensajs_mock);
+		// const MM = Catalogo.get_motor('motor_mensajes');
 		// console.log(JSON.stringify(MM.d_data, null, 2)); 
 		
 		// ┌■■ VALIDA E INFORMA:
@@ -293,33 +290,37 @@ class e_Salon extends Tablero_Touch {
 		}
 
 		// 🟥 ┌•••  🟥🟥🟥🟥🟥🟥🟥			
+
 		// 🧩 Crea un ghost a partir de una dimension string desde A0.
-		const rango_dim = this.eRdS.crear_$marco('3x4');
+		const rango_dim = this.eRdS.crear_marco('3x4');
+		this.eRdS.informe_marco_consola("Creo un Marco 3x4 desde A0 Sobre el Salon ... de pruebas");
 		// 🧩 Ahora ghost va a cambiar a una dimension de 5x6 desde A0.
-		const marco_reasig = this.eRdS.crear_$marco({filas:5, columnas:6});			
-		
+		const marco_reasig = this.eRdS.crear_marco({filas:5, columnas:6});					
+		this.eRdS.informe_marco_consola("Creo un Marco 5x6 desde A0 Sobre el Salon ... de pruebas");
 		// 🧩 (Cuando le paso un rango nombrado hace un previo pull de los elementos).
 		// 🧩 Trabaja con arrays de Rangos formando un rango que lo engloba y values e items de cada uno de ellos sin mas info.
-		// ?????? PROBLEMAS CON LOS ARRAYS. ????????????????????????????????????????????????
-		// const marco_de_pares = this.eRdS.crear_$marco('rango_pares');
+		const marco_columna = this.eRdS.crear_marco('rango_columna_2');
+		this.eRdS.informe_marco_consola("Creo un Marco sobre un rango fixed: rango_columna_2");
 
 		// 🧩 Prueba de copia de un rango nombrado.
-		const copia = this.eRdS._copy_rango('rango_columna_0', 'rango_colum_one');
+		const copia = this.eRdS.copy_en_d_rangos('rango_columna_0', 'rango_colum_one');
 		// 🧩 Creo un marco de rango_matriz.
-		const marco_matriz = this.eRdS.crear_$marco('rango_matriz');			
+		const marco_matriz = this.eRdS.crear_marco('rango_matriz');			
 		// 🧩 Informe de lo que contiene el rango_matriz recien creado.
-		this.eRdS.informe_marco_consola("Informe rango_matriz", 5);
+		this.eRdS.informe_marco_consola("Informe rango_matriz", 3);
+		// 🧩 Combinaciones de acciones, copy-paste y cut-paste
+		// this.eRdS.crear_marco('A0', '3x4');	
+		// let ok_g = null;
+		// ok_g = this.eRdS.comb_copy_paste('A3' , 'B5');
+		// ok_g=this.eRdS.mover_cursor('A1');
+		// ok_g=this.eRdS.comb_cut_paste('D3' , 'F6');
+		// ok_g=this.eRdS.mover_cursor('E11');
+		// ok_g=this.eRdS.pegar_marco();						
 		// 🧩 La prueba consiste en coger la Letra que me ha pasado el Usuario en may, calcular la columna, 
 		// 🧩 hacer un sub-rango desde esa letra cuenta la dimension actual(8/16/24) según donde estemos(movil)		
 		// 🧩 ahora hay que adaptar sub-rango para que pueda cachar rangos directamente???
 		// const sub_r = this.eRdS.sub_rango("new", {filas:3, columnas:4}, 'C2');
-		
-		// let ok_g = null;
-		// 🧩 ok_g = this.eRdS.comb_copy_paste('A3' , 'B5');
-		// 🧩 ok_g=this.eRdS.mover_cursor('A1');
-		// 🧩 ok_g=this.eRdS.comb_cut_paste('D3' , 'F6');
-		// 🧩 ok_g=this.eRdS.mover_cursor('E11');
-		// 🧩 ok_g=this.eRdS.pegar_$marco();						
+
 		// 🟥 ┌••• FINAL DEL PUENTE DE PRUEBAS 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 		
 	}
@@ -1890,7 +1891,7 @@ class Configuracion_Salon {
 						const celda_destino = RAN.suma_fc(celda_base_destino, item.delta_y, item.delta_x);
 						
 						if (celda_destino) {
-							const indice_matriz = RAN.X_to_indice(celda_destino);
+							const indice_matriz = RAN.X_to_indice_matriz(celda_destino);
 							const baldosa = this.Salon._get_baldosa(indice_matriz);
 							
 							if (baldosa) {
@@ -2388,7 +2389,7 @@ class Configuracion_Salon {
             const celda_destino = this.Salon.eRdS.suma_fc(celda_inicio_free, item.delta_y, item.delta_x);
             if (!celda_destino) return true; // Error o fuera de rango
 
-            const indice_matriz = this.Salon.eRdS.X_to_indice(celda_destino);
+            const indice_matriz = this.Salon.eRdS.X_to_indice_matriz(celda_destino);
             let baldosa_obj = this.Salon.matriz_plana[indice_matriz]; 
             if (!baldosa_obj) return true;
 			
@@ -2507,7 +2508,7 @@ class Configuracion_Salon {
 			// ┌•• Recolectar coordenadas 
 			ids_items.forEach(id => {
 				// ┌•• Clase Rango para consultar la celda. Si la matriz está vacía, no se procesa.
-				const celda = RAN._search_celda(id); 
+				const celda = RAN.buscar_celda_by_contenido(id); 
 				if (celda) {
 					const fc = RAN._celda_to_fc(celda);
 					if (fc.fila < minF) minF = fc.fila;
@@ -5091,7 +5092,7 @@ class Foto_CRUD{
 				throw('Dimensiones Distintas');
 			}
 
-			console.log( `\n█ █ █ █ █ █ █ █ █ █ █ █  INI CARGAR ELEMENTOS: + ${foto_id} ► ${foto_bdd.titulo}`);
+			console.log( `\n${'█ '*10} INICIO CARGA ELEMENTOS ::  id_foto: ${foto_id} | titulo: ${foto_bdd.titulo}`);
 			
 			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
 			// 🔳🔳🔳🔳🔳 CARGA de SALON 🔳🔳🔳🔳🔳
@@ -5103,9 +5104,9 @@ class Foto_CRUD{
 															 {filas:filas_bdd, columnas:columnas_bdd});
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
-					RAN.crear_$marco(rango);	
+					RAN.crear_marco(rango);	
 					const nombre_marco = RAN.registrar_marco_en_d_rangos();
-					RAN.pegar_$marco();
+					RAN.pegar_marco();
 					RAN.eliminar_rango(nombre_marco);
 
 					// diccionario {'b0':<obj_silla_0>. ...}

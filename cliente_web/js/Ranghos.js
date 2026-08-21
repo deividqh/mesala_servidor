@@ -104,7 +104,7 @@ class Celda_Mapper {
 /**
  * ## Working_Celdas representa una celda en una matriz_plana.
  * ### Permite convertir entre coordenadas (fila, columna) o indice y referencias estilo Excel (A1, B2, etc.)
- * @example let celda = new Working_Celdas(this, fila, columna);
+ * @example  const celdas = new Working_Celdas(api_rangos);
  */
 class Working_Celdas {
 	// ■■
@@ -151,7 +151,7 @@ class Working_Celdas {
 	
 	/**
 	 * ## Devuelve el indice en  this.matriz_plana si lo encuentra, o false si no encuentra.
-	 * {@link X_to_indice} ■ 
+	 * {@link X_to_indice_matriz} ■ 
 	 * ```javascript
 	 * const indice = celda._get_indice_(2, 3); // fila 2, columna 3 ► indice = 14
 	 * const indice = celda._get_indice_(2, 3000); // fila 2, columna 3000 ► indice = false
@@ -217,13 +217,13 @@ class Working_Celdas {
 	 * @param {number|string|Working_Celdas} arg1 - Puede ser: índice directo (int), fila (int), "A1" (string) o objeto Working_Celdas.
 	 * @param {number|null} arg2 - Si arg1 es fila, arg2 es la columna. Si no, es null.
 	 * ```javascript
-	 *	matriz.X_to_indice(5); ► (Indice) Devuelve 5 si es válido
-	 *	matriz.X_to_indice(2, 3); ► (row-col) Devuelve el índice de fila 2, columna 3
-	 *	matriz.X_to_indice("B3"); ► (str) Devuelve el índice de la celda B3
-	 *	matriz.X_to_indice({1, 4}); ► Devuelve el índice de la celda (1,4)
+	 *	matriz.X_to_indice_matriz(5); ► (Indice) Devuelve 5 si es válido
+	 *	matriz.X_to_indice_matriz(2, 3); ► (row-col) Devuelve el índice de fila 2, columna 3
+	 *	matriz.X_to_indice_matriz("B3"); ► (str) Devuelve el índice de la celda B3
+	 *	matriz.X_to_indice_matriz({1, 4}); ► Devuelve el índice de la celda (1,4)
 	 * ``` 
 	*/
-    X_to_indice(arg1, arg2 = null) {        
+    X_to_indice_matriz(arg1, arg2 = null) {        
 		let fila, col;
 		try {
 			// ■ CASO 1: Índice directo (un solo número)
@@ -269,7 +269,7 @@ class Working_Celdas {
 	 */
 	X_to_fc(arg1, arg2=null){
 		// Valida
-		const indice = this.X_to_indice(arg1, arg2);
+		const indice = this.X_to_indice_matriz(arg1, arg2);
 		if (indice===false) return null;
 		// Calcula coordenadas
 		const dim = this._get_dimension_matriz?.();
@@ -293,7 +293,7 @@ class Working_Celdas {
 	X_to_celda(arg1, arg2=null){
 		try {
 			// Valida
-			const indice = this.X_to_indice(arg1, arg2);
+			const indice = this.X_to_indice_matriz(arg1, arg2);
 			if (indice === false) return null;
 			//Saca Coordenadas
 			const coordenada = this.X_to_fc(indice);
@@ -446,7 +446,7 @@ class Working_Celdas {
 		// Valida
 		if (!Number.isInteger(plus)) plus=1;		
 		// Convierte la celda a indice
-		const indice = this.X_to_indice(arg1);
+		const indice = this.X_to_indice_matriz(arg1);
 		if(indice === false) return false;
 		// Suma el plus al indice
 		const indice_plus = indice + plus;		
@@ -467,7 +467,7 @@ class Working_Celdas {
 	 */
 	suma_fc(arg1='A0', plus_row = 0, plus_col = 0) {
 		// Valida
-		const indice = this.X_to_indice(arg1);
+		const indice = this.X_to_indice_matriz(arg1);
 		if(indice === false) return false;
 		
 		const coordenada = this.X_to_fc(indice);		
@@ -529,7 +529,7 @@ class Working_Celdas {
  }		
 ■■■■■■■■ contenido-to-celda-R
  const id_contenido = 'silla_7';
- const celda_de_contenido = 	RAN._search_celda(id_contenido);
+ const celda_de_contenido = 	RAN.buscar_celda_by_contenido(id_contenido);
  console.log(`▶️ CONTENIDO '${id_contenido}' está en CELDA ► '${celda_de_contenido}'`);
 ■■■■■■■■ IS_R_VACIO??
  const es_vacio = RAN.es_rango_vacío(rango);
@@ -556,7 +556,7 @@ RAN._is_continuos(celdas_union);
 RAN.registrar_ficha('rango_prueba', rango_from_reservas_bdd[0]);
 ■■■■■■■ Tengo un Fantasma!!!! 👻👻
 // juega con to_pull para cargarlo de datos.
-const nombre_ghost = RAN.crear_$marco({filas:3,columnas:4});
+const nombre_ghost = RAN.crear_marco({filas:3,columnas:4});
 this.d_rangos[nombre_ghost];
 
  ▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️ FIN PRUEBAS CON RANGOS
@@ -718,11 +718,11 @@ class Working_Rangos  extends Working_Celdas{
 	 * ### • 'celda_inicio' {String} y celda_fin {String} ► 'A0', 'B2', 'H0', 'M4', ...
 	 * ### • 'is_str' {Boolean} si es true devuelve la dimensión como cadena "filasxcolumnas". si false devuelve un objeto {filas:int, columnas:int}
 	 * ```javascript
-	 * const dim_str = this._get_dimension('B2', 'D4');  ► "3x3"
-	 * const dim_obj = this._get_dimension('B2', 'D4', false); ► { filas: 3, columnas: 3 }
-	 * const dim_obj = this._get_dimension('B2000', 'D4', false); ► null (celda inválida)
+	 * const dim_str = this._get_dimension_by_cicf('B2', 'D4');  ► "3x3"
+	 * const dim_obj = this._get_dimension_by_cicf('B2', 'D4', false); ► { filas: 3, columnas: 3 }
+	 * const dim_obj = this._get_dimension_by_cicf('B2000', 'D4', false); ► null (celda inválida)
 	 * ```   */
-	_get_dimension(celda_inicio = 'A0', celda_fin = 'A0', b_get_str = true) { 
+	_get_dimension_by_cicf(celda_inicio = 'A0', celda_fin = 'A0', b_get_str = true) { 
 		try {
 			const inicio = this._celda_to_fc(celda_inicio);
 			const fin = this._celda_to_fc(celda_fin);
@@ -853,7 +853,7 @@ class Working_Rangos  extends Working_Celdas{
 	celda_to_baldosa(celda){
 		if (typeof celda !== 'string') return null;
 
-		const indice = this.X_to_indice(celda);
+		const indice = this.X_to_indice_matriz(celda);
 		if (indice === false) return null;
 
 		return this._get_matriz_plana()?.[indice]?.elemento_div ?? null;
@@ -861,7 +861,7 @@ class Working_Rangos  extends Working_Celdas{
 
 	/** ## Hace una Copia de un rango registrado en d_rangos. 
 	 * ### Devuelve el nuevo rango si ok y null si algo va mal. */
-	_copy_rango(nombre_rango, new_nombre_rango, diccionario_to_inspect){
+	copy_en_d_rangos(nombre_rango, new_nombre_rango, diccionario_to_inspect){
 		// ┌• Seleccionamos el rango sobre el que trabajar.
 		if (!diccionario_to_inspect)  diccionario_to_inspect = this.d_rangos;					
 		// ┌• Valida si existe en this.d_rangos.
@@ -947,7 +947,7 @@ class Working_Rangos  extends Working_Celdas{
 		for (let fila = fila_inicio; fila <= fila_fin; fila++) {
 			for (let col = col_inicio; col <= col_fin; col++) {
 				const celda = this._fc_to_celda(fila, col);
-				const indice = this.X_to_indice(fila, col);
+				const indice = this.X_to_indice_matriz(fila, col);
 				// ┌• Si el indice es false, la celda no pertenece a la matriz y devuelve null.
 				// ┌• Si el indice es válido, devuelve el elemento myDiv o null si no existe.
 				const elemento = (indice === false) ? null : (MatriZ[indice] ?? null);
@@ -1056,7 +1056,7 @@ class Working_Rangos  extends Working_Celdas{
 	 * @param {String} id_contenido Identificador del contenido a localizar.
 	 * @returns {String|null} Celda en formato "A0", "B7"... o null si no se encuentra.
 	 */
-	_search_celda(id_contenido = '') {
+	buscar_celda_by_contenido(id_contenido = '') {
 		if (!id_contenido || typeof id_contenido !== 'string') return null;
 		const buscado = id_contenido.trim();
 
@@ -1103,7 +1103,6 @@ class Working_Rangos  extends Working_Celdas{
 			if (!dimension_fc || !coord_ci) return null;
 	
 			// ■ Cacha totales de la clase matriz_plana (ref_matriz_plana)
-			// const { total_filas, total_columnas } = this.ref_Salon.get_dimension_matriz();
 			const {filas: total_filas,columnas: total_columnas,} = this._get_dimension_matriz();
 	
 			// ■ Valida dimension
@@ -1147,7 +1146,7 @@ class Working_Rangos  extends Working_Celdas{
 		for (let fila = fila_inicio; fila < fila_inicio + dim_rows; fila++) {
 			for (let columna = columna_inicio; columna < columna_inicio + dim_cols; columna++) {
 				// 1. Obtener índice matricial
-				const indice = this.X_to_indice(fila, columna);
+				const indice = this.X_to_indice_matriz(fila, columna);
 				if (indice === false) return false;
 				// 2. Obtener el objeto MyDiv directamente de la referencia a la matriz
 				const myDiv = MatriZ[indice];					
@@ -1254,7 +1253,7 @@ class Working_Rangos  extends Working_Celdas{
 			// ┌•• Recolectar coordenadas 
 			ids_items.forEach(id => {
 				// ┌•• Clase Rango para consultar la celda. Si la matriz está vacía, no se procesa.
-				const celda = this._search_celda(id); 
+				const celda = this.buscar_celda_by_contenido(id); 
 				if (celda) {
 					const fc = this._celda_to_fc(celda);
 					if (fc.fila < minF) minF = fc.fila;
@@ -1360,7 +1359,7 @@ class Working_Rangos  extends Working_Celdas{
 		if (!Number.isFinite(minFila) || !Number.isFinite(minCol)) return;
 		const celda_inicio = this._fc_to_celda(minFila, minCol);
 		const celda_fin = this._fc_to_celda(maxFila, maxCol);
-		const dimension = this._get_dimension(celda_inicio, celda_fin, false);
+		const dimension = this._get_dimension_by_cicf(celda_inicio, celda_fin, false);
 		if(celda_inicio && celda_fin && dimension) 
 			return {celda_inicio, celda_fin};
 		else
@@ -1369,7 +1368,7 @@ class Working_Rangos  extends Working_Celdas{
 
 	/** ## De una celda-inicio y celda-fin conseguimos la dimensión y devolvemos un 'rango continuo' del Salon */
 	_get_rango_from_cicf(celda_inicio = 'A0', celda_fin = 'C4'){
-		const dimension = this._get_dimension(celda_inicio, celda_fin, false);
+		const dimension = this._get_dimension_by_cicf(celda_inicio, celda_fin, false);
 		return dimension ? this._crear_ficha_rango(celda_inicio, dimension) : null;
 	}
 
@@ -1383,7 +1382,7 @@ class Working_Rangos  extends Working_Celdas{
 		if (!ini_fc || !fin_fc) return null;
 
 		const celda_fin = this._fc_to_celda(fin_fc.fila, fin_fc.columna);
-		const dimension_fc = this._get_dimension(celda_inicio, celda_fin, false);
+		const dimension_fc = this._get_dimension_by_cicf(celda_inicio, celda_fin, false);
 		if (!celda_fin || !dimension_fc) return null;
 
 		const ficha = this._get_ficha_vacia();
@@ -1406,7 +1405,7 @@ class Working_Rangos  extends Working_Celdas{
 				ficha.items[celda] = cuadrado?.id || null;				
 				// ┌■ Carga el Valor del DOM: 'silla_3' o 'mesa_0' o null si no hay contenido.
 				if (cuadrado?.firstElementChild) {
-					ficha.values[celda] = cuadrado.firstElementChild;
+					ficha.values[celda] = cuadrado.firstElementChild.id;
 				}
 			}
 		}
@@ -1457,7 +1456,7 @@ class Working_Rangos  extends Working_Celdas{
 		if (!Number.isInteger(ultimo_indice_matriz) || ultimo_indice_matriz < 0) return null;
 		const celda_i = this.X_to_celda(0, 0);
 		const celda_f = this.X_to_celda(ultimo_indice_matriz);
-		const dimension = this._get_dimension(celda_i, celda_f);
+		const dimension = this._get_dimension_by_cicf(celda_i, celda_f);
 
 		return dimension ? this.crear_rango('rango_matriz', celda_i, dimension) : null;
 	}
@@ -1470,14 +1469,14 @@ class Working_Rangos  extends Working_Celdas{
 			const inicio = this.X_to_celda(0, c);
 			let fin = inicio;
 			for (let f = total_filas - 1; f >= 0; f--) {
-				const indice = this.X_to_indice(f, c);
+				const indice = this.X_to_indice_matriz(f, c);
 				if (indice !== false) {
 					fin = this.X_to_celda(indice);
 					break;
 				}
 			}
-			const dimension = this._get_dimension(inicio, fin);
-			if (dimension && this.crear_rango(`rango_fila_${c}`, inicio, dimension)) contador++;
+			const dimension = this._get_dimension_by_cicf(inicio, fin);
+			if (dimension && this.crear_rango(`rango_columna_${c}`, inicio, dimension)) contador++;
 		}
 		return contador;
 	}
@@ -1491,13 +1490,13 @@ class Working_Rangos  extends Working_Celdas{
 			let fin = inicio;
 			
 			for (let c = total_cols - 1; c >= 0; c--) {
-				const indice = this.X_to_indice(f, c);
+				const indice = this.X_to_indice_matriz(f, c);
 				if (indice !== false) {
 					fin = this.X_to_celda(indice);
 					break;
 				}
 			}
-			const dimension = this._get_dimension(inicio, fin);
+			const dimension = this._get_dimension_by_cicf(inicio, fin);
 			if (dimension && this.crear_rango(`rango_fila_${f}`, inicio, dimension)) contador++;
 		}
 		return contador;
@@ -1579,7 +1578,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * crear_marco('rango_fila_2');	► Crea un marco si rango_fila_2 está registrado en this.d_rangos
 	 * crear_marco(celda_inicio:'A2', dimension:{filas:3, columnas:4}); ► Crea un marco con ci('A2') de dimension 3x4
 	 * ```	 */
-	crear_$marco(argumento){
+	crear_marco(argumento){
 		if(!argumento || Array.isArray(argumento)) return null;
 		let filas =  -1;
 		let columnas = -1;
@@ -1627,6 +1626,33 @@ class Rango_Ghost extends Working_Rangos{
 		
 	}
 
+	/** ## Devuelve una ficha del marco "en Salon", con valores del Dom.
+	 * ### RECUERDA 
+	 * #### Que los values del marco al cargar desde BDD son virtuales(no existen en el Dom).
+	 * #### Al 'mover' el cursor también hay diferencias entre salon y marco.
+	 * #### Y si cortas los elementos, también dejan de existir en el Dom para ser de memoria RAM.
+	 * 
+	 * ### ■ Lo uso en informe_marco_consola para acceder al Salon y Marco por separado.
+	 * 
+	 * #### Al registrar el marco en d_rangos, uso _get_values y _get_items que acceden al dom.
+	 * #### De esta forma puedo dejar intacto el marco y "acceder al Salon indirectamente".
+	 * #### además los 'items' y 'values' vienen normalizados como string no como objetos.
+	 */
+	get_ficha_marco_en_Salon(){
+
+		// ┌■ Values e items  'en Salon'. 
+        const nombre_marco = this.registrar_marco_en_d_rangos();
+        const d_values_salon  = this._get_values(nombre_marco, false, false);
+        const d_items_salon = this._get_items(nombre_marco, false);
+        this.eliminar_rango(nombre_marco);
+
+		const ficha_marco_salon = this._get_ficha_vacia();
+		ficha_marco_salon.values = d_values_salon;
+		ficha_marco_salon.items = d_items_salon;
+		return ficha_marco_salon || {}
+
+	}
+
 	/** ### Crea un marco desde un rango ya creado. 
 	 * ### Además convierte los id's de values en objetos  
 	 * ### Siempre un Rango Rectangular */
@@ -1647,7 +1673,7 @@ class Rango_Ghost extends Working_Rangos{
 		// ┌■ El proceso es el siguiente:
 		// Se pone el cursor(celda_inicio) en A0. Se calcula la dimension y el rango. Luego se puede calcular geo, items y values
 		const new_dimension = {filas:filas, columnas:columnas};
-		// ┌■  Cuando llama a crear_$marco solo con dimension situa el cursor en  'A0'
+		// ┌■  Cuando llama a crear_marco solo con dimension situa el cursor en  'A0'
 		const ci = 'A0';
 		const cf = this._get_celda_fin(ci, new_dimension);
 		if(!cf) return null;
@@ -1669,7 +1695,8 @@ class Rango_Ghost extends Working_Rangos{
 		
 		// ┌■ Asigno los valores
 		this.d_rangos[ghost_name].geo =  geo ? geo : {};
-		// this.d_rangos[ghost_name].items = items ? items : {};
+		
+		// ┌■ Convierto los items y los valores en Objetos Html!
 		this.d_rangos[ghost_name].items = this.#_normalizar_items_marco(items);
 		this.d_rangos[ghost_name].values = this.#_normalizar_values_marco(values);
 		
@@ -1691,7 +1718,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * @param {Number} separacion  Espacio de separación entre las matrices (La separación dinámica)
 	 * @returns {Array}  Array de strings representando la matriz del ghost y el salon
 	 */
-    informe_marco_consola(titulo = '', separacion = 15) {
+    informe_marco_consola(titulo = '', separacion = 7) {
 		// ┌■ Espacio de separación entre las matrices(La separación dinámica)
 		const GAP = ' '.repeat(separacion); 
 		// ┌■ Colores usados
@@ -1706,7 +1733,15 @@ class Rango_Ghost extends Working_Rangos{
         const BARRAINI = `${F.bright}${F.green}${BARRA}${F.reset}`;
         const BARRAFIN = `${F.bright}${F.gray}${LINEA}${F.reset}\n`;
 		const BASTON = `${F.bright}${F.gray}┌■■${F.reset}`;
+		
+		// ┌■■■■■ Funciones Locales ■■■■■┐
 
+		/** ### Formato centrado haciendo padding sobre el texto */
+		const centrar_celda = (texto, longitud, relleno = " ") => {
+			return texto
+				.padStart(Math.floor((longitud + texto.length) / 2), relleno)
+				.padEnd(longitud, relleno);
+		};
 		/** ### Devuelve un array de str con la linea que tiene que escribir, cruza celdas con values en Salon y Rango 
 		 * ### • 1 llamada por 'Salon' y otra por 'Rango'		*/
         const representar_matriz = (array_celdas, arr_values=[]) => {
@@ -1721,7 +1756,7 @@ class Rango_Ghost extends Working_Rangos{
                 columnas.forEach(letra => {
                     const celda = `${letra}${num}`;
 					const idCeldaPadded = celda.padEnd(ANCHO_CELDA, ' '); // Normaliza a 4 caracteres
-					const id_celda_padded_centrada = centrar(celda, 5, ' ');
+					const id_celda_padded_centrada = centrar_celda(celda, 5, ' ');
                     if (array_celdas.includes(celda)) {
                         if(arr_values.includes(celda))
                             filaVisual.push(`${F.bright}${F.green}${id_celda_padded_centrada}${F.reset}`);
@@ -1738,12 +1773,7 @@ class Rango_Ghost extends Working_Rangos{
             });
             return array_retorno_str;
         };
-		/** ### Formato centrado */
-		const centrar = (texto, longitud, relleno = " ") => {
-			return texto
-				.padStart(Math.floor((longitud + texto.length) / 2), relleno)
-				.padEnd(longitud, relleno);
-		};
+		
 		/** ### Entra un str y devuelve la longitud real sin los caracteres de color */
 		const get_longitud_limpia = (str) => {
 			// Esta regex busca el carácter de escape seguido de los corchetes y parámetros
@@ -1751,57 +1781,72 @@ class Rango_Ghost extends Working_Rangos{
 			return str.replace(ansiRegex, '').length;
 		};
 		/** ### Retorna un id. valor puede ser string u objeto. */
-		const obtener_id = (valor) => {
+		/** ### Retorna un id. valor puede ser string u objeto. */
+		const normalizar_identificador = (valor) => {
 			if (valor === null || valor === undefined || valor === false) return 'vacío';
 			if (typeof valor === 'string' || typeof valor === 'number') return String(valor);
 			return valor.id || '(elemento sin id)';
 		};
-		/** ### diccionario {ceda:<elemento>} */
-		const values_marco = this.marco.values || {};
-
+		/** ### Recive 2 arrays de celdas y valida si tienen las mismas o no. */
+		const tienen_celdas_iguales = (celdas_marco, celdas_salon) => {
+			if (celdas_marco.length !== celdas_salon.length) return false;			
+			let son_iguales = true;
+			celdas_marco.forEach((celda, i) => {
+				if (celda !== celdas_salon[i]) {
+					son_iguales = false;
+				}
+			});
+			return son_iguales;
+		};
+		
 		// ┌■■■■■ PREPARACIÓN DE DATOS ■■■■■┐	
+		
+		/** ### Values e items en el marco */
+		const values_marco = this.marco.values || {};
+		const items_marco = this.marco.items || {};
 
-		// ┌• Obtener  values e items  'en Salon'     
+		// ┌■ Values e items  'en Salon'. 
+		// ┌• Al registrar el marco en d_rangos, uso _get_values y _get_items que acceden al dom.
+		// ┌• De esta forma puedo dejar intacto el marco y "acceder al Salon indirectamente".
         const nombre_marco = this.registrar_marco_en_d_rangos();
         const d_values_salon  = this._get_values(nombre_marco, false, true);
         const d_items_salon = this._get_items(nombre_marco, false);
         this.eliminar_rango(nombre_marco);
 
-		// ┌• Array de string 'B4:silla_3','A4:mesa_1', . . .   del Salon
-		let values_rango = '';
-		for (const [celda, valor] of Object.entries(values_marco)) {
-			values_rango += `${celda}: ${obtener_id(valor)}, `;
-		}
-		// ┌• Array de celdas con valor del Salon(this.marco.values)
-		const arr_values = Object.keys(values_marco);
-		
-		// ┌• Asegura celda_inicio y celda_fin con el formato correcto
-        if(typeof this.marco.celda_inicio == 'object') this.marco.celda_inicio = this.X_to_celda(this.marco.celda_inicio);
-        if(typeof this.marco.celda_fin == 'object') this.marco.celda_fin = this.X_to_celda(this.marco.celda_fin);   
+		const ficha_salon = this.get_ficha_marco_en_Salon();
+		const ficha_alt = this._crear_ficha_rango(this.marco.celda_inicio, this.marco.dimension);
 
-        // ┌• Celdas del 'Marco'
-        let celdas_marco = Object.keys(this.marco.items);		
-        
-        // ┌• Celdas del 'Salon'
-		let celdas_salon = [];
-		for (let celda of Object.keys(d_items_salon)) celdas_salon.push(celda);        
-		
-        // ┌• Values del 'Salon'
-		let values_salon = '';
+		// ┌• Values del 'Salon' en una linea xa Info-Estadistica
+		let meta_values_salon = '';
         for (const [celda, valor] of Object.entries(d_values_salon || {})) {
-			values_salon += `${celda}: ${obtener_id(valor)}, `;
+			meta_values_salon += `${celda}: ${normalizar_identificador(valor)}, `;
+		}		
+		// ┌• Array de string 'B4:silla_3','A4:mesa_1', . . .   del Marco
+		let meta_values_marco = '';
+		for (const [celda, valor] of Object.entries(values_marco)) {
+			meta_values_marco += `${celda}: ${normalizar_identificador(valor)}, `;
 		}
+
+		// ┌■■ Construcción de las matrices ■■┐
+		// ┌• Array de celdas con valor del Salon(this.marco.values)
+		const arr_values_marco = Object.keys(values_marco);
+		const arr_values_salon = Object.keys(d_values_salon);
+
+        // ┌• Celdas del 'Marco' // ┌• Celdas del 'Salon'
+        let celdas_marco = Object.keys(this.marco.items);        
+		let celdas_salon = [];
+		celdas_salon = Object.keys(d_items_salon);  		
+		if (!tienen_celdas_iguales(celdas_marco, celdas_salon)) return;
         
-        // ┌• Array de str de Salon - 
-        const lineas_rango = representar_matriz(celdas_marco, arr_values || []);
-		const lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon || {}));
-		
-		// ┌• Calcular la 'longitud max de las filas' de la MATRIZ
-        const filas_totales = Math.max(lineas_rango.length, lineas_salon.length);
+        // ┌• Array de str de Salon // ┌• Array de str de Marco
+        const arr_lineas_marco = representar_matriz(celdas_marco, arr_values_marco || []);
+		const arr_lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon || []));		
+		// ┌■ Combino la información para meter 2 matrices x linea
+        const filas_totales = Math.max(arr_lineas_marco.length, arr_lineas_salon.length);
 		const linea_s_to_print  = []
         for (let i = 0; i < filas_totales; i++) {
-            const fila_R = lineas_rango[i] || ''; // Por si una matriz tiene menos filas
-            const fila_S = lineas_salon[i] || '';
+            const fila_R = arr_lineas_marco[i] || ''; // Por si una matriz tiene menos filas
+            const fila_S = arr_lineas_salon[i] || '';
 			const linea = `${fila_S}${GAP}${fila_R}`;			
 			linea_s_to_print.push(linea);
         }
@@ -1811,6 +1856,10 @@ class Rango_Ghost extends Working_Rangos{
 		linea_s_to_print.forEach(linea =>{max_l = Math.max(max_l, get_longitud_limpia(linea)) });
 		const x_matriz = Math.floor((max_l - separacion) / 2);
 		
+		// ┌■ Linea Base de las Matrices:
+		const under_salon = this.#__generar_linea_formateada(x_matriz, 'SALON',  2);
+		const under_rango = this.#__generar_linea_formateada(x_matriz, 'MARCO',  2);
+
 		// ┌■ Preparo Metadatos
 		const ci = `${BASTON} ${F.yellow}CELDA_INI${F.reset}: "${this.marco.celda_inicio}"`;
 		const cf = `${BASTON} ${F.yellow}CELDA_FIN${F.reset}: "${this.marco.celda_fin}"`;
@@ -1819,20 +1868,17 @@ class Rango_Ghost extends Working_Rangos{
 		const items = `${BASTON} ${F.yellow}ITEMS${F.reset}: ${this.marco.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
 		const action = `${BASTON}${F.yellow} ACCION${F.reset}: ${this.accion}`;
 		const paste = `${F.gray}┌■■${F.reset} Nº ${F.yellow}PASTEs${F.reset}: ${this.num_pegar}`;
-		const values_rango_str = `${BASTON} VALUES ${F.yellow}RANGO${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${values_rango}${F.bright}${F.yellow}█▀▄█${F.reset}`;
-		const values_salon_str = `${BASTON} VALUES ${F.yellow}SALON${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${values_salon}${F.bright}${F.yellow}█▀▄█${F.reset}`;
+		const values_rango_str = `${BASTON} ${F.yellow}VALUES RANGO${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${meta_values_marco}${F.bright}${F.yellow}█▀▄█${F.reset}`;
+		const values_salon_str = `${BASTON} ${F.yellow}VALUES SALON${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${meta_values_salon}${F.bright}${F.yellow}█▀▄█${F.reset}`;
 
 		// ┌■■■■■ RENDERIZADO HACIA CONSOLA ■■■■■┐	
-
-        console.log(`\n​​​🧩 Titulo: ${F.yellow}${titulo}${F.reset}`);
 		
-		// ┌■ Imprimir las matrices lado a lado
-		linea_s_to_print.forEach(linea =>{console.log(linea)});		
-		// ┌■ Linea Base de las Matrices:
-		const under_salon = this.#__generar_linea_formateada(x_matriz, 'SALON',  2);
-		const under_rango = this.#__generar_linea_formateada(x_matriz, 'RANGO',  2);
-        console.log(` ${F.bright}${F.gray}${under_salon}${GAP}${under_rango}${F.reset}`);        
-		
+		// ┌■ Titulo del Informe:
+        console.log(`\n​​​🧩 Titulo: ${F.yellow}${titulo}${F.reset}`);		
+		// ┌■ Imprimir las matrices lado a lado:
+		linea_s_to_print.forEach(linea =>{console.log(linea)});				
+		// ┌■ Imprimir las lineas divisorias:
+        console.log(` ${F.bright}${F.gray}${under_salon}${GAP}${under_rango}${F.reset}`);        		
 		// ┌■ imprimo metadatos
 		console.log(`${ci}  ${cf}  ${dim}  ${geo}  ${items}`);
 		console.log(`${action} ${paste}`);
@@ -1917,7 +1963,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * ### • Es responsabilidad del programador mover el cursor con 'mover_cursor' para CORTAR valores distintos.
 	 * ### • VOY A INTENTAR 'CORTAR' LOS ELEMENTOS DIRECTAMENTE PORQUE GHOST VIVE EN EL DOM. NO SE GUARDA.
 	*/	
-	cortar_$marco() {
+	cortar_marco() {
 		const nombre_marco = this.registrar_marco_en_d_rangos();
 		try {
 			// Obtener los elementos del DOM directamente y no el id del elemento usando el tercer parámetro en true
@@ -1953,7 +1999,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * ### • Es responsabilidad del programador mover el cursor con 'mover_cursor' para COPIAR valores distintos.
 	 * ### • VOY A 'CLONAR' LOS ELEMENTOS DIRECTAMENTE PORQUE GHOST VIVE EN EL DOM. NO SE GUARDA
 	*/
-	copiar_$marco(){
+	copiar_marco(){
 		try {
 			if(!this.marco || !this.marco.celda_inicio) return null;
 			// TENGO QUE COPIAR LOS ELEMENTOS DEL SALON EN 'values', luego me quedo esperando que me muevan con 'mover_cursor'.
@@ -2042,7 +2088,7 @@ class Rango_Ghost extends Working_Rangos{
 	/** Pega los values del marco en las baldosas dom.
 	 * devuleve un array de diccionario {baldosa:<obj_baldosa1, elemento:<obj_silla_5>, .... }
 	*/
-	pegar_$marco() {
+	pegar_marco() {
 		// ┌■ Previo a Pegar
 		const celda_elemento = this.get_celda_s_elemento_del_marco();
 		// ┌■ Validacion:
@@ -2084,11 +2130,11 @@ class Rango_Ghost extends Working_Rangos{
 			let ok = false;
 			ok = this.mover_cursor(celda_origen)
 			if(!ok) throw Error(`Error en "Mover" a celda-origen ${celda_origen}`);
-			ok = this.cortar_$marco();
+			ok = this.cortar_marco();
 			if(!ok) throw Error(`Error en "Cortar" celda-destino: ${celda_destino}`);
 			ok = this.mover_cursor(celda_destino);
 			if(!ok) throw Error(`Error "Mover" a celda-destino ${celda_destino}`);
-			ok = this.pegar_$marco();			
+			ok = this.pegar_marco();			
 			if(!ok) throw Error(`Error "Paste" en celda-destino ${celda_destino}`);
 			return ok;
 
@@ -2116,11 +2162,11 @@ class Rango_Ghost extends Working_Rangos{
 			let ok = false;
 			ok = this.mover_cursor(celda_origen)
 			if(!ok) throw Error(`Error en "Mover" a celda-origen ${celda_origen}`);
-			ok = this.copiar_$marco();
+			ok = this.copiar_marco();
 			if(!ok) throw Error(`Error en "Copiar" celda-origen: ${celda_origen}`);
 			ok = this.mover_cursor(celda_destino);
 			if(!ok) throw Error(`Error en "Mover" a celda-destino ${celda_destino}`);
-			ok = this.pegar_$marco();
+			ok = this.pegar_marco();
 			if(!ok) throw Error(`Error en "Paste" en celda-destino ${celda_destino}`);
 			
 			return ok;
@@ -2128,6 +2174,22 @@ class Rango_Ghost extends Working_Rangos{
 			console.log(`❌ Error Copy-Paste 👻, celda-destino ${celda_destino} :::` , error);
 			return false;
 		}
+	}
+	/** 
+	 * ### registro la ficha del marco en d_rangos.
+	 * ### Este proceso vale para hacer operaciones con el marco como un rango de working_Rangos
+	 * */
+	registrar_marco_en_d_rangos(){
+		if (this.marco){
+			// ┌■ Objeto rango.
+			const nombre_marco = this._get_nombre_rango('marco');		
+			this.registrar_ficha(nombre_marco, this.marco);
+			// ┌■
+			return nombre_marco;
+		}else{
+			return '';
+		}
+		
 	}
 
 	/**
@@ -2293,22 +2355,7 @@ class Rango_Ghost extends Working_Rangos{
 		return celda_retorno ? celda_retorno : '';
 	}
 
-	/** 
-	 * ### registro la ficha del marco en d_rangos.
-	 * ### Este proceso vale para hacer operaciones con el marco como un rango de working_Rangos
-	 * */
-	registrar_marco_en_d_rangos(){
-		if (this.marco){
-			// ┌■ Objeto rango.
-			const nombre_marco = this._get_nombre_rango('marco');		
-			this.registrar_ficha(nombre_marco, this.marco);
-			// ┌■
-			return nombre_marco;
-		}else{
-			return '';
-		}
-		
-	}
+	
 	
 }
 
@@ -2826,7 +2873,7 @@ class El_Rango_del_Salon extends Rango_Ghost{
 			indice_a_celda: (indice, dimension) => this._get_celda(indice , dimension),
 			crear_ficha: (celda_inicio, dimension) => this._crear_ficha_rango(celda_inicio, dimension),
 			celdas_a_limites: this.__get_cicf_from_celdas.bind(this),
-			calcular_dimension: (celda_inicio, celda_fin) => this._get_dimension(celda_inicio, celda_fin, false),
+			calcular_dimension: (celda_inicio, celda_fin) => this._get_dimension_by_cicf(celda_inicio, celda_fin, false),
 		});
 	}
 

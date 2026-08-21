@@ -88,10 +88,7 @@ class Work_ClassName {
 	 * @param {*} path_css
 	 * @returns null si no se encuentra el archivo.
 	 */
-	// constructor(path_css = Work__ClassName.LINK_FILEPATH_XDEF) {
 	constructor(path_css = CSS_HREF_LINK) {
-		
-		// super();															// ■ Llamada a Head_Drive (padre)
 		
 		if (typeof (path_css) != 'string')  path_css = CSS_HREF_LINK; 
 		if (path_css.trim() == '')  		path_css = CSS_HREF_LINK;
@@ -257,33 +254,79 @@ class Matriz_Plana extends Work_ClassName {
 	 * ```
 	 */
 	constructor( columnas , lista_elemento_dom = null) {
-		try {
-			// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-			super(); // Llamada al constructor de Work__ClassName
-			// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-			// ■ matriz_plana
-			this.matriz_plana = [];
-			if (!this._is_lista_OK(lista_elemento_dom)) lista_elemento_dom=[];
-			this.matriz_plana = lista_elemento_dom;				// • Si se tiene una lista de elementos. si no se tiene(null): this.matriz_plana = []	
-			// ■ Columnas
-			if (!Number.isSafeInteger(columnas) || columnas < 0 ) return false;
-			this.columnas = columnas;			
-			// ■ Hay que calcular las filas siempre que cambien ó cambie el •numero_columnas ó •numero_items.
-			const total_filas = this.total_filas();      	
-			if (total_filas === false) {
-				this.filas = 0;
-			}else{
-				this.filas = total_filas;}
-			
-			this.WC = new Working_Celdas(this);
-		} catch (e) {
-			console.log('❌ ERROR ► contructor Matriz_Plana: \n' + e.message);
-			return false;
+		super(); // Llamada al constructor de Work__ClassName
+
+		// ■ matriz_plana
+		this.matriz_plana = [];
+		if (!this._is_lista_OK(lista_elemento_dom)) lista_elemento_dom=[];
+		this.matriz_plana = lista_elemento_dom;				// • Si se tiene una lista de elementos. si no se tiene(null): this.matriz_plana = []	
+		// ■ Columnas
+		if (!Number.isSafeInteger(columnas) || columnas < 0 ) return false;
+		this.columnas = columnas;			
+		// ■ Hay que calcular las filas siempre que cambien ó cambie el •numero_columnas ó •numero_items.
+		const total_filas = this.total_filas();      	
+		if (total_filas === false) {
+			this.filas = 0;
+		}else{
+			this.filas = total_filas;}
+		
+		// this.WC = new Working_Celdas(this);
+
+	}
+	/** Convierte unas coordenadas válidas en un índice de matriz. */
+	_coordenadas_a_indice(fila, columna) {
+		if (!Number.isInteger(fila) || !Number.isInteger(columna)) return false;
+		if (fila < 0 || columna < 0 || columna >= this.columnas) return false;
+
+		const indice = fila * this.columnas + columna;
+		return this.is_indice_OK(indice) ? indice : false;
+	}
+
+	/** Convierte una referencia como "A0", "B3" o "AA1" en coordenadas. */
+	_celda_a_coordenadas(celda) {
+		if (typeof celda !== 'string') return null;
+
+		const coincidencia = celda.trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
+		if (!coincidencia) return null;
+
+		let columna = 0;
+		for (const letra of coincidencia[1]) {
+			columna = columna * 26 + letra.charCodeAt(0) - 64;
 		}
+
+		return {
+			fila: Number.parseInt(coincidencia[2], 10),
+			columna: columna - 1,
+		};
+	}
+
+	/**
+	 * Obtiene un índice desde un índice, unas coordenadas o una referencia de celda.
+	 * @returns {number|false} Índice válido o false si la entrada queda fuera de la matriz.
+	 */
+	X_to_indice(arg1, arg2 = null) {
+		if (Number.isInteger(arg1) && arg2 === null) {
+			return this.is_indice_OK(arg1) ? arg1 : false;
+		}
+
+		if (Number.isInteger(arg1) && Number.isInteger(arg2)) {
+			return this._coordenadas_a_indice(arg1, arg2);
+		}
+
+		if (typeof arg1 === 'string' && arg2 === null) {
+			const coordenadas = this._celda_a_coordenadas(arg1);
+			if (!coordenadas) return false;
+			return this._coordenadas_a_indice(coordenadas.fila, coordenadas.columna);
+		}
+
+		if (arg1 && typeof arg1 === 'object' && arg2 === null) {
+			return this._coordenadas_a_indice(arg1.fila, arg1.columna);
+		}
+
+		return false;
 	}
 
 	// ■■■■■■■■■■■■■■■■■ VALIDADORES
-	// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 	/**
 	 * ### Valida que un indice es Correcto(Entero positivo, en el rango de la matriz.)
 	 * @param {number} indice de la matriz a evaluar.
@@ -345,7 +388,6 @@ class Matriz_Plana extends Work_ClassName {
 	}
 
 	// ■■■■■■■■■■■■■■■■■ CRUD
-	// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 	/** 🚫
 	 * ### 
 	 * @param {ElementoDom} puede ser cualquier elemento del dom sobre el que se quiera usar matriz. lo normal = Div
@@ -364,7 +406,7 @@ class Matriz_Plana extends Work_ClassName {
 	*/
 	read(arg1, arg2 = null){
 		if (!this._is_lista_OK(this.matriz_plana)) return false;        
-        const indice = this.WC.X_to_indice(arg1, arg2); // Delegamos la "traducción" al método universal        
+		const indice = this.X_to_indice(arg1, arg2);       
         if (indice === false) return false;
 
 		for (let i = 0; i < this.matriz_plana.length; i++) {
@@ -396,7 +438,7 @@ class Matriz_Plana extends Work_ClassName {
 	*/
 	delete_item(arg1, arg2=null){
 		if (!this._is_lista_OK(this.matriz_plana)) return null;      // Validación de la matriz   
-        const indice = this.WC.X_to_indice(arg1, arg2); // Delegamos la "traducción" al método universal    		    
+		const indice = this.X_to_indice(arg1, arg2);    		    
 		try {
 			if (indice === false) {
 				const item_deleted = this.matriz_plana.pop();
@@ -424,7 +466,6 @@ class Matriz_Plana extends Work_ClassName {
 		}
 	}
 	// ■■■■■■■■■■■■■■■■■ SACA DATOS DE LA CLASE
-	// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 	/**
 	 * ## Devuelve filas y columnas en matriz_plana {filas, columnas} 
 	 * @returns {object}  { filas, columnas } devuelve un objeto tipo filas:5 , columnas:7
@@ -483,7 +524,7 @@ class Matriz_Plana extends Work_ClassName {
 		if (!this._is_lista_OK(this.matriz_plana)) return false;        
 		if (this.columnas === 0) return 0;
         
-		const indice = this.WC.X_to_indice(arg1); 		// Delegamos la "traducción" al método universal        
+		const indice = this.X_to_indice(arg1);       
         if (indice === false) return false;
 		const fila = Math.floor(indice / this.columnas);		// Cálculo directo de la fila
 		return fila;
@@ -496,7 +537,7 @@ class Matriz_Plana extends Work_ClassName {
 	 */
 	numero_columna(arg1) {			
 		if (!this._is_lista_OK(this.matriz_plana)) return false;        
-        const indice = this.WC.X_to_indice(arg1); // Delegamos la "traducción" al método universal        
+		const indice = this.X_to_indice(arg1);      
         if (indice === false) return false;
 
 		return indice % this.columnas;	// Cálculo directo de la columna... resto del total entre el número de columnas
@@ -510,16 +551,15 @@ class Matriz_Plana extends Work_ClassName {
 	*/
     _at(arg1, arg2 = null) {
 		if (!this._is_lista_OK(this.matriz_plana)) return null;        
-        const indice = this.WC.X_to_indice(arg1, arg2); // Delegamos la "traducción" al método universal        
+		const indice = this.X_to_indice(arg1, arg2);      
         if (indice === false) return null;
         return this.matriz_plana[indice];
     }	
 	
 	
-	// ■■■■■■■■■■■■■■■■■ GETTER'S & SETTER'S
-	// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 	/**
-	 * ###  Asigna el numero de items de la matriz. Recalcula el número de filas. El número de columnas se mantiene.
+	 * ###  Asigna el numero de items de la matriz. 
+	 * Recalcula el número de filas. El número de columnas se mantiene.
 	 */
 	set matriz_plana(lista_elemento_dom) {
 		try {
@@ -570,21 +610,13 @@ class Matriz_Plana extends Work_ClassName {
 // ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘   FIN CLASE Matriz_Plana
 
 
-// ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-// ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-// * C L A S E  "Matriz_to_MyDiv"  	
-// ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-// ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
-// ■■■■ Clase que mantiene ( insertar / editar / eliminar / Buscar / Show) un Array de objetos [MyDiv] ► (matriz) en un contenedor padre ► (this.contenedor_div_x_div).
-
-// • TODOS LOS DIVS TIENEN LOS MISMOS className('estiloBaldosa', 'estiloSalon') inicialmente 
-// dentro de  la misma Hoja de Estilos (stylesDvd.css) • • • por Defecto .... Hereda de Work__ClassName
-
-// • Se pueden poner ESTILOS DIFERENTES a cada DIV,  dependiendo del FLAG o del TAG asignado POSTERIORMENTE.
-// • Se puede manejar el head de la aplicacion para editarlo dinamicamente(CRUD sobre el Head).  ► obj_Div_X_Div.head_drive.[add__etiqueta, addTitle, updateURL...]
-
-// import { Matriz_Plana } from './matriz_dvd.js'; // ■■■■■■ 
+/** C L A S E  "Matriz_to_MyDiv"  	
+* ■■■■ Clase que mantiene ( insertar / editar / eliminar / Buscar / Show) un Array de objetos [MyDiv] ► (matriz) en un contenedor padre ► (this.contenedor_div_x_div).
+* TODOS LOS DIVS TIENEN LOS MISMOS className('estiloBaldosa', 'estiloSalon') inicialmente 
+* dentro de  la misma Hoja de Estilos (stylesDvd.css) • • • por Defecto .... Hereda de Work__ClassName
+* Se pueden poner ESTILOS DIFERENTES a cada DIV,  dependiendo del FLAG o del TAG asignado POSTERIORMENTE.
+* Se puede manejar el head de la aplicacion para editarlo dinamicamente(CRUD sobre el Head).  ► obj_Div_X_Div.head_drive.[add__etiqueta, addTitle, updateURL...]
+ */
 class Matriz_to_MyDiv extends Matriz_Plana {
 	// STATIC PARAM'S 🧍‍♂️
 	static FAMILY_NONAME = 'NoNfamily';				//Para los div no nombrados explicitamente:
@@ -601,38 +633,25 @@ class Matriz_to_MyDiv extends Matriz_Plana {
 	div_maestro = null;
 	columnas = 8;
 	filas = 8;
-	// tag_baldosas = '#Baldosa';
-
 	
 	/**
 	 * ### 
 	 * @param {*} family 		Nombre comun para los divs. Si Capulettos -> Capulettos_0, Capulettos_1...
-	 * @param {*} id_div_contenedor 	Contenedor donde meter los divs creados con la clase.
-	 * @param {*} div_maestro, 			div donde meter el contenedor de los divs. es un contenedor de un contenedor. Será document.body si no se pasa argumento.
-	 * 								si se pasa argumento div_maestro.appendChild(this.contenedor_div_x_div) 
+	 * @param {*} id_div_contenedor	Contenedor donde meter los divs creados con la clase.
+	 * @param {*} div_maestro, Div donde meter el contenedor de los divs. es un contenedor de un contenedor. Será document.body si no se pasa argumento.
+	 * 							si se pasa argumento div_maestro.appendChild(this.contenedor_div_x_div) 
 	*/
 	constructor(family = '', id_div_contenedor = '', div_maestro = null, columnas = 8, filas = 8) {
-		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-		// ■■ LLAMADA AL PADRE
-		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-		try {
-			super(columnas);							// De una lista plana obtenemos las referencias de una lista bidimensional.		
-		} catch (error) {
-			console.log(`❌​ ERROR Matriz_to_MyDiv::: constructor::: ${error.message}`);
-		}
+		super(columnas);							// De una lista plana obtenemos las referencias de una lista bidimensional.		
 		
-		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■■ ASIGNACION DE VARIABLES.
-		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		
-		// ■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ FAMILY: 
 		if (typeof (family) != 'string' || family.trim() === '' || document.getElementById(family) || document.getElementById(family+'_0')) 
 			this.family = Herramientas._get_secuencial_dom(Matriz_to_MyDiv.FAMILY_NONAME);			
 		else		
 			this.family = family;
 		
-		// ■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ id_div_contenedor 	
 		if (id_div_contenedor == null || typeof (id_div_contenedor) != 'string' || id_div_contenedor.trim() == '') {			
 			this.contenedor_div_x_div = document.createElement('div');
@@ -644,7 +663,6 @@ class Matriz_to_MyDiv extends Matriz_Plana {
 			this.contenedor_div_x_div = document.getElementById(id_div_contenedor);	// • IF ► el contenedor pasado EXISTE en Html...lo cacho como contenedor
 		}		
 
-		// ■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ CONTENEDOR DEL CONTENEDOR 		
 		if(!div_maestro) 		// • La clase está pensada para que sea en el document.body en caso de div_maestro = null
 			div_maestro = document.body;		
@@ -652,43 +670,31 @@ class Matriz_to_MyDiv extends Matriz_Plana {
 		// ◘ añadimos el contenedor de la matriz al body.
 		this.div_maestro.appendChild(this.contenedor_div_x_div);		
 		
-		// ■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ NUMERO COLUMNAS: 
 		if (typeof (columnas) != 'number' || columnas <= 0) 	
 			this.columnas = 8;
 		else 									
 			this.columnas = Math.floor(columnas);
-		// ■■■■■■■■■■■■■■■■■■■■■■■■
+
 		// ■ NUMERO FILAS: 		
 		if (typeof (filas) != 'number' || filas <= 0) 		
 			this.filas = 8;
 		else
 			this.filas = filas;
 		
-		// ■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ Crea un primer div que será el patron de clonacion
 		this.my_div_one = this._crear_mydiv();		
 		if (!this.my_div_one) throw ('​❌​ Error al  Crear 1º Div  :(');
 		
-		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ AÑADO LAS BALDOSAS AL SALON
-		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		this._set_total_mydivs( this.filas * this.columnas );
 		this.set_classname_container('estiloSalon');		// Y asigno la clase al conetenedor.
     	this.set_className('estiloBaldosas');				// Y asigno la clase a las baldosas.
 		
-		// ■■■■■■■■■■■■■■■■■■■
 		// LOG Estados 🖥️​​ 
 		this.log_salon();
-		
-		// ■■■■■■■■■■■■■■■■■■■■■
-		// ​🧩​🧩​  RANGOS 🧩​🧩​​
-		// ■■■■■■■■■■■■■■■■■■■■■
-		this.W_R = new Working_Celdas(this); 	// Instanciamos el gestor de RANGOS y CELDAS de la matriz.		
-		
-		
 
-	}	// ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘ FIN CONSTRUCTOR
+	}	
 
 	/**
 	 * ### Imprime un Logg de salon por consola.
@@ -707,8 +713,7 @@ class Matriz_to_MyDiv extends Matriz_Plana {
 		console.log(txt);
 	}
 
-	// ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘ SCANNER DE UNA BALDOSA
-	/**
+	/**	### SCANNER DE UNA BALDOSA
      * ### Escanea la lista de diccionarios mesa del salon y hace la busqueda norte sur este oeste, buscando sillas y mesas.
      * @param {*} 
     */
@@ -761,7 +766,7 @@ class Matriz_to_MyDiv extends Matriz_Plana {
 		return myDiv_to_search;
 	}
 
-	/** ┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌
+	/** ┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘┌┘
 	 * ### recibe un objeto myDiv. devuelve un array con los ids de todas las Mesas y Sillas que tiene alrededor
 	 * @param {myDiv} my_div - Objeto myDiv que contiene el escaneo n-s-e-w.
 	 * @param {myDiv} base_name_clone - el objeto clone (null, 'mesa' , 'silla')  a buscar.... si null, entra todo(Mesas y Sillas).
@@ -786,8 +791,6 @@ class Matriz_to_MyDiv extends Matriz_Plana {
 			
 		}
 		return arr_encontrados;
-
-		
 	}
 
 	/** 
@@ -905,7 +908,7 @@ class Matriz_to_MyDiv extends Matriz_Plana {
 		let fila_coord 		= dicc_coord[coordenada].fil		// ► fila tiene un número si existe y si no existe es false.
 		let columna_coord 	= dicc_coord[coordenada].col		// ► columna tiene un número si existe y si no existe es false.
 
-		let indice_coord = this.W_R.X_to_indice(fila_coord, columna_coord); 		//(Matriz_Plana) retorna number o false.
+		let indice_coord = this.X_to_indice(fila_coord, columna_coord);
 		
 		// Si hay indice y es numerico hay que validar si está ocupada o está vacía(null)
 		if (indice_coord !== false && indice_coord >=0) { 
@@ -1687,10 +1690,6 @@ class Tablero_Drop extends Matriz_to_MyDiv{
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		//  ​👂​👂 Connfigura DRAG (con touchpad y raton)  del MENU HTML 
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-		// ​​​​​​​const items_html_to_matriz = document.querySelectorAll(".menu_to_clone");		
-		// ​​​​​​​if (items_html_to_matriz.length > 0) {	
-		// ​​​​​​​	items_html_to_matriz.forEach(el => el.addEventListener("dragstart", this.dragStart.bind(this)));
-		// ​​​​​​​}
 		const items_html_to_matriz = document.querySelectorAll(".menu_to_clone");
 		if (items_html_to_matriz.length > 0) {
 			items_html_to_matriz.forEach(el => {
@@ -1700,7 +1699,6 @@ class Tablero_Drop extends Matriz_to_MyDiv{
 			});
 		}
 		console.log('✅ Tablero_Drop - Touch-Raton ​​👆​🖱️​ • • • Loaded ✔️');
-
 	}
 	/**
 	 * ### Permite que se suelten elementos en el contenedor.
