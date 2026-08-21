@@ -101,9 +101,6 @@ class Celda_Mapper {
 	}
 }
 
-
-
-
 /**
  * ## Working_Celdas representa una celda en una matriz_plana.
  * ### Permite convertir entre coordenadas (fila, columna) o indice y referencias estilo Excel (A1, B2, etc.)
@@ -115,12 +112,26 @@ class Working_Celdas {
 	// * Permite convertir entre coordenadas (fila, columna) o indice y referencias estilo Excel (A1, B2, etc.)
 	// * example: (Matriz_Plana)  let celda = new Working_Celdas(this, fila, columna);
 	// ■■
-	constructor(instancia_Salon = null) {
-		
-		this.ref_Salon = instancia_Salon;
+	constructor(api_rangos = null) {
+		if (typeof api_rangos?.get_dimension !== 'function') {
+			throw new TypeError('Rangos necesita la función get_dimension().');
+		}
+		if (typeof api_rangos?.get_matriz !== 'function') {
+			throw new TypeError('Rangos necesita la función get_matriz().');
+		}
 
+		this.api_rangos = api_rangos;
 		this.celda_mapper = new Celda_Mapper();
+	}
 
+	/** ### Funcion que se comunica con Salon para obtener la dimension */
+	_get_dimension_matriz() {
+		return this.api_rangos.get_dimension();
+	}
+	
+	/** ### Funcion que se comunica con Salon para obtener la "matriz_plana" */
+	_get_matriz_plana() {
+		return this.api_rangos.get_matriz();
 	}
 
 	/**
@@ -146,9 +157,11 @@ class Working_Celdas {
 	 * const indice = celda._get_indice_(2, 3000); // fila 2, columna 3000 ► indice = false
 	 * ```	*/
 	_get_indice(fila, columna) {
-		const dimension_matriz = this.ref_Salon?.get_dimension_matriz?.();
+		const dimension_matriz = this._get_dimension_matriz();
+		const matriz_plana = this._get_matriz_plana();
+
 		const indice = this.celda_mapper.coordenadas_a_indice(fila, columna, dimension_matriz);
-		if(indice !== null && indice < this.ref_Salon.matriz_plana.length){
+		if (Array.isArray(matriz_plana) && indice !== null && indice < matriz_plana.length) {
 			return indice;
 		}
 		return false;
@@ -259,7 +272,8 @@ class Working_Celdas {
 		const indice = this.X_to_indice(arg1, arg2);
 		if (indice===false) return null;
 		// Calcula coordenadas
-		const dim = this.ref_Salon?.get_dimension_matriz?.();
+		const dim = this._get_dimension_matriz?.();
+
 		if (!dim) return null;
 		const { fila, columna } = this.celda_mapper.indice_a_coordenadas(indice,dim.columnas,dim.filas,);
 		// ■ RETORNO
@@ -311,9 +325,8 @@ class Working_Celdas {
 			filas = arg1;
 			columnas = arg2;
 		}
-		// Ahora Valido los límites de la matriz.
-		const Salon = this.ref_Salon;
-		const limites = Salon?.get_dimension_matriz?.();
+		// Ahora Valido los límites de la matriz(con la api)
+		const limites = this._get_dimension_matriz();
 		if (!limites) return null;
 		if (filas <= limites.filas && columnas <= limites.columnas){
 			return Number.isInteger(filas) && filas > 0
@@ -332,7 +345,7 @@ class Working_Celdas {
 	 * @param {number} indice de la matriz. 
 	*/
 	_indice_OK(indice){
-		const MatriZ = this.ref_Salon.matriz_plana;
+		const MatriZ = this._get_matriz_plana();
 		// ■ Validación que exista la matriz
 		if (!MatriZ || !Array.isArray(MatriZ)) return false;		
 		// ■ Validación de parámetros: NUMERO - ENTERO - POSITIVO
@@ -350,7 +363,7 @@ class Working_Celdas {
 		if (!Number.isInteger(fila) || fila < 0) return false;
 		if (!Number.isInteger(columna) || columna < 0) return false;
 
-		const limites = this.ref_Salon?.get_dimension_matriz?.();
+		const limites = this._get_dimension_matriz();
 		if (!limites) return false;
 
 		return fila < limites.filas && columna < limites.columnas;
@@ -371,7 +384,7 @@ class Working_Celdas {
 		if (!Number.isInteger(filas) || filas <= 0) return false;
 		if (!Number.isInteger(columnas) || columnas <= 0) return false;
 
-		const limites = this.ref_Salon?.get_dimension_matriz?.();
+		const limites = this._get_dimension_matriz();
 		if (!limites) return false;
 
 		return filas <= limites.filas && columnas <= limites.columnas;
@@ -479,87 +492,72 @@ class Working_Celdas {
  ```javascript
  ▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️ PRUEBAS CON RANGOS
  
-  ■ suma_fc (suma una fila o columna a partir de una celda)
- const celda_suma = this.W_R.suma_fc('C3', 0, 1); 
- const celda_suma_mat = this.W_R.suma_fc({fila:3, columna:2}, 0, 1); 
+■■■■■■■■ suma_fc (suma una fila o columna a partir de una celda)
+ const celda_suma = RAN.suma_fc('C3', 0, 1); 
+ const celda_suma_mat = RAN.suma_fc({fila:3, columna:2}, 0, 1); 
  if(celda_suma && celda_suma_mat) 
  	console.log(`▶️ SUMA_FC ► ${celda_suma} , SUMA_FC MATRICIAL► ${celda_suma_mat}`);
- 
-  ■■■■■■■■ PLUS() (suma un indice a una celda), devuelve celda, siempre da una celda ok dentro del rango excepto en los extremos.
+■■■■■■■■ PLUS() (suma un indice a una celda), devuelve celda, siempre da una celda ok dentro del rango excepto en los extremos.
  const celda1 = 'C3'; 
  const plus = 7;
- const celda_plus = this.W_R.plus(celda1, plus); 
+ const celda_plus = RAN.plus(celda1, plus); 
  if(celda_plus) 
  	console.log(`▶️ PLUS celda: ${celda1} - plus: ${plus} ► ${celda_plus}`);
- 
-  ■■■■■■■■ RESERVAS-A-RANGOS()
- const rangos_reserva = this.W_R._reservas_a_rangos(dicc_api_foto.reservas);
+■■■■■■■■ RESERVAS-A-RANGOS()
+ const rangos_reserva = RAN._reservas_a_rangos(dicc_api_foto.reservas);
  console.log(`▶️ RANGOS RESERVA ► \n${JSON.stringify(rangos_reserva)}`);
- 
-  ■■■■■■■■ LISTAR() - RANGOS CREADOS
- console.log(`▶️ RANGOS CREADOS \n ${this.W_R.listar()}`);
- 
-  ■■■■■■■■ GET_ITEMS() (Baldosas) (objetos myDivs)
- const elementos = this.W_R._get_items();
+■■■■■■■■ LISTAR() - RANGOS CREADOS
+ console.log(`▶️ RANGOS CREADOS \n ${RAN.listar()}`);
+■■■■■■■■ GET_ITEMS() (Baldosas) (objetos myDivs)
+ const elementos = RAN._get_items();
  if (elementos) console.log(`▶️ ELEMENTOS EN BALDOSAS ${Object.keys(elementos).length} elementos`);
   console.log(`ELEMENTOS EN BALDOSAS \n ${JSON.stringify(elementos)}`);
- 
-  ■■■■■■■■ GET_BOOLEAN_VALUES()
+■■■■■■■■ GET_BOOLEAN_VALUES()
  const rango = 'rango_pares';
- let contenido = this.W_R?._get_boolean_values(rango, true);	 contenido es un diccionario {id_contenido:booleano,....}
+ let contenido = RAN._get_boolean_values(rango, true);	 contenido es un diccionario {id_contenido:booleano,....}
  console.log(`▶️ DICC BOOLEANO DE RANGO '${rango}' ►\n  ${JSON.stringify(contenido)}`);
- 
-  ■■■■■■■■ VALUES - CONTENIDO
- contenido = this.W_R?._get_values(rango, false);			 contenido es un diccionario {id_contenido:booleano,....}
+■■■■■■■■ VALUES - CONTENIDO
+ contenido = RAN._get_values(rango, false);			 contenido es un diccionario {id_contenido:booleano,....}
  console.log(`▶️ DICC CONTENIDO(EN BALDOSA) EN RANGO '${rango}' ►\n  ${JSON.stringify(contenido)}`);
- 
-  ■■■■■■■■ VALORES DE LAS CELDAS: 
+■■■■■■■■ VALORES DE LAS CELDAS: 
  const celda = 'F0';
- contenido = this.W_R?._get_celda_value(celda);
+ contenido = RAN.valor_en_celda(celda);
  if(contenido){
  	console.log(`▶️ CELDA '${celda}' contenido id ► '${contenido.id}'`); ► 'mesa_0'
  }else{
  	console.log(`▶️ CELDA '${celda}' vacia :(`);
  }		
-  ■■■■■■■■ contenido-to-celda-R
+■■■■■■■■ contenido-to-celda-R
  const id_contenido = 'silla_7';
- const celda_de_contenido = 	this.W_R?._search_celda(id_contenido);
+ const celda_de_contenido = 	RAN._search_celda(id_contenido);
  console.log(`▶️ CONTENIDO '${id_contenido}' está en CELDA ► '${celda_de_contenido}'`);
- 
-  ■■■■■■■■ IS_R_VACIO??
- const es_vacio = this.eRdS?._is_vacio(rango);
+■■■■■■■■ IS_R_VACIO??
+ const es_vacio = RAN.es_rango_vacío(rango);
  console.log(`▶️ RANGO '${rango}' está vacio? ► ${es_vacio}`);
- 
-  ■■■■■■■■ BUSCAR RANGO LIBRE
+■■■■■■■■ BUSCAR RANGO LIBRE
  const dimension = '4x5';
  const celda_inicio = 'A0';
- const rango_free = this.eRdS?._busca_dimension_free(dimension, celda_inicio);
+ const rango_free = RAN._busca_dimension_free(dimension, celda_inicio);
  if (rango_free)
  	console.log(`✅ RANGO LIBRE en dimension ${dimension} , desde Celda ${celda_inicio} ► ${rango_free.celda_inicio} - ${rango_free.celda_fin}`);
  else
 	 	console.log(`❌ NO HAY RANGO LIBRE en dimension ${dimension} , desde Celda ${celda_inicio}`);
-
-  ■■■■■■■■ UNION / INTERSECCION
-const celdas_union = RnG._get_union('rango_fila_0','rango_fila_1');
-const celdas_intersección = RnG._get_interseccion('rango_columna_1','rango_fila_0');
-const celdas_intersección_2 = RnG._get_interseccion('rango_columna_1','rango_columna_2');
-const celdas_intersección_3 = RnG._get_interseccion('rango_columna_1','rango_columna_1');
-console.log(`• CELDAS-UNION: ${celdas_union} ➿ ${RnG._is_continuos(celdas_union)}`);
-console.log(`• CELDAS-INTERSECCION:${celdas_intersección} ➿ ${RnG._is_continuos(celdas_intersección)}`);
-console.log(`• CELDAS-INTERSECCION NULL:${celdas_intersección_2} ➿ ${RnG._is_continuos(celdas_intersección_2)} `);
-
-  ■■■■■■■  👀 ES RANGO CONTINUO??
-RnG._is_continuos(celdas_union);
-
-  ■■■■■■■  👀 ADD RANGO "A MANO"
-RnG.registrar_ficha('rango_prueba', rango_from_reservas_bdd[0]);
-
-  ■■■■■■■ 👻👻 Tengo un Fantasma!!!! 👻👻
-  // Crea un rango solo con dimension, sin celda_inicio, ni celda_fin, me permite DINAMISMO. 
-  // juega con to_pull para cargarlo de datos.
-  // 
-const nombre_ghost = this.crear_$marco({filas:3,columnas:4});
-this.ghost_s[nombre_ghost];
+■■■■■■■■ UNION / INTERSECCION
+const celdas_union = RAN._get_union('rango_fila_0','rango_fila_1');
+const celdas_intersección = RAN._get_interseccion('rango_columna_1','rango_fila_0');
+const celdas_intersección_2 = RAN._get_interseccion('rango_columna_1','rango_columna_2');
+const celdas_intersección_3 = RAN._get_interseccion('rango_columna_1','rango_columna_1');
+console.log(`• CELDAS-UNION: ${celdas_union} ➿ ${RAN._is_continuos(celdas_union)}`);
+console.log(`• CELDAS-INTERSECCION:${celdas_intersección} ➿ ${RAN._is_continuos(celdas_intersección)}`);
+console.log(`• CELDAS-INTERSECCION NULL:${celdas_intersección_2} ➿ ${RAN._is_continuos(celdas_intersección_2)} `);
+■■■■■■■  ES RANGO CONTINUO??
+RAN._is_continuos(celdas_union);
+■■■■■■■  ADD RANGO "A MANO"
+RAN.registrar_ficha('rango_prueba', rango_from_reservas_bdd[0]);
+■■■■■■■ Tengo un Fantasma!!!! 👻👻
+// juega con to_pull para cargarlo de datos.
+const nombre_ghost = RAN.crear_$marco({filas:3,columnas:4});
+this.d_rangos[nombre_ghost];
 
  ▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️▶️ FIN PRUEBAS CON RANGOS
 ```
@@ -650,227 +648,232 @@ class Rango_Repository {
 	}
 }
 
-/** */
+/** 
+ * ■ d_rangos = {rango_matriz:{}, rango_fila_0:{}, rango_fila_1, ...}
+ * ■ rango_fila_1: {celda_inicio:'A1',
+ * 					celda_fin:'H1',
+ * 					dimension:'1x8',
+ * 					geo:{A1:{delta_x:0, delta_y:0}, B1:{delta_x:1, delta_y:0}, ...},
+ * 					items:{A1:'Gran_Salon_8', B1:'Gran_Salon_9', ...}
+ * 					values:{A1:'silla_2', B1:'mesa_0', C1:null, ...} }
+*/
 class Working_Rangos  extends Working_Celdas{
-        // ■■
-        // * C L A S E  "Rango"
-        // ■■
-        constructor(instancia_matriz_plana = null) {			
-			if (!instancia_matriz_plana) return null;
-			
-			// ■■
-			super(instancia_matriz_plana);	
-			// ■■ rango_fila_3: {celda_inicio:'A3',celda_fin:'H3',dimension:'1x8',geo:{*},items:{*},values:{*}}
-			
-			this.d_rangos = {};							
-			// ■■ rango_repository se encarga de los diccionarios de rangos y rangos-reservas.
-			this.rango_repository = new Rango_Repository();
-			this.rango_repository.registrar_fuente('rangos', this.d_rangos);
-			
-			// ■■ Inicializa los rangos FIX y los registra en this.d_rangos.
-			this._set_rangos_fijos(true, true, true);
-        }
+	// ■■
+	// * C L A S E  "Rango"
+	// ■■
+	constructor(api_rangos = null) {
+		if (!api_rangos) return null;
 		
-		/** ### Crea nombre secuencial del nombre_rango. Empieza la cuenta en rango_0  */
-		_get_nombre_rango(nombre_rango, dicc_to_read=null){
-			if(!nombre_rango) nombre_rango = 'rango';
-			if (dicc_to_read==null) {
-				dicc_to_read = this.d_rangos;			
-			}
-			nombre_rango = nombre_rango.trim();               
-			const nombres_existentes = Object.keys(dicc_to_read);				
-			
-			let indice = 0;
-			let candidato = nombre_rango+'_0';
-			
-			while (nombres_existentes.includes(candidato)) {
-				candidato = `${nombre_rango}_${indice}`;
-				indice += 1;
-			}
-			return candidato;
-		}
+		// ■■ Pasamos la api
+		super(api_rangos);		
+		
+		// ■■ Diccionario principal de rangos 
+		this.d_rangos = {};							
 
-		/** ### devuelve las coordenadas de la celda fin en {fila, columna}	 */
-        _get_celda_fin(celda_inicio, dimension) {
-			try {
-				const inicio = this._celda_to_fc(celda_inicio);
-				const dimension_fc = this._normalizar_dimension(dimension);
-				if (!inicio || !dimension_fc) return null;
-				const fin = {
-					fila: inicio.fila + dimension_fc.filas - 1,
-					columna: inicio.columna + dimension_fc.columnas - 1
-				};
-				return this._celda_to_fc(fin);				
-			} catch (error) {
-				return null;
-			}			
-        }
+		// ■■ rango_repository se encarga de los diccionarios de rangos y rangos-reservas.
+		this.rango_repository = new Rango_Repository();
+		this.rango_repository.registrar_fuente('rangos', this.d_rangos);
 		
-		/**
-         * ### Devuelve la [ dimensión ] entre dos celdas en formato 'string' u 'object' {filas:int,columnas:int}
-         * ### • 'celda_inicio' {String} y celda_fin {String} ► 'A0', 'B2', 'H0', 'M4', ...
-         * ### • 'is_str' {Boolean} si es true devuelve la dimensión como cadena "filasxcolumnas". si false devuelve un objeto {filas:int, columnas:int}
-		 * ```javascript
-		 * const dim_str = this._get_dimension('B2', 'D4');  ► "3x3"
-		 * const dim_obj = this._get_dimension('B2', 'D4', false); ► { filas: 3, columnas: 3 }
-		 * const dim_obj = this._get_dimension('B2000', 'D4', false); ► null (celda inválida)
-		 * ```   */
-        _get_dimension(celda_inicio = 'A0', celda_fin = 'A0', b_get_str = true) { 
-			try {
-				const inicio = this._celda_to_fc(celda_inicio);
-				const fin = this._celda_to_fc(celda_fin);
+		// ■■ Inicializa los rangos FIX y los registra en this.d_rangos.
+		this._set_rangos_fijos();
+	}
 	
-				if (!inicio || !fin) return null;
-				if (!this._celda_OK(inicio) || !this._celda_OK(fin)) return null;
-				// VARIABLES DE RETORNO
-				const filas = Math.abs(fin.fila - inicio.fila) + 1;
-				const columnas = Math.abs(fin.columna - inicio.columna) + 1;
-				const dimension = { filas, columnas };
-				// RETORNO
-				return b_get_str ? `${filas}x${columnas}` : dimension;				
-			} catch (error) {
-				return null;
-			}               
-        }
-		/** ### Crea un nuevo rango en el sistema 🌡️🌡️🌡️🌡️
-		 * ### Retorna el rango creado o null si hay error	 */  
-		crear_rango(nombre_rango = '', celda_inicio = 'A0', dimension = '1x1') {
-			if (typeof nombre_rango !== 'string' || nombre_rango.trim() === '') {
+	/** ### Crea nombre secuencial del nombre_rango. Empieza la cuenta en rango_0  */
+	_get_nombre_rango(nombre_rango, dicc_to_read=null){
+		if(!nombre_rango) nombre_rango = 'rango';
+		if (dicc_to_read==null) {
+			dicc_to_read = this.d_rangos;			
+		}
+		nombre_rango = nombre_rango.trim();               
+		const nombres_existentes = Object.keys(dicc_to_read);				
+		
+		let indice = 0;
+		let candidato = nombre_rango+'_0';
+		
+		while (nombres_existentes.includes(candidato)) {
+			candidato = `${nombre_rango}_${indice}`;
+			indice += 1;
+		}
+		return candidato;
+	}
+
+	/** ### devuelve las coordenadas de la celda fin en {fila, columna}	 */
+	_get_celda_fin(celda_inicio, dimension) {
+		try {
+			const inicio = this._celda_to_fc(celda_inicio);
+			const dimension_fc = this._normalizar_dimension(dimension);
+			if (!inicio || !dimension_fc) return null;
+			const fin = {
+				fila: inicio.fila + dimension_fc.filas - 1,
+				columna: inicio.columna + dimension_fc.columnas - 1
+			};
+			return this._celda_to_fc(fin);				
+		} catch (error) {
+			return null;
+		}			
+	}
+	
+	/**
+	 * ### Devuelve la [ dimensión ] entre dos celdas en formato 'string' u 'object' {filas:int,columnas:int}
+	 * ### • 'celda_inicio' {String} y celda_fin {String} ► 'A0', 'B2', 'H0', 'M4', ...
+	 * ### • 'is_str' {Boolean} si es true devuelve la dimensión como cadena "filasxcolumnas". si false devuelve un objeto {filas:int, columnas:int}
+	 * ```javascript
+	 * const dim_str = this._get_dimension('B2', 'D4');  ► "3x3"
+	 * const dim_obj = this._get_dimension('B2', 'D4', false); ► { filas: 3, columnas: 3 }
+	 * const dim_obj = this._get_dimension('B2000', 'D4', false); ► null (celda inválida)
+	 * ```   */
+	_get_dimension(celda_inicio = 'A0', celda_fin = 'A0', b_get_str = true) { 
+		try {
+			const inicio = this._celda_to_fc(celda_inicio);
+			const fin = this._celda_to_fc(celda_fin);
+
+			if (!inicio || !fin) return null;
+			if (!this._celda_OK(inicio) || !this._celda_OK(fin)) return null;
+			// VARIABLES DE RETORNO
+			const filas = Math.abs(fin.fila - inicio.fila) + 1;
+			const columnas = Math.abs(fin.columna - inicio.columna) + 1;
+			const dimension = { filas, columnas };
+			// RETORNO
+			return b_get_str ? `${filas}x${columnas}` : dimension;				
+		} catch (error) {
+			return null;
+		}               
+	}
+	/** ### Crea un nuevo rango en el sistema 🌡️🌡️🌡️🌡️
+	 * ### Retorna el rango creado o null si hay error	 */  
+	crear_rango(nombre_rango = '', celda_inicio = 'A0', dimension = '1x1') {
+		if (typeof nombre_rango !== 'string' || nombre_rango.trim() === '') {
+			nombre_rango = this._get_nombre_rango('rango', this.d_rangos);
+		}
+			
+		const ficha = this._crear_ficha_rango(celda_inicio, dimension);
+		if (!ficha) return null;
+
+		const rango = this.rango_repository.guardar('rangos', nombre_rango, ficha) || null;
+		return rango;
+	}
+
+	/**
+	 * ### Devuelve un rango.	
+	 * @param {string} nombre_rango - El nombre del rango a leer.
+	 * @param {Array<string>} dicc_to_read - Una lista de diccionarios  a leer.
+	 * @returns {Object|null} - El rango encontrado o null si no se encuentra.
+	 */
+	read_rango(nombre_rango , dicc_to_read = null) {
+		if (!nombre_rango) return null;
+		if(!dicc_to_read) dicc_to_read = 'rangos';
+		const rango = this.rango_repository.obtener(nombre_rango, [dicc_to_read]) || null;
+		return rango;
+	}		
+	
+		
+	/**
+	 * ### Elimina un rango de this.dicc_rangos_	 
+	 * ### Retorna el rango eliminado o null si hay error*/
+	eliminar_rango(nombre_rango, dicc_to_delete = null) {
+		if (!nombre_rango) return null;
+		const nombre_fuente = dicc_to_delete === null
+			? 'rangos'
+			: this.rango_repository.obtener_nombre_fuente(dicc_to_delete);
+		return nombre_fuente
+			? this.rango_repository.eliminar(nombre_fuente, nombre_rango)
+			: null;
+	}		
+
+	/**
+	 * ### Devuelve el contenido de this.dicc_rangos_ 
+	 * console.log(`◘ RANGOS CREADOS \n ${this.eRdS.listar()}`);
+	 */
+	listar(dicc_to_list) {
+		if(!dicc_to_list) dicc_to_list = this.d_rangos;
+		console.log( JSON.stringify(dicc_to_list, 2) );
+	}
+
+	/** ## Carga los valores 'desde' matriz_principal 'hasta' el Rango.values 
+	 * ### Es conveniente hacer to_pull__ antes de operar con la propiedad 'values' del Rango porque el rango
+	 * ### cuando se crea obtiene los valores de la matriz, pero [NO se actualiza]. to_pull__ corrige esto.
+	 * ```javascript
+	 * const valores = this._matriz_to_rango_('rango_matriz'); ► Actualiza d_rangos['rango_matriz'].values
+	 * console.log(valores); ► {A0:'silla_0', A1:'mesa_0', B1:'silla_1'}
+	 * ``` */
+	to_pull(nombre_rango, show_all=true){
+		try {
+			const rango_en_d = this.read_rango(nombre_rango);
+			if(!rango_en_d) throw(`Rango: ${nombre_rango} Not Found`)
+			
+			// Obtiene los valores de la matriz(hijos??).
+			const values_rango = this._get_values(nombre_rango , show_all);					
+			// Reasignación para obtener los datos actualizados. 
+			rango_en_d.values = values_rango || {};				
+
+			return values_rango;			
+		} catch (error) {
+			console.log(error);
+		}
+	}	
+
+	/** ### Hace pull a todos los Rangos Registrados */
+	pull_all(){
+		Object.keys(this.d_rangos).forEach(nombre_rango => { this.to_pull(nombre_rango); });
+	}	
+	
+	/** ## Crea una entrada directa a d_rangos con la ficha. 
+	 * ### • nombre_rango (string) ► nombre del rango. Si ='', crea un nombre 'rango_X' único para el rango.
+	 * ### • ficha ► es una ficha-rango completa.
+	 * ### ■ devuelve 'nombre_rango' si se completó con exito y false si no se completó con exito. 	*/
+	registrar_ficha(nombre_rango, ficha){
+		if(!this._validar_ficha(ficha)) return {};
+		if(ficha && ficha.celda_inicio && ficha.celda_fin && ficha.geo && ficha.items  ){		
+			if(!nombre_rango || typeof nombre_rango != 'string' || nombre_rango.trim() === ''){
 				nombre_rango = this._get_nombre_rango('rango', this.d_rangos);
 			}
-				
-			const ficha = this._crear_ficha_rango(celda_inicio, dimension);
-			if (!ficha) return null;
+			const rango = ficha;
+			return this.rango_repository.guardar('rangos', nombre_rango, rango) ? nombre_rango : false;
+		}		
+	}
 
-			const rango = this.rango_repository.guardar('rangos', nombre_rango, ficha) || null;
-			return rango;
+	/** ### Valida que es la entrada es una ficha-rango. 
+	 * ### Devuelve True o False		 */
+	_validar_ficha(ficha_rango){
+		if(typeof ficha_rango === 'object' && 
+				ficha_rango.celda_inicio && ficha_rango.celda_fin && 
+				ficha_rango.dimension && 
+				ficha_rango.geo && ficha_rango.items && 
+				ficha_rango.values ){
+			return true;
 		}
+		return false;
+	}
 
-		/**
-		 * ### Devuelve un rango.	
-		 * @param {string} nombre_rango - El nombre del rango a leer.
-		 * @param {Array<string>} dicc_to_read - Una lista de diccionarios  a leer.
-		 * @returns {Object|null} - El rango encontrado o null si no se encuentra.
-		 */
-		read_rango(nombre_rango , dicc_to_read = null) {
-			if (!nombre_rango) return null;
-			if(!dicc_to_read) dicc_to_read = 'rangos';
-			const rango = this.rango_repository.obtener(nombre_rango, [dicc_to_read]) || null;
-			return rango;
-        }		
-		
-			
-		/**
-		 * ### Elimina un rango de this.dicc_rangos_	 
-		 * ### Retorna el rango eliminado o null si hay error*/
-		eliminar_rango(nombre_rango, dicc_to_delete = null) {
-			if (!nombre_rango) return null;
-			const nombre_fuente = dicc_to_delete === null
-				? 'rangos'
-				: this.rango_repository.obtener_nombre_fuente(dicc_to_delete);
-			return nombre_fuente
-				? this.rango_repository.eliminar(nombre_fuente, nombre_rango)
-				: null;
-        }		
+	/**
+	 * ### Devuelve el elemento_div de la baldosa que corresponde a una celda.
+	 * @param {string} celda Referencia de celda, por ejemplo: 'B0', 'C3' o 'H15'.
+	 * @returns {HTMLElement|null} El div de la baldosa o null si la celda no es válida.
+	 */
+	celda_to_baldosa(celda){
+		if (typeof celda !== 'string') return null;
 
-		/**
-		 * ### Devuelve el contenido de this.dicc_rangos_ 
-		 * console.log(`◘ RANGOS CREADOS \n ${this.eRdS.listar()}`);
-		 */
-        listar(dicc_to_list) {
-			if(!dicc_to_list) dicc_to_list = this.d_rangos;
-			console.log( JSON.stringify(dicc_to_list, 2) );
-        }
+		const indice = this.X_to_indice(celda);
+		if (indice === false) return null;
 
-		/** ## Carga los valores 'desde' matriz_principal 'hasta' el Rango.values 
-		 * ### Es conveniente hacer to_pull__ antes de operar con la propiedad 'values' del Rango porque el rango
-		 * ### cuando se crea obtiene los valores de la matriz, pero [NO se actualiza]. to_pull__ corrige esto.
-		 * ```javascript
-		 * const valores = this._matriz_to_rango_('rango_matriz'); ► Actualiza d_rangos['rango_matriz'].values
-		 * console.log(valores); ► {A0:'silla_0', A1:'mesa_0', B1:'silla_1'}
-		 * ``` */
-		to_pull(nombre_rango, show_all=true){
-			try {
-				const rango_en_d = this.read_rango(nombre_rango);
-				if(!rango_en_d) throw(`Rango: ${nombre_rango} Not Found`)
-				
-				// Obtiene los valores de la matriz(hijos??).
-				const values_rango = this._get_values(nombre_rango , show_all);					
-				// Reasignación para obtener los datos actualizados. 
-				rango_en_d.values = values_rango || {};				
+		return this._get_matriz_plana()?.[indice]?.elemento_div ?? null;
+	}
 
-				return values_rango;			
-			} catch (error) {
-				console.log(error);
-			}
-		}	
+	/** ## Hace una Copia de un rango registrado en d_rangos. 
+	 * ### Devuelve el nuevo rango si ok y null si algo va mal. */
+	_copy_rango(nombre_rango, new_nombre_rango, diccionario_to_inspect){
+		// ┌• Seleccionamos el rango sobre el que trabajar.
+		if (!diccionario_to_inspect)  diccionario_to_inspect = this.d_rangos;					
+		// ┌• Valida si existe en this.d_rangos.
+		const rango_a_copiar = this.read_rango(nombre_rango);
+		if (!rango_a_copiar) return null;
 
-		/** ### Hace pull a todos los Rangos Registrados */
-		pull_all(){
-			Object.keys(this.d_rangos).forEach(nombre_rango => { this.to_pull(nombre_rango); });
-		}	
-		
-		/** ## Crea una entrada directa a d_rangos con la ficha. 
-		 * ### • nombre_rango (string) ► nombre del rango. Si ='', crea un nombre 'rango_X' único para el rango.
-		 * ### • ficha ► es una ficha-rango completa.
-		 * ### ■ devuelve 'nombre_rango' si se completó con exito y false si no se completó con exito. 	*/
-		registrar_ficha(nombre_rango, ficha){
-			if(!this._validar_ficha(ficha)) return {};
-			if(ficha && ficha.celda_inicio && ficha.celda_fin && ficha.geo && ficha.items  ){		
-				if(!nombre_rango || typeof nombre_rango != 'string' || nombre_rango.trim() === ''){
-					nombre_rango = this._get_nombre_rango('rango', this.d_rangos);
-				}
-				const rango = ficha;
-				return this.rango_repository.guardar('rangos', nombre_rango, rango) ? nombre_rango : false;
-			}		
-		}
+		//┌• Asigno el rango de uno al Nuevo Rango.
+		diccionario_to_inspect[new_nombre_rango] = rango_a_copiar;	
 
-		/** ### Valida que es la entrada es una ficha-rango. 
-		 * ### Devuelve True o False		 */
-		_validar_ficha(ficha_rango){
-			if(typeof ficha_rango === 'object' && 
-					ficha_rango.celda_inicio && ficha_rango.celda_fin && 
-					ficha_rango.dimension && 
-					ficha_rango.geo && ficha_rango.items && 
-					ficha_rango.values ){
-				return true;
-			}
-			return false;
-		}
-
-		/**
-		 * ### Devuelve el elemento_div de la baldosa que corresponde a una celda.
-		 * @param {string} celda Referencia de celda, por ejemplo: 'B0', 'C3' o 'H15'.
-		 * @returns {HTMLElement|null} El div de la baldosa o null si la celda no es válida.
-		 */
-		celda_to_baldosa(celda){
-			if (typeof celda !== 'string') return null;
-
-			const indice = this.X_to_indice(celda);
-			if (indice === false) return null;
-
-			return this.ref_Salon?.matriz_plana?.[indice]?.elemento_div ?? null;
-		}
-
-		/** ## Hace una Copia de un rango registrado. 
-		 * ### Devuelve el nuevo rango si ok y null si algo va mal. */
-		_copy_rango(nombre_rango, new_nombre_rango, diccionario_to_inspect){
-			// ┌• Seleccionamos el rango sobre el que trabajar.
-			if (!diccionario_to_inspect)  diccionario_to_inspect = this.d_rangos;					
-			// ┌• Valida si existe en this.d_rangos.
-			const rango_a_copiar = this.read_rango(nombre_rango);
-			if (!rango_a_copiar) return null;
-
-			//┌• Asigno el rango de uno al Nuevo Rango.
-			diccionario_to_inspect[new_nombre_rango] = rango_a_copiar;	
-
-			//
-			return diccionario_to_inspect[new_nombre_rango];
-		}
-
-		
-		
-		
+		//
+		return diccionario_to_inspect[new_nombre_rango];
+	}
 
 	/** ## Obtiene una Matriz relativa a un Rango que contiene la geometría del rango. . . 
 	 * Usada en  {@link crear_rango}  para la formación de un rango.
@@ -920,7 +923,7 @@ class Working_Rangos  extends Working_Celdas{
 	 * ```	 */
 	_get_items(nombre_rango = '', b_get_mydiv=false) {
 		
-		const MatriZ = this.ref_Salon.matriz_plana;
+		const MatriZ = this._get_matriz_plana();
 
 		if (!nombre_rango || typeof nombre_rango != 'string') 
 			nombre_rango = 'rango_matriz';
@@ -1038,22 +1041,14 @@ class Working_Rangos  extends Working_Celdas{
 	}
 
 	/**
-	 * ### Devuelve el contenido (primer hijo) de la celda indicada o null si está vacía o no existe.
-	 * @param {String} celda Nombre de la celda en cualquier notación válida heredada de Working_Celdas.
-	 * @returns {HTMLElement|null} id del elemento contenido en la celda o null si no hay contenido o la celda no pertenece a la matriz.
-	 * @example contenido = this._get_value_celda_('B7'); 	► 'silla_3'
+	 * Devuelve el elemento contenido en una celda.
+	 * @param {string} celda Referencia de celda, por ejemplo, "B7".
+	 * @returns {HTMLElement|null} Primer elemento de la baldosa o null.
+	 * @example const contenido = this.valor_en_celda('B7');
 	 */
-	_get_celda_value(celda = '') {
-		if (!celda || typeof celda !== 'string') return null;
-
-		const indice = this.X_to_indice(celda);
-		if (indice === false) return null;
-
-		const myDiv = this.matriz_plana?.[indice];
-		if (!myDiv || !myDiv.elemento_div) return null;
-
-		const contenido = myDiv.elemento_div.firstElementChild;
-		return contenido instanceof HTMLElement ? contenido : null;
+	valor_en_celda(celda = '') {
+		const baldosa = this.celda_to_baldosa(celda);
+		return baldosa?.firstElementChild ?? null;
 	}
 
 	/**
@@ -1065,9 +1060,9 @@ class Working_Rangos  extends Working_Celdas{
 		if (!id_contenido || typeof id_contenido !== 'string') return null;
 		const buscado = id_contenido.trim();
 
-		const MatriZ = this.ref_Salon.matriz_plana;		
-
+		const MatriZ = this._get_matriz_plana();		
 		if (!Array.isArray(MatriZ) || MatriZ.length === 0) return null;
+
 		for (let i = 0; i < MatriZ.length; i++) {
 			const myDiv = MatriZ[i];
 			if (!myDiv || !myDiv.elemento_div) continue;
@@ -1083,9 +1078,9 @@ class Working_Rangos  extends Working_Celdas{
 	 * ### Indica si todas las celdas del rango están vacías (sin id de contenido).
 	 * @param {String} nombre_rango Nombre del rango a comprobar.
 	 * @returns {Boolean|null} true si todas las celdas son null, false si hay algún id, null si el rango no existe.
-	 * @example const isEmpty = this._is_vacio('rango_libre'); ► true = vacio | false = con contenido | null = rango no existe
+	 * @example const isEmpty = this.es_rango_vacío('rango_libre'); ► true = vacio | false = con contenido | null = rango no existe
 	 */
-	_is_vacio(nombre_rango = '') {
+	es_rango_vacío(nombre_rango = '') {
 		const contenidos = this._get_values(nombre_rango);
 		if (!contenidos) return null;
 		return Object.values(contenidos).every((valor) => valor === false);
@@ -1108,9 +1103,8 @@ class Working_Rangos  extends Working_Celdas{
 			if (!dimension_fc || !coord_ci) return null;
 	
 			// ■ Cacha totales de la clase matriz_plana (ref_matriz_plana)
-			// const total_filas 	 = this.ref_Salon.total_filas();
-			// const total_columnas = this.ref_Salon.columnas;
-			const { total_filas, total_columnas } = this.ref_Salon.get_dimension_matriz();
+			// const { total_filas, total_columnas } = this.ref_Salon.get_dimension_matriz();
+			const {filas: total_filas,columnas: total_columnas,} = this._get_dimension_matriz();
 	
 			// ■ Valida dimension
 			if (!Number.isInteger(total_filas) || !Number.isInteger(total_columnas)) return null;
@@ -1146,7 +1140,7 @@ class Working_Rangos  extends Working_Celdas{
 	 */
 	__es_bloque_libre(fila_inicio = 0, columna_inicio = 0, dim_rows = 1, dim_cols = 1) {
 		// ┌•• Cachamos la MatriZ
-		const MatriZ = this.ref_Salon.matriz_plana;
+		const MatriZ = this._get_matriz_plana();
 
 		if (dim_rows <= 0 || dim_cols <= 0) return false;
 
@@ -1401,7 +1395,7 @@ class Working_Rangos  extends Working_Celdas{
 			for (let columna = ini_fc.columna; columna <= fin_fc.columna; columna++) {
 				const celda = this._fc_to_celda(fila, columna);
 				const indice = this._get_indice(fila, columna);
-				const my_div = indice === false ? null : this.ref_Salon.matriz_plana[indice];
+				const my_div = indice === false ? null : this._get_matriz_plana()[indice];
 				const cuadrado = my_div?.elemento_div || null;
 				// ┌■ Carga la geometría relativa (delta_x, delta_y) respecto a la celda_inicio
 				ficha.geo[celda] = {
@@ -1438,11 +1432,11 @@ class Working_Rangos  extends Working_Celdas{
 	 * ### Se debe llamar tras crear la matriz o si cambian sus dimensiones drásticamente.
 	 */
 	_set_rangos_fijos() {
-		const { filas: total_filas, columnas: total_cols } = this.ref_Salon.get_dimension_matriz();
+		const { filas: total_filas, columnas: total_cols } = this._get_dimension_matriz();
 		if (!Number.isInteger(total_filas) || !Number.isInteger(total_cols)) return null;
 		if (total_filas <= 0 || total_cols <= 0) return null;
 
-		const ultimo_indice = this.ref_Salon.matriz_plana.length - 1;
+		const ultimo_indice = this._get_matriz_plana().length - 1;
 		
 		this.registra_rango_matriz(ultimo_indice);
 		this.registra_rango_columna_s(total_filas, total_cols);
@@ -1562,10 +1556,10 @@ class Working_Rangos  extends Working_Celdas{
 class Rango_Ghost extends Working_Rangos{
 	/**
 	 * ## Establece los Rangos Ghost y las operaciones que se pueden realizar con ellos. */
-	constructor(instancia_matriz_plana = null) {			
-		if (!instancia_matriz_plana) return null;		
+	constructor(api_rangos = null) {
+		if (!api_rangos) return null;	
 		// ┌■ 
-		super(instancia_matriz_plana);	
+		super(api_rangos);	
 		// ┌■ ghost es un rango que se mueve / copia / corta / pega sobre el Salon.
 		this.marco = {};		
 		this.accion = 'inicial';	// 'inicial' | 'copiar' | 'cortar' | 'pegar' | 'mover' |
@@ -1768,7 +1762,7 @@ class Rango_Ghost extends Working_Rangos{
 		// ┌■■■■■ PREPARACIÓN DE DATOS ■■■■■┐	
 
 		// ┌• Obtener  values e items  'en Salon'     
-        const nombre_marco = this.registrar_marco_en_rangos();
+        const nombre_marco = this.registrar_marco_en_d_rangos();
         const d_values_salon  = this._get_values(nombre_marco, false, true);
         const d_items_salon = this._get_items(nombre_marco, false);
         this.eliminar_rango(nombre_marco);
@@ -1924,7 +1918,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * ### • VOY A INTENTAR 'CORTAR' LOS ELEMENTOS DIRECTAMENTE PORQUE GHOST VIVE EN EL DOM. NO SE GUARDA.
 	*/	
 	cortar_$marco() {
-		const nombre_marco = this.registrar_marco_en_rangos();
+		const nombre_marco = this.registrar_marco_en_d_rangos();
 		try {
 			// Obtener los elementos del DOM directamente y no el id del elemento usando el tercer parámetro en true
 			const elementos_r = this._get_values(nombre_marco, false, true);
@@ -2272,8 +2266,8 @@ class Rango_Ghost extends Working_Rangos{
 	 * array_elementos.map(elemento=>{ _crear_y_salonizar(elemento) }); // ► si son ids, ahora son elementos, si son elementos, lo siguen siendo y si no existen los crea.
 	 * ```	 * */
 	#_normalizar_elemento(elemento){		
-		if (typeof this.ref_Salon?.api_normalizar_el_player !== 'function') return null;
-		return this.ref_Salon.api_normalizar_el_player(elemento);
+		if (typeof this.api_rangos.normalizar_elemento !== 'function') return null;
+		return this.api_rangos.normalizar_elemento(elemento);
 	}
 
 	/** ## obtiene las Coordenadas con offset.
@@ -2303,7 +2297,7 @@ class Rango_Ghost extends Working_Rangos{
 	 * ### registro la ficha del marco en d_rangos.
 	 * ### Este proceso vale para hacer operaciones con el marco como un rango de working_Rangos
 	 * */
-	registrar_marco_en_rangos(){
+	registrar_marco_en_d_rangos(){
 		if (this.marco){
 			// ┌■ Objeto rango.
 			const nombre_marco = this._get_nombre_rango('marco');		
@@ -2319,7 +2313,7 @@ class Rango_Ghost extends Working_Rangos{
 }
 
 /** ◘ ◘ ◘ ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘
- * ### CLASE HIJA DE RANGOS. Operaciones Especiales. 
+ * ### Operaciones Especiales. No operativo de momento.
  *  ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘
 */
 class Wedding_Rangos {
@@ -2817,10 +2811,10 @@ class Reserva_Range_Mapper {
 /** ## Clase para trabajar con Rangos especificamente de salon(reservas_a_rangos__ por ejemplo) */
 // class El_Rango_del_Salon extends Wedding_Rangos{
 class El_Rango_del_Salon extends Rango_Ghost{
-	constructor(instancia_Salon = null){
-		if (!instancia_Salon) return null;		
+	constructor(api_rangos = null){
+		if (!api_rangos) return null;
 		// ┌■ Llamamos al padre.
-		super(instancia_Salon);
+		super(api_rangos);
 
 		/** ###  [ diccionario de rangos ] de las reservas creadas en Salon
 		 

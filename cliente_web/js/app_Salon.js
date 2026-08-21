@@ -230,7 +230,13 @@ class e_Salon extends Tablero_Touch {
 		// ■■■■■■■■■■■■■■■■■■■■■
 		// ​🧩​🧩​  RANGOS 🧩​🧩​​
 		// ■■■■■■■■■■■■■■■■■■■■■
-		this.eRdS = new El_Rango_del_Salon(this); 	// Instanciamos el gestor de RANGOS y CELDAS de la matriz.		
+		const api_rangos = {
+			get_dimension: () => this.get_dimension_matriz(),
+			get_matriz: () => this.matriz_plana,
+			normalizar_elemento: (elemento) => this.api_normalizar_el_player(elemento),
+		};
+		this.eRdS = new El_Rango_del_Salon(api_rangos); // Gestor de rangos con acceso solo a lo que necesita.
+		// this.eRdS = new El_Rango_del_Salon(this); 	// Instanciamos el gestor de RANGOS y CELDAS de la matriz.		
 		
 		// ■ MENSAJE FINAL DE CARGA
 		console.log(`${'█ '.repeat(20)}  • • •  FINALIZADA LA CARGA DE SALON  • • •`);
@@ -5098,7 +5104,7 @@ class Foto_CRUD{
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
 					RAN.crear_$marco(rango);	
-					const nombre_marco = RAN.registrar_marco_en_rangos();
+					const nombre_marco = RAN.registrar_marco_en_d_rangos();
 					RAN.pegar_$marco();
 					RAN.eliminar_rango(nombre_marco);
 
