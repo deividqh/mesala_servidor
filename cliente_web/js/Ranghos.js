@@ -1816,7 +1816,7 @@ class Rango_Ghost extends Working_Rangos{
 		const ficha_salon = this.get_ficha_marco_en_Salon();
 		const ficha_alt = this._crear_ficha_rango(this.marco.celda_inicio, this.marco.dimension);
 
-		// ┌• Values del 'Salon' en una linea xa Info-Estadistica
+		// ┌■■ Values del 'Salon' en una linea xa Metadatos
 		let meta_values_salon = '';
         for (const [celda, valor] of Object.entries(d_values_salon || {})) {
 			meta_values_salon += `${celda}: ${normalizar_identificador(valor)}, `;
@@ -1831,59 +1831,52 @@ class Rango_Ghost extends Working_Rangos{
 		// ┌• Array de celdas con valor del Salon(this.marco.values)
 		const arr_values_marco = Object.keys(values_marco);
 		const arr_values_salon = Object.keys(d_values_salon);
-
         // ┌• Celdas del 'Marco' // ┌• Celdas del 'Salon'
         let celdas_marco = Object.keys(this.marco.items);        
 		let celdas_salon = [];
 		celdas_salon = Object.keys(d_items_salon);  		
-		if (!tienen_celdas_iguales(celdas_marco, celdas_salon)) return;
-        
+		if (!tienen_celdas_iguales(celdas_marco, celdas_salon)) return;        
         // ┌• Array de str de Salon // ┌• Array de str de Marco
         const arr_lineas_marco = representar_matriz(celdas_marco, arr_values_marco || []);
-		const arr_lineas_salon = representar_matriz(celdas_salon, Object.keys(d_values_salon || []));		
+		const arr_lineas_salon = representar_matriz(celdas_salon, arr_values_salon || []);		
 		// ┌■ Combino la información para meter 2 matrices x linea
-        const filas_totales = Math.max(arr_lineas_marco.length, arr_lineas_salon.length);
-		const linea_s_to_print  = []
+        const filas_totales = Math.max(arr_lineas_marco.length, arr_lineas_salon.length);		
+		const $linea_s_to_print  = []
         for (let i = 0; i < filas_totales; i++) {
             const fila_R = arr_lineas_marco[i] || ''; // Por si una matriz tiene menos filas
             const fila_S = arr_lineas_salon[i] || '';
 			const linea = `${fila_S}${GAP}${fila_R}`;			
-			linea_s_to_print.push(linea);
+			$linea_s_to_print.push(linea);
         }
-
 		// ┌• Longitud maxima de cada linea que suma de las matrices "Salon+Separacion+Rango"
 		let max_l = 0;
-		linea_s_to_print.forEach(linea =>{max_l = Math.max(max_l, get_longitud_limpia(linea)) });
-		const x_matriz = Math.floor((max_l - separacion) / 2);
-		
+		$linea_s_to_print.forEach(linea =>{max_l = Math.max(max_l, get_longitud_limpia(linea)) });		
 		// ┌■ Linea Base de las Matrices:
-		const under_salon = this.#__generar_linea_formateada(x_matriz, 'SALON',  2);
-		const under_rango = this.#__generar_linea_formateada(x_matriz, 'MARCO',  2);
+		const x_matriz = Math.floor((max_l - separacion) / 2);		
+		const $under_salon = this.#__generar_linea_formateada(x_matriz, 'SALON',  2);
+		const $under_rango = this.#__generar_linea_formateada(x_matriz, 'MARCO',  2);
 
-		// ┌■ Preparo Metadatos
-		const ci = `${BASTON} ${F.yellow}CELDA_INI${F.reset}: "${this.marco.celda_inicio}"`;
-		const cf = `${BASTON} ${F.yellow}CELDA_FIN${F.reset}: "${this.marco.celda_fin}"`;
-		const dim = `${BASTON} ${F.yellow}DIM${F.reset}: ( ${this.marco.dimension.filas} x ${this.marco.dimension.columnas} )`;
-		const geo = `${BASTON} ${F.yellow}GEO${F.reset}: ${this.marco.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
-		const items = `${BASTON} ${F.yellow}ITEMS${F.reset}: ${this.marco.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
-		const action = `${BASTON}${F.yellow} ACCION${F.reset}: ${this.accion}`;
-		const paste = `${F.gray}┌■■${F.reset} Nº ${F.yellow}PASTEs${F.reset}: ${this.num_pegar}`;
-		const values_rango_str = `${BASTON} ${F.yellow}VALUES RANGO${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${meta_values_marco}${F.bright}${F.yellow}█▀▄█${F.reset}`;
-		const values_salon_str = `${BASTON} ${F.yellow}VALUES SALON${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${meta_values_salon}${F.bright}${F.yellow}█▀▄█${F.reset}`;
+		// ┌■ Preparo El formato de Salida con los datos acumulados.
+		const $titulo = `\n​​​🧩 Titulo: ${F.yellow}${titulo}${F.reset}`;
+		const $lineas_bajo_matriz = ` ${F.bright}${F.gray}${$under_salon}${GAP}${$under_rango}${F.reset}`;
+		const $ci = `${BASTON} ${F.yellow}CELDA_INI${F.reset}: "${this.marco.celda_inicio}"`;
+		const $cf = `${BASTON} ${F.yellow}CELDA_FIN${F.reset}: "${this.marco.celda_fin}"`;
+		const $dim = `${BASTON} ${F.yellow}DIM${F.reset}: ( ${this.marco.dimension.filas} x ${this.marco.dimension.columnas} )`;
+		const $geo = `${BASTON} ${F.yellow}GEO${F.reset}: ${this.marco.geo ? 'Deltas ✔️' : 'NO DATA ⚠️'}`;
+		const $items = `${BASTON} ${F.yellow}ITEMS${F.reset}: ${this.marco.items ? 'Baldosas ✔️' : 'NO DATA ⚠️'}`;
+		const $action = `${BASTON}${F.yellow} ACCION${F.reset}: ${this.accion}`;
+		const $paste = `${F.gray}┌■■${F.reset} Nº ${F.yellow}PASTEs${F.reset}: ${this.num_pegar}`;
+		const $values_rango_str = `${BASTON} ${F.yellow}VALUES RANGO${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${meta_values_marco}${F.bright}${F.yellow}█▀▄█${F.reset}`;
+		const $values_salon_str = `${BASTON} ${F.yellow}VALUES SALON${F.reset}: ${F.bright}${F.yellow}■ ${F.reset}${meta_values_salon}${F.bright}${F.yellow}█▀▄█${F.reset}`;
 
 		// ┌■■■■■ RENDERIZADO HACIA CONSOLA ■■■■■┐	
-		
-		// ┌■ Titulo del Informe:
-        console.log(`\n​​​🧩 Titulo: ${F.yellow}${titulo}${F.reset}`);		
-		// ┌■ Imprimir las matrices lado a lado:
-		linea_s_to_print.forEach(linea =>{console.log(linea)});				
-		// ┌■ Imprimir las lineas divisorias:
-        console.log(` ${F.bright}${F.gray}${under_salon}${GAP}${under_rango}${F.reset}`);        		
-		// ┌■ imprimo metadatos
-		console.log(`${ci}  ${cf}  ${dim}  ${geo}  ${items}`);
-		console.log(`${action} ${paste}`);
-		console.log(`${values_rango_str}`);
-		console.log(`${values_salon_str}`);
+        console.log(`${$titulo}`);		
+		$linea_s_to_print.forEach(linea =>{console.log(linea)});				
+        console.log(`${$lineas_bajo_matriz}`);        		
+		console.log(`${$ci}  ${$cf}  ${$dim}  ${$geo}  ${$items}`);
+		console.log(`${$action} ${$paste}`);
+		console.log(`${$values_rango_str}`);
+		console.log(`${$values_salon_str}`);
 		// console.log(`${BARRAFIN}`);		
     }
 	

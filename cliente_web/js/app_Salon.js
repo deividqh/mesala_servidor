@@ -299,8 +299,8 @@ class e_Salon extends Tablero_Touch {
 		this.eRdS.informe_marco_consola("Creo un Marco 5x6 desde A0 Sobre el Salon ... de pruebas");
 		// 🧩 (Cuando le paso un rango nombrado hace un previo pull de los elementos).
 		// 🧩 Trabaja con arrays de Rangos formando un rango que lo engloba y values e items de cada uno de ellos sin mas info.
-		const marco_columna = this.eRdS.crear_marco('rango_columna_2');
-		this.eRdS.informe_marco_consola("Creo un Marco sobre un rango fixed: rango_columna_2");
+		const marco_columna = this.eRdS.crear_marco('rango_fila_2');
+		this.eRdS.informe_marco_consola("Creo un Marco sobre un rango fixed: rango_fila_2");
 
 		// 🧩 Prueba de copia de un rango nombrado.
 		const copia = this.eRdS.copy_en_d_rangos('rango_columna_0', 'rango_colum_one');
