@@ -247,7 +247,7 @@ class e_Salon extends Tablero_Touch {
 			silla_7: 5, silla_8: 20, silla_9: 22,  silla_11: 12, 
 			mesa_2: 41, mesa_4: 49, mesa_7: 57, silla_10: 33, silla_1: 42, silla_12: 40, silla_17: 50 , silla_18: 48, silla_13: 57,
 			silla_14: 45, silla_16: 54, silla_15: 52, mesa_5: 53, silla_19: 61 , 
-			mesa_6: 75, silla_21: 74, silla_20: 76,  			
+			mesa_6: 75, silla_21: 74, silla_20: 76, planta_0:27, planta_1:35, planta_2:66, planta_3:67, planta_4:68,			
 		};
 		const d_mensajs_mock = {silla_0: "Una mesa es una reserva.", 
 			mesa_0: 'Cuando juntas mesas, forman una sola reserva tb.', 
@@ -270,15 +270,18 @@ class e_Salon extends Tablero_Touch {
 		// ┌■■ REGISTRA LOS ELEMNTOS RECIEN CARGADOS
 		this.RegisteR();
 		
+		// ┌■■ RECUERDA :::: borrar
 		// this.CFG.api_re_posicionar();				
 		
 		// ┌■■ REGISTRA EL MOTOR DE ALERGIAS  (PESTAÑA DE LOGICA) 
 		const ok_alerg = this._load_alergias_en_Salon(d_alergias_mock);		
+		// ┌■■ Log
 		// const MA = Catalogo.get_motor('motor_alergias');
 		// console.log(JSON.stringify(MA.d_data, null, 2)); 
 		
 		// ┌■■ REGISTRA EL MOTOR DE MENSAJES (PESTAÑA DE LOGICA)
 		const ok_msg = this._load_mensajes_en_Salon(d_mensajs_mock);
+		// ┌■■ Log
 		// const MM = Catalogo.get_motor('motor_mensajes');
 		// console.log(JSON.stringify(MM.d_data, null, 2)); 
 		
@@ -360,76 +363,47 @@ class e_Salon extends Tablero_Touch {
 		return elemento;
 	}
 
-	/** 
-	 * @param {String} id_elemento Entra un string ( id de elemento, id_key, dataset.id_key )
-	 * ### Retorna {HTMLObjectElement} Sale un clon de un elemento del menú Side_Elementos(factoría de elementos a clonar).	 
-	 * */
-	api_get_clon_menu(id_elemento=''){
-		if (typeof id_elemento !== 'string' || id_elemento.trim() === '') return null;
-		id_elemento = id_elemento.trim();
+	/**
+	 * Crea un elemento del salón clonando su plantilla del menú.
+	 *
+	 * @param {string} id_elemento ID completo o clave de un elemento del catálogo.
+	 * @param {boolean} intenta_conservar_id
+	 *        Si es true, conserva el ID cuando no está ocupado.
+	 *        Si es false o el ID ya existe, genera uno nuevo.
+	 * @returns {HTMLElement|null} Elemento preparado para el salón, o null si falla.
+	 */
+	api_get_clon_menu(id_elemento = '', intenta_conservar_id = false) {
+		if (typeof id_elemento !== 'string') return null;
 
-		let key_menu = '';
-		for (const key of Catalogo.get_keys()) {
-			if (id_elemento.startsWith(key)) key_menu = key;
-		}
+		id_elemento = id_elemento.trim();
+		if (!id_elemento) return null;
+
+		const key_menu = Catalogo.get_keys()
+			.sort((a, b) => b.length - a.length)
+			.find(key =>
+				id_elemento === key ||
+				id_elemento.startsWith(`${key}_`)
+			);
+
 		if (!key_menu) return null;
 
-		const elemento_menu = this.Side_Elementos?.get_elemento_menu(key_menu);
+		const elemento_menu =
+			this.Side_Elementos?.get_elemento_menu(key_menu);
+
 		if (!elemento_menu) return null;
 
 		const nuevo_elemento = elemento_menu.cloneNode(true);
-		
-		// nuevo_elemento.id = Herramientas.get_dom_secuency(key_menu);
-		nuevo_elemento.id = id_elemento;
+		const id_esta_disponible = !document.getElementById(id_elemento);
 
-		// ┌■ Saloniza(asignar dataset.id_key, clases_css, listenners)
+		nuevo_elemento.id =
+			intenta_conservar_id && id_esta_disponible
+				? id_elemento
+				: Herramientas.get_dom_secuency(key_menu);
+
 		if (!this._saloniza_elemento(nuevo_elemento)) return null;
-		
+
 		return nuevo_elemento;
-	}
-
-	get_clon_del_menu__alt(id_el, conserva_id=true){
-		try {		
-			// ┌■■ Selecciona TODOS los elementos a clonar (elementos del menu)
-			let items_menu = document.querySelectorAll('.menu_to_clone');
-			if (items_menu.length === 0) {
-				throw('[ No hay plantillas .menu_to_clone en el DOM.]');
-			}
-
-			// ■■ Busca en el menú la plantilla cuyo data-tipo coincide con el pasado.
-			const get_elemento_menu_byKey = (id_key) => {
-				for (const el of items_menu) {
-					const id_key_el = (el.dataset && el.dataset.id_key) || el.getAttribute('data-id_key');
-					if (id_key_el === id_key) 
-						return el;
-				}
-				throw('[ get_elemento_menu_byKey ::: No se encuentra el elemento en el menu_to_clone ]');
-			};
-				
-			let element_menu_to_clone = null;
-			const id_keys = Catalogo.get_keys();
-			const key_menu = id_keys.find(k => id_el.startsWith(k));
-			if(!key_menu) 
-				throw(`[ No coincide el id( ${id_el} ) con ningún id_key de Catalogo ]`);
-			element_menu_to_clone = get_elemento_menu_byKey(key_menu);				
-			// ┌■■ Creamos un Clon del MENU. 
-			const clon_item = element_menu_to_clone.cloneNode(true);                  
-			if(conserva_id){
-				if(document.getElementById(id_el)){
-					
-				}else{
-					clon_item.id = id_el;				
-				}
-			}else{
-				clon_item.id = Herramientas.get_dom_secuency(key_menu);
-			}
-			return clon_item;
-		} catch (error) {
-			console.log("❌ Error en get_clon_menu__alt :::");
-			return null;	
-		}
-
-	}
+	}	
 
 	/** 
 	 entorno:{tipo='MOVIL', es_tactil=false, ancho_ventana=558}
@@ -1004,16 +978,16 @@ class e_Salon extends Tablero_Touch {
 
 	}
 	// ◘◘◘◘ FIN RESERVAS • • • LOGICA BASE DEL SALON
-	// ██████████████████████████████████████████████
 	
 	
 	// ◘◘◘◘ ACCIONES SOBRE LOS ICONOS DEL NAV-BAR (MENU SUPERIOR)
-	// ███████████████████████████████████████████████████████████
 	/**
 	 * ### Reinicia el Salon. Da Opción Previa de Guardar.
 	 */
 	async accion_re_init_salon(){
-		
+		const mensaje = "¿Seguro que quieres Vaciar este salón? Esta acción no se puede deshacer.";
+		const confirmacion = await Alertas_UI.ConfirM("Confimación Accion Eliminar", mensaje, "warning")
+		if (!confirmacion) return;
 		if(this.CFG) this.CFG.api_reiniciar_salon();
 	}
 	
@@ -1058,12 +1032,12 @@ class e_Salon extends Tablero_Touch {
 	/**
 	 * ### click sobre el Boton de Re-Ordenar elementos. Lo quiero quitar o no se.....
 	 * @see {@link e_Salon constructor}
-	 */
+	*/
 	accion_re_posicionar(){
 		this.CFG.api_re_posicionar();
 	}
 
-	// ◘◘◘◘ API'S O LLAMADAS DIRECTAS 
+	// ◘◘◘◘ LLAMADAS DIRECTAS 
 	// ███████████████████████████████
 		
 	/**
@@ -1232,17 +1206,12 @@ class e_Salon extends Tablero_Touch {
 	 * hay que llamar a {@link RegisteR} para completar el ciclo.
 	 */
 	_load_elementos_en_Salon(dicc_api_indices){
-		const CFG = this.dicc_config;
-		if(!CFG) return;
-
-					
-		if (!this.dicc_config) return;
 		if (!dicc_api_indices || typeof dicc_api_indices !== 'object') return false;
 		try {
 			for (const [id_el, i_baldosa] of Object.entries(dicc_api_indices)) {
 				const $baldosa = this._get_baldosa(i_baldosa);
 				if (!this.is_baldosa_vacia($baldosa)) continue;
-				const elemento = this.api_get_clon_menu(id_el);
+				const elemento = this.api_get_clon_menu(id_el, true);
 				if (!elemento) continue;
 
 				$baldosa.appendChild(elemento);
@@ -1252,71 +1221,6 @@ class e_Salon extends Tablero_Touch {
 			console.log('ERROR en Posicionar ' + error.message);
 			return false;
 		} 
-
-
-
-		try {
-			// ■■ Validación básica de diccionario.
-			if (!dicc_api_indices || typeof dicc_api_indices !== 'object') {
-
-
-				return false;
-			}
-			// console.log(`Total elementos a posicionar: ${Object.keys(dicc_api_indices).length}`);
-			
-			// ■■ Selecciona TODOS los elementos a clonar (elementos del menu)
-			let items_menu = document.querySelectorAll('.menu_to_clone');
-			if (items_menu.length === 0) {
-				console.log('[_load_elementos_en_Salon] No hay plantillas .menu_to_clone en el DOM.');
-				return false;
-			}
-
-			// ■■ Busca en el menú la plantilla cuyo data-tipo coincide con el pasado.
-			const get_elemento_menu_byKey = (id_key) => {
-				for (const el of items_menu) {
-					const id_key_el = (el.dataset && el.dataset.id_key) || el.getAttribute('data-id_key');
-					if (id_key_el === id_key) 
-						return el;
-				}
-				return null;
-			};
-			
-			// Contenido del diccionario separando
-			const api_indices = Object.entries(dicc_api_indices);			
-			
-			api_indices.forEach(([id_el, i_baldosa]) => {				
-				const $baldosa = this._get_baldosa(i_baldosa);
-				// ┌■■ Verificamos que la baldosa de destino esté vacía
-				if (this.is_baldosa_vacia($baldosa) == false) 
-					return;
-				
-				let element_menu_to_clone = null;
-				const id_keys = Catalogo.get_keys();
-				const key_menu = id_keys.find(k => id_el.startsWith(k));
-				if(!key_menu) return;
-				element_menu_to_clone = get_elemento_menu_byKey(key_menu);				
-				// ┌■■ Creamos un Clon del MENU. 
-				const clon_item = element_menu_to_clone.cloneNode(true);                  
-				clon_item.id = id_el;				
-				clon_item.title = clon_item.id;
-				
-				//  ​👂​👂  DRAGGABLE
-				this._add_listeners_movimiento(clon_item);
-
-				// ┌■■ Añade el clon  a la baldosa.
-				$baldosa.appendChild(clon_item);           
-				
-				// ┌■■ CAMBIA DE CLASE PARA NO HEREDAR EL ESTILO DEL MENU....
-				clon_item.className = "";
-				clon_item.classList.add('class_onplay');				
-				clon_item.classList.add(key_menu);				
-				clon_item.classList.add(key_menu + '_onplay');
-				clon_item.addEventListener('click', this._elemento_onplay_click.bind(this));   
-			});		
-		} catch (error) {
-			console.log('ERROR en Posicionar '+ error.message)
-		} 
-		return true;	
 	}
 	
 	/** 
@@ -1362,7 +1266,7 @@ class e_Salon extends Tablero_Touch {
                 return; 	// Si no tiene el motor activo, ignoramos este elemento
             }
             const elemento = e_Salon._to_element(id);
-            if (!elemento) return;	// Si el elemento No Existe en el Salon(tiene que estar pre-cargado).
+            if (!elemento) return;	// Si el elemento No Existe en el DOM-Salon(tiene que estar pre-cargado).
 			MA.update(id, alergia_s);
 			MA._set_alerta_elemento(id);
         });
@@ -3501,13 +3405,14 @@ class Foto_CRUD{
 		if(!this.CU) return;	
 
 		try {		
-			// ■■ Autenticación ┌• { is_authenticated:(bool), token:(string), user:(string) }
+			// ┌■■ Autenticación ┌• { is_authenticated:(bool), token:(string), user:(string) }
 			const datos_auth = Login_Modal.get_datos_auth();		
 			if (!datos_auth?.is_authenticated || !datos_auth?.token) {
 				this._feedback_CU('⚠️ Necesitas iniciar sesión para guardar la foto.', 'warning');
 				this?.Salon?.LogIn?._sincroniza_UI();
 				return;
-			}			
+			}	
+			// ┌■■ Preparo datos para el payload ■■┐		
 			// ┌•• Cacho Formulario.
 			const cu = this.CU;
 			// ┌•• Limpio los mensajes de la zona feedback.
@@ -3665,12 +3570,10 @@ class Foto_CRUD{
 
 			if (this.is_lista_registros_completa === false) {
 				try {
-					// ┌••••••••••••••••••••••••••••
 					// ┌■ Carga la lista de Fotos 
-					// ┌••••••••••••••••••••••••••••
 					const ok = await this._load_lista_registros();
 					
-					// ┌•• Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
+					// ┌■ Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
 					if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
 
 				} catch (error) {
@@ -3776,7 +3679,7 @@ class Foto_CRUD{
 		try {
 			// cd.innerHTML =
 			const mensaje = "¿Seguro que quieres eliminar este salón? Esta acción no se puede deshacer.";
-			const confirmacion = Alertas_UI.ConfirM("Confimación Accion Eliminar", mensaje, "warning")
+			const confirmacion = await Alertas_UI.ConfirM("Confimación Accion Eliminar", mensaje, "warning")
 			if (!confirmacion) return;
 			// this._feedback_RUD('Eliminando photo...', 'warning');
 
@@ -4181,16 +4084,13 @@ class Foto_CRUD{
 
 			contenedor.insertAdjacentHTML('beforeend', item_Html);
 		});
-
-		// ■ ■ ■ 
 		// • • • Después de esto, hemos creado varios registros y por cada registro, 
 		// 4 iconos bi de accion (ver-info/update/delete/load), ahora hay darles accion(listenners)
 
-
-		// Carga Listeners para cada elemento  '.js-load-salon' y '.js-delete-salon' 'js-update-salon' recien creados
+		// ┌■■ Carga Listeners para cada elemento  '.js-load-salon' y '.js-delete-salon' 'js-update-salon' recien creados
 		this._init_listeners_listado_fotos(contenedor);
 
-		// UI 🖼️ 
+		// ┌■■ UI  
 		Foto_CRUD._crear_dinamic_bs_elements_RUD(contenedor);
 	}
 
@@ -5001,17 +4901,25 @@ class Foto_CRUD{
 		const RAN  = this?.Salon?.eRdS;
 		if(!RAN) return;
 		
-		// ┌•• Le hace una foto al salón en este momento
+		// ┌■■ Le hace una foto al salón en este momento
 		const dicc_api_foto = this.Salon?.api_foto();
 		const dimension = this.Salon.dimension;		
 		
-		// ┌•• Cacho los rangos de las reservas de la foto.
+		// ┌■■ Cacho los rangos de las reservas de la foto.
 		const rangos_reservas = RAN._reservas_a_rangos(dicc_api_foto.reservas || [], dicc_api_foto.indices, dimension || null);
-		// ┌•• Cacho el Rango Matriz.
+		
+		// ┌■■ Me aseguro de que tenga los ultimos valores.
 		RAN.to_pull('rango_matriz');
 		const rango_matriz = RAN?.d_rangos["rango_matriz"];
+		
+		// ┌■■ Plantas, decoración, estructura, ... cualquier 'player' NO[central o cliente]
+		const rangos_otros = this._crear_rangos_otros(RAN, rango_matriz?.values);
 
-		const rango_tot = {reservas: rangos_reservas , matriz: rango_matriz};
+		const rango_tot = {
+			reservas: rangos_reservas,
+			otros: rangos_otros,
+			matriz: rango_matriz,
+		};
 		
 		const CFG = dicc_api_foto.configuracion || this.dicc_config || {};
 		return {
@@ -5064,6 +4972,35 @@ class Foto_CRUD{
 		};
 
 	}
+
+	/**
+	 * Convierte cada player ajeno a las reservas en un rango independiente de 1x1.
+	 * Mesas y clientes quedan exclusivamente en `rangos.reservas`.
+	 */
+	_crear_rangos_otros(gestor_rangos, values_matriz = {}) {
+		if (typeof gestor_rangos?.crear_ficha_rango_1x1 !== 'function') return [];
+		if (!values_matriz || typeof values_matriz !== 'object' || Array.isArray(values_matriz)) return [];
+
+		const rangos_otros = [];
+		for (const [celda, id_elemento] of Object.entries(values_matriz)) {
+			if (!this._es_player_no_reservable(id_elemento)) continue;
+
+			const rango = gestor_rangos.crear_ficha_rango_1x1(celda, id_elemento);
+			if (rango) rangos_otros.push(rango);
+		}
+
+		return rangos_otros;
+	}
+
+	/** Devuelve true para los players cuyo rol no es central ni cliente. */
+	_es_player_no_reservable(id_elemento) {
+		if (typeof id_elemento !== 'string' || id_elemento.trim() === '') return false;
+
+		const elemento_catalogo = Catalogo.get_elemento(id_elemento);
+		if (!elemento_catalogo || elemento_catalogo.grupo !== 'player') return false;
+
+		return elemento_catalogo.rol !== 'central' && elemento_catalogo.rol !== 'cliente';
+	}
 	
 	/** 🎞️🎞️  - STATIC METHOD 🧍‍♂️
 	 * ### Normaliza un slug: minúsculas y guiones.
@@ -5072,9 +5009,6 @@ class Foto_CRUD{
 		if (!valor) return '';
 		return valor.trim().toLowerCase().replace(/\s+/g, '-');
 	}
-	
-		
-
 	
 	/**
 	 * ## Cambia los caracteres html por utf8 (por seguridad)
@@ -5174,7 +5108,7 @@ class Foto_CRUD{
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
 					RAN.crear_marco(rango);	
-					const nombre_marco = RAN.registrar_marco_en_d_rangos();
+					const nombre_marco = RAN.registrar_marco_en_d_rangos(); 
 					RAN.pegar_marco();
 					RAN.eliminar_rango(nombre_marco);
 
@@ -5187,6 +5121,9 @@ class Foto_CRUD{
 
 				});
 			}
+
+			// ┌■ Elementos visuales: cada uno conserva su propia celda en un rango 1x1.
+			this._cargar_rangos_otros(foto_bdd?.rangos?.otros, RAN, Salon);
 
 			// ┌■ Cacho los datos que nos interesan para cargar las sillas y las mesas.
 			const d_indices = foto_bdd.dicc_indices;
@@ -5217,6 +5154,42 @@ class Foto_CRUD{
 			this._set_UI_ojo();
 			return;
 		}
+	}
+
+	/** Carga los rangos 1x1 de players que no pertenecen a una reserva. */
+	_cargar_rangos_otros(rangos_otros, gestor_rangos, salon) {
+		if (!Array.isArray(rangos_otros)) return 0;
+		if (!gestor_rangos || !salon) return 0;
+
+		let elementos_cargados = 0;
+		for (const rango of rangos_otros) {
+			if (!this._es_rango_otro_valido(rango)) continue;
+			if (!gestor_rangos.crear_marco(rango)) continue;
+
+			const nombre_marco = gestor_rangos.registrar_marco_en_d_rangos();
+			if (!nombre_marco) continue;
+
+			const elementos_pegados = gestor_rangos.pegar_marco();
+			gestor_rangos.eliminar_rango(nombre_marco);
+
+			if (!Array.isArray(elementos_pegados)) continue;
+			for (const { elemento } of elementos_pegados) {
+				if (!elemento) continue;
+				salon._saloniza_elemento(elemento);
+				elementos_cargados += 1;
+			}
+		}
+
+		return elementos_cargados;
+	}
+
+	/** Comprueba el contrato de `rangos.otros`: un player no reservable por rango 1x1. */
+	_es_rango_otro_valido(rango) {
+		if (!rango || typeof rango !== 'object' || Array.isArray(rango)) return false;
+		if (rango.dimension?.filas !== 1 || rango.dimension?.columnas !== 1) return false;
+
+		const ids_elementos = Object.values(rango.values || {}).filter(Boolean);
+		return ids_elementos.length === 1 && this._es_player_no_reservable(ids_elementos[0]);
 	}
 
 	/** ### Lleva la lógica de abrir una foto del Salón:

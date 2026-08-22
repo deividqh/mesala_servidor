@@ -1413,6 +1413,24 @@ class Working_Rangos  extends Working_Celdas{
 		return ficha;
 	}
 
+	/**
+	 * Crea, sin registrar, la ficha 1x1 de un elemento situado en una celda.
+	 * Es útil para representar elementos visuales que no forman una agrupación.
+	 * @param {String} celda Celda ocupada por el elemento, por ejemplo `B3`.
+	 * @param {String} id_elemento Identificador del elemento, por ejemplo `planta_0`.
+	 * @returns {Object|null} Ficha de rango completa o null si los datos no son válidos.
+	 */
+	crear_ficha_rango_1x1(celda, id_elemento) {
+		if (typeof celda !== 'string' || celda.trim() === '') return null;
+		if (typeof id_elemento !== 'string' || id_elemento.trim() === '') return null;
+
+		const rango = this._crear_ficha_rango(celda, '1x1');
+		if (!rango) return null;
+
+		rango.values = { [rango.celda_inicio]: id_elemento };
+		return rango;
+	}
+
 	/** ### Devuelve una ficha_rango con los valores por defecto para ser rellenada. */
 	_get_ficha_vacia( ){
 		const ficha_rango = {
