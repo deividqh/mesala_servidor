@@ -303,7 +303,7 @@ class e_Salon extends Tablero_Touch {
 		this.eRdS.informe_marco_consola("Creo un Marco sobre un rango fixed: rango_fila_2");
 
 		// 🧩 Prueba de copia de un rango nombrado.
-		const copia = this.eRdS.copy_en_d_rangos('rango_columna_0', 'rango_colum_one');
+		// const copia = this.eRdS.copy_en_d_rangos('rango_columna_0', 'rango_colum_one');
 		// 🧩 Creo un marco de rango_matriz.
 		const marco_matriz = this.eRdS.crear_marco('rango_matriz');			
 		// 🧩 Informe de lo que contiene el rango_matriz recien creado.
@@ -365,6 +365,9 @@ class e_Salon extends Tablero_Touch {
 	 * ### Retorna {HTMLObjectElement} Sale un clon de un elemento del menú Side_Elementos(factoría de elementos a clonar).	 
 	 * */
 	api_get_clon_menu(id_elemento=''){
+		if (typeof id_elemento !== 'string' || id_elemento.trim() === '') return null;
+		id_elemento = id_elemento.trim();
+
 		let key_menu = '';
 		for (const key of Catalogo.get_keys()) {
 			if (id_elemento.startsWith(key)) key_menu = key;
@@ -375,14 +378,58 @@ class e_Salon extends Tablero_Touch {
 		if (!elemento_menu) return null;
 
 		const nuevo_elemento = elemento_menu.cloneNode(true);
-		nuevo_elemento.id = Herramientas.get_dom_secuency(key_menu);
 		
+		// nuevo_elemento.id = Herramientas.get_dom_secuency(key_menu);
+		nuevo_elemento.id = id_elemento;
+
 		// ┌■ Saloniza(asignar dataset.id_key, clases_css, listenners)
-		this._saloniza_elemento(nuevo_elemento);
+		if (!this._saloniza_elemento(nuevo_elemento)) return null;
 		
 		return nuevo_elemento;
 	}
 
+	get_clon_del_menu__alt(id_el, conserva_id=true){
+		try {		
+			// ┌■■ Selecciona TODOS los elementos a clonar (elementos del menu)
+			let items_menu = document.querySelectorAll('.menu_to_clone');
+			if (items_menu.length === 0) {
+				throw('[ No hay plantillas .menu_to_clone en el DOM.]');
+			}
+
+			// ■■ Busca en el menú la plantilla cuyo data-tipo coincide con el pasado.
+			const get_elemento_menu_byKey = (id_key) => {
+				for (const el of items_menu) {
+					const id_key_el = (el.dataset && el.dataset.id_key) || el.getAttribute('data-id_key');
+					if (id_key_el === id_key) 
+						return el;
+				}
+				throw('[ get_elemento_menu_byKey ::: No se encuentra el elemento en el menu_to_clone ]');
+			};
+				
+			let element_menu_to_clone = null;
+			const id_keys = Catalogo.get_keys();
+			const key_menu = id_keys.find(k => id_el.startsWith(k));
+			if(!key_menu) 
+				throw(`[ No coincide el id( ${id_el} ) con ningún id_key de Catalogo ]`);
+			element_menu_to_clone = get_elemento_menu_byKey(key_menu);				
+			// ┌■■ Creamos un Clon del MENU. 
+			const clon_item = element_menu_to_clone.cloneNode(true);                  
+			if(conserva_id){
+				if(document.getElementById(id_el)){
+					
+				}else{
+					clon_item.id = id_el;				
+				}
+			}else{
+				clon_item.id = Herramientas.get_dom_secuency(key_menu);
+			}
+			return clon_item;
+		} catch (error) {
+			console.log("❌ Error en get_clon_menu__alt :::");
+			return null;	
+		}
+
+	}
 
 	/** 
 	 entorno:{tipo='MOVIL', es_tactil=false, ancho_ventana=558}
@@ -650,9 +697,8 @@ class e_Salon extends Tablero_Touch {
 			const elemento_onplay = document.getElementById(id_contenido);
 			if (!elemento_onplay) return [];
 
-			// ■■ 🔥🔥🔥🔥🔥🔥 Obtenemos el rol del elemento en catalogo 🔥🔥🔥🔥🔥🔥
+			// ■■ Obtenemos el rol del elemento en catalogo 
 			const rol_elemento_onplay = this.#get_rol_en_catalogo(elemento_onplay);
-			// ■ ■ ■ 
 
 			// ■■ match por rol_busca.			
 			if(rol_elemento_onplay && rol_elemento_onplay === rol_busca ) {
@@ -1188,9 +1234,32 @@ class e_Salon extends Tablero_Touch {
 	_load_elementos_en_Salon(dicc_api_indices){
 		const CFG = this.dicc_config;
 		if(!CFG) return;
+
+					
+		if (!this.dicc_config) return;
+		if (!dicc_api_indices || typeof dicc_api_indices !== 'object') return false;
+		try {
+			for (const [id_el, i_baldosa] of Object.entries(dicc_api_indices)) {
+				const $baldosa = this._get_baldosa(i_baldosa);
+				if (!this.is_baldosa_vacia($baldosa)) continue;
+				const elemento = this.api_get_clon_menu(id_el);
+				if (!elemento) continue;
+
+				$baldosa.appendChild(elemento);
+			}
+			return true;
+		} catch (error) {
+			console.log('ERROR en Posicionar ' + error.message);
+			return false;
+		} 
+
+
+
 		try {
 			// ■■ Validación básica de diccionario.
 			if (!dicc_api_indices || typeof dicc_api_indices !== 'object') {
+
+
 				return false;
 			}
 			// console.log(`Total elementos a posicionar: ${Object.keys(dicc_api_indices).length}`);
