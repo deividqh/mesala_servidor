@@ -372,9 +372,71 @@
             <div class="text-white-50 p-3 text-center">Aún no has guardado ningún salón.</div>
         </template>
     </div>
-
         
   </div>
 
+  <!--   
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  Modal UPDATE de una ficha de foto. ■■■■■■■■
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    La estructura es estática para que el formulario sea fácil de localizar y
+    mantener. JavaScript únicamente carga los datos y abre la ventana.
+  -->
+  <div class="modal fade" id="modal_update_ficha" tabindex="-1" aria-labelledby="modal_update_ficha_titulo" aria-hidden="true" data-updt="update">
+      <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+              <div class="modal-header" data-updt="header">
+                  <h5 class="modal-title" id="modal_update_ficha_titulo" data-updt="titulo-modal">Actualizar Ficha 🗃️ del Salón:</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+
+              <div class="update-body">
+                  <div class="alert alert-danger d-none p-2 small mb-3" role="alert" data-updt="feedback"></div>
+
+                  <div class="update-body" data-updt="contenedor-formulario">
+                      
+                      <!-- FORMULARIO -->
+                      <form id="form_update_foto" class="small" data-updt="formulario">
+                          <div class="mb-2">
+                              <span class="form-label mb-1 text-black-50" data-updt="dimension"></span>
+                          </div>
+
+                          <div class="mb-2">
+                              <label for="update_foto_titulo" class="form-label mb-1 text-black-50">Título</label>
+                              <input id="update_foto_titulo" type="text" class="form-control form-control-sm" data-updt="titulo" required>
+                          </div>
+
+                          <div class="mb-2">
+                              <label for="update_foto_slug_publico" class="form-label mb-1 text-black-25">Slug público</label>
+                              <input id="update_foto_slug_publico" type="text" class="form-control form-control-sm text-black-50" data-updt="slug">
+                          </div>
+
+                          <div class="mb-2">
+                              <label for="update_foto_mensaje_publico" class="form-label mb-1 text-black-50">Descripción (opcional)</label>
+                              <textarea id="update_foto_mensaje_publico" class="form-control form-control-sm" rows="2" data-updt="mensaje"></textarea>
+                          </div>
+
+                          <div class="form-check mb-2">
+                              <input id="update_foto_es_plantilla" class="form-check-input" type="checkbox" data-updt="plantilla">
+                              <label class="form-check-label text-black-50" for="update_foto_es_plantilla">Es plantilla (copia única que se replica)</label>
+                          </div>
+
+                          <div class="form-check mb-3">
+                              <input id="update_foto_es_publica" class="form-check-input" type="checkbox" data-updt="publica">
+                              <label class="form-check-label text-black-50" for="update_foto_es_publica">Es pública (sin uso de momento)</label>
+                          </div>
+                      </form>
+
+                  </div>
+              </div>
+
+              <div class="modal-footer">
+                  <button type="submit" data-updt="submit" form="form_update_foto" class="btn btn-primary btn-sm w-100">Actualizar Ficha</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  
 </body>
 </html>

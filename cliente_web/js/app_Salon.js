@@ -3733,7 +3733,7 @@ class Foto_CRUD{
 	}
 
 	/** 
-	 * ### ■■■ Construye el HTML de la lista.
+	 * ### Crea la lista de registros read foto - update ficha-foto - delete foto
 	 * @param {Array} arrjson_fotos - Array de objetos foto. this.lista_fotos_RUD
 	 * @param {HTMLElement} contenedor - Div contenedor ► this.RUD.$contenedor_dinamic 
 	 * ```javascript
@@ -4096,108 +4096,47 @@ class Foto_CRUD{
 	
 	/** 
 	 * ## • Evento 'click' sobre la acción `actualizar` en: {@link _inicializar_acciones_listado_RUD}
-	 * ## • Crea un Objeto Modal Bootstrap 'Al vuelo', que:
+	 * ## • Abre el modal Bootstrap definido en index.html, que:
 	 * ### Muestra la -FICHA- de la foto del Salon para -UPDATE-
 	 * *  Para ello, recorro todas las **reservas** y las muestro en un formato legible.
 	 * *  Recorro el objeto 'MSG_S' con los mensajes de cada silla.
 	 * *  recorro el 'dicc_salon' con la configuración de la APP Salon.
 	 * 
-	 * Con estos datos creo un Objeto Modal al vuelo y lo muestro. El objeto se destruye tras su cierre.
+	 * JavaScript rellena los datos variables de la ficha antes de mostrarlo.
 	*/
-	async _abrir_ventana_update_ficha_RUD(foto_id, titulo_head='Actualizar Ficha 🗃️ del Salon:') {
-		// ┌•• Limpiar modales anteriores del mismo tipo
-		Foto_CRUD._limpiar_modales_anteriores();
+	async _abrir_ventana_update_ficha_RUD(foto_id, titulo_head='Actualizar Ficha del Salon:') {
 		
 		// ┌•• Cachar el foto abierto de la base de datos del offcanvas-RUD
 		const foto = this._get_regitro_from_lista( foto_id );
 		if(!foto) throw (`⚠️ Registro ${foto_id} No Encontrado en la lista de Memoria... Aborto mision`);
-
-		const dimension = `{ filas: '${foto.filas || 'X'}', columnas: '${foto.columnas || 'X'}' }`;
 		
-		console.log(`📐 Dimensiones desde BDD: { filas: '${dimension.filas}', columnas: '${dimension.columnas}' }`);
-			
-		// ┌•• Cacho el 'id' para generar el Html.
-		const modal_id = Herramientas._get_secuencial_dom('json_Modal');				
-		// ┌•• Crear modal dinámicamente
-		const modalHTML = `
-		<div class="modal fade" id="${modal_id}" tabindex="-1"  data-updt="update">
-			<div class="modal-dialog modal-lg">
-				<div class="modal-content">
-					<div class="modal-header" data-updt="header">
-						<h5 class="modal-title">${titulo_head} </h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-					</div>
-					<div class="update-body">						
-						<!-- ■■■■■■■■■■■■■■■■■■■■■■ 
-						■■ AREA DE FEEDBACK ■■ 
-						■■■■■■■■■■■■■■■■■■■■■■■■■■■ -->				
-						<div class="alert alert-danger d-none p-2 small mb-3" role="alert" data-updt="feedback"></div>
-
-						<!-- ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-						■■ Formulario CREATE/UPDATE ■■ 
-						■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ -->
-						<div class="update-body" 						data-updt="contenedor-formulario">
-							<form id="form_guardar_foto" class="small" 	data-updt="formulario">
-								<div class="mb-2">
-									<label class="form-label mb-1 text-black-50">Dimension: ${dimension} </label>
-								</div>
-
-								<div  class="alert d-none" role="alert" ></div> 
-
-
-								<div class="mb-2">
-									<label for="foto_titulo" class="form-label mb-1 text-black-50">Título</label>
-									<input id="foto_titulo" type="text" class="form-control form-control-sm" data-updt="titulo" required>
-								</div>
-
-								<div class="mb-2">
-									<label for="foto_slug_publico" class="form-label mb-1 text-black-25">Slug público</label>
-									<input id="foto_slug_publico" type="text" class="form-control form-control-sm text-black-50" data-updt="slug">
-								</div>
-
-								<div class="mb-2">
-									<label for="foto_mensaje_publico" class="form-label mb-1 text-black-50">Descripción (opcional)</label>
-									<textarea id="foto_mensaje_publico" class="form-control form-control-sm" rows="2" data-updt="mensaje"></textarea>
-								</div>
-
-								<div class="form-check mb-2">
-									<input id="foto_es_plantilla" class="form-check-input" type="checkbox" data-updt="plantilla">
-									<label class="form-check-label text-black-50" for="foto_es_plantilla">Es plantilla ( Copia Única... se Replica ) </label>
-								</div>
-
-								<div class="form-check mb-3">
-									<input id="foto_es_publica" class="form-check-input" type="checkbox" data-updt="publica">
-									<label class="form-check-label text-black-50" for="foto_es_publica">Es pública ( ⚠️ Sin Uso de Momento)</label>
-								</div>
-
-							</form>
-						</div>
-
-					</div>
-					<div class="modal-footer">
-						<button type="submit"  data-updt="submit"  form="form_guardar_foto" class="btn btn-primary btn-sm w-100" >Actualizar Ficha</button>
-					</div>
-				</div>
-			</div>
-		</div>
-		`;
+		const $modal = document.getElementById('modal_update_ficha');
+		if (!$modal || !window.bootstrap?.Modal) {
+			throw new Error('No se encontró el modal de actualización en index.html');
+		}
 		
-		// ┌•• Añadir al DOM
-		document.body.insertAdjacentHTML('beforeend', modalHTML);
-		const modal_bs = new bootstrap.Modal(document.getElementById(modal_id));
 		try {			
 			// ┌•• Cacho los Controles.
 			const UPDT = {
-				$updt: 			e_Salon._to_element('[data-updt="update"]') || null,				
-				$feedback: 		e_Salon._to_element('[data-updt="feedback"]') || null,	// zona feedback
-				$formulario: 	e_Salon._to_element('[data-updt="formulario"]') || null, // formulario. el objeto padre.
-				$titulo: 		e_Salon._to_element('[data-updt="titulo"]') || null,  	// input título
-				$slug_publico: 	e_Salon._to_element('[data-updt="slug"]') || null,		// input slug
-				$mensaje_publico: e_Salon._to_element('[data-updt="mensaje"]') || null,	// input mensaje
-				$es_plantilla: 	e_Salon._to_element('[data-updt="plantilla"]') || null,	// checkbox plantilla
-				$es_publica: 	e_Salon._to_element('[data-updt="publica"]') || null,	// checkbox pública
-				$submit: 		e_Salon._to_element('[data-updt="submit"]') || null,	// botón guardar
+				$updt: $modal,
+				$feedback: $modal.querySelector('[data-updt="feedback"]'),
+				$formulario: $modal.querySelector('[data-updt="formulario"]'),
+				$titulo: $modal.querySelector('[data-updt="titulo"]'),
+				$slug_publico: $modal.querySelector('[data-updt="slug"]'),
+				$mensaje_publico: $modal.querySelector('[data-updt="mensaje"]'),
+				$es_plantilla: $modal.querySelector('[data-updt="plantilla"]'),
+				$es_publica: $modal.querySelector('[data-updt="publica"]'),
+				$submit: $modal.querySelector('[data-updt="submit"]'),
 			};
+			const $titulo_modal = $modal.querySelector('[data-updt="titulo-modal"]');
+			const $dimension = $modal.querySelector('[data-updt="dimension"]');
+			if (Object.values(UPDT).some(elemento => !elemento) || !$titulo_modal || !$dimension) {
+				throw new Error('El modal de actualización está incompleto');
+			}
+
+			$titulo_modal.textContent = titulo_head;
+			$dimension.textContent = `Dimensión: ${foto.filas || 'X'} x ${foto.columnas || 'X'}`;
+
 			// ┌•• Rellenar los controles de this.CU con los datos del foto a Actualizar.
 			// captured_at | dicc_configuracion | id | mensaje_publico | slug_publico | titulo
 			UPDT.$titulo.value = foto.titulo;
@@ -4207,31 +4146,22 @@ class Foto_CRUD{
 			UPDT.$es_plantilla.checked = Boolean(foto.es_plantilla);
 			
 			// ┌•• Muestra el objeto Modal
-			modal_bs.show();
+			bootstrap.Modal.getOrCreateInstance($modal).show();
 			
 			// ┌•• Muestra el Mensaje en la zona de Feedback.
 			this._feedback_updt_ficha_RUD('👍 Preparado para Actualizar!! ');
 			
-			// ​👂​👂 Limpiar al cerrar 
-			const $modal = document.getElementById(modal_id);
-			$modal.addEventListener('hidden.bs.modal', function() {
-				this.remove();
-			});
-			
-			// ┌••• • • • • • • • • • • • • • • • • • • • • • 
-			// 👂​👂​ click sobre el boton UPDATE / ACTUALIZAR
-			UPDT.$submit.addEventListener('click', (ev) => {
+			// Asignar propiedades evita acumular listeners cada vez que se abre el modal.
+			UPDT.$formulario.onsubmit = (ev) => {
 				ev.preventDefault();
 				this.update(foto_id, UPDT);
-			});
+			};
 
 			// 👂​👂​ Al cambiar el título dinamicamente se normaliza el slug.
-			UPDT.$titulo.addEventListener('input', (event) => {
-				// console.log(`🖊️ slug cambiado: ${event.target.value}`);
+			UPDT.$titulo.oninput = (event) => {
 				const titulo_normalizado = Foto_CRUD._normalizar_slug_CU(event.target.value.trim());
 				UPDT.$slug_publico.value = titulo_normalizado;
-			});
-
+			};
 		} catch (error) {
 			console.log(`❌ Error ► Abrir_ventana_updt ► ${error}`);
 			return null;	
@@ -4294,7 +4224,7 @@ class Foto_CRUD{
 
 	
 		
-	/**  UI 🖼️
+	/**  UI 
 	 * ### Muestra un MENSAJE en el offcanvas de Guardar Foto.(camara)
 	 * @param {string} mensaje Mensaje a mostrar.
 	 * @param {string} tipo Tipo de mensaje: 'success', 'danger', 'warning'.
@@ -4350,7 +4280,7 @@ class Foto_CRUD{
 		}
 	}
 
-	/**  🎞️ UI 🖼️ 
+	/**  UI 
 	 * ### Muestra un MENSAJE en el offcanvas de carga.
 	 * @param {string} mensaje Mensaje a mostrar.
 	 * @param {string} tipo Tipo de mensaje: 'success', 'danger', 'warning'.
@@ -4370,10 +4300,6 @@ class Foto_CRUD{
 		$feedback.textContent = mensaje;
 	}
 	
-	// ■■■
-	// ■■■ ONLY .... CU
-	// ■■■
-
 	/**    
 	 * ### Guarda o Actualiza una Foto 🎞️ del Salon si el usuario está autenticado.
 	 * @param {object} payload - Datos de salón y foto.
@@ -4644,7 +4570,7 @@ class Foto_CRUD{
 		return elemento_catalogo.rol !== 'central' && elemento_catalogo.rol !== 'cliente';
 	}
 	
-	/** 🎞️🎞️  - STATIC METHOD 🧍‍♂️
+	/** - STATIC METHOD 
 	 * ### Normaliza un slug: minúsculas y guiones.
 	 */
 	static _normalizar_slug_CU(valor) {
@@ -4904,7 +4830,7 @@ class Foto_CRUD{
 		//       •••••••••••           ••••• ••    •••••
 		// 🧠🧠 PREPARACION DEL SALON ANTES DE LA CARGA DE ELEMENTOS.
 
-		// ┌■ 🧹 Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
+		// ┌■ Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
 		CFG.limpiar_Salon();
 
 		// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos
