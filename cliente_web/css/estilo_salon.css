@@ -229,63 +229,65 @@ Fullscreen en MOVILES
 /* ┌■■ Botón Cerrar (X) */
 [data-updt="update"] .btn-close { background-color: #fff; border-radius: 50%;opacity: 0.8;padding: 0.6rem;box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
 
-/* Objeto Modal de BootStrap para CREACIÓN (data-creat)
-Estilo: Soft Lavender Corporate (Referencia CSS1)
-■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
-/* ┌■■ El offcanvas conserva la estructura interna y el ancho visual del modal. --- */
-/* [data-creat="modal"].offcanvas { width: min(500px, 100vw); } */
-[data-creat="modal"].offcanvas .modal-dialog { width: 100%; min-height: 100%; margin: 0; }
-[data-creat="modal"].offcanvas .modal-content { min-height: 100%; }
-[data-creat="modal"].offcanvas .modal-body { overflow-y: auto; }
-/* ┌■■ Contenedor Principal del Modal --- */
-[data-creat="modal"] .modal-content { border: none; border-radius: 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
-    background-color: #ffffff;  overflow: hidden;font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-[data-creat="titulares"] { color: #b2a3d4; font-weight: 700; letter-spacing: -0.5px; font-size: 1.25rem; }
+/* 
+Offcanvas de Bootstrap para crear/actualizar (data-offcanvas-cu)
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+[data-offcanvas-cu="root"] { border: none; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+    background-color: #ffffff; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+[data-offcanvas-cu="root"] .offcanvas-header { display: flex; width: 100%; }
+[data-offcanvas-cu="root"] .offcanvas-body { overflow-y: auto; }
+[data-offcanvas-cu="titulares"] { color: #b2a3d4; font-weight: 700; letter-spacing: -0.5px; font-size: 1.25rem; }
 /* ┌■■ Cuerpo y Formulario --- */
-[data-creat="contenedor-formulario"] { padding: 2rem; background-color: #ffffff; }
+[data-offcanvas-cu="contenedor-formulario"] { padding: 2rem; background-color: #ffffff; }
 /* ┌■■ Inputs de Texto y Textarea */
-[data-creat="titulo"], 
-[data-creat="slug"], 
-[data-creat="mensaje"] { border: 2px solid #f5f5f7; border-radius: 12px; padding: 10px 12px; transition: all 0.3s ease; background-color: #fafafb; }
-[data-creat="titulo"]:focus, 
-[data-creat="slug"]:focus, 
-[data-creat="mensaje"]:focus { border-color: #d1c4e9; background-color: #fff; box-shadow: 0 0 0 4px rgba(209, 196, 233, 0.25); outline: none; }
-[data-creat="formulario"] .form-label { font-weight: 600; color: #8e94a5 !important; margin-left: 4px; font-size: 0.85rem; }
-
+[data-offcanvas-cu="titulo"],
+[data-offcanvas-cu="slug"],
+[data-offcanvas-cu="mensaje"] { border: 2px solid #f5f5f7; border-radius: 12px; padding: 10px 12px; transition: all 0.3s ease; background-color: #fafafb; }
+[data-offcanvas-cu="titulo"]:focus,
+[data-offcanvas-cu="slug"]:focus,
+[data-offcanvas-cu="mensaje"]:focus { border-color: #d1c4e9; background-color: #fff; box-shadow: 0 0 0 4px rgba(209, 196, 233, 0.25); outline: none; }
+[data-offcanvas-cu="formulario"] .form-label { font-weight: 600; color: #8e94a5 !important; margin-left: 4px; font-size: 0.85rem; }
 /* ┌■■ Checkboxes Personalizados --- */
-[data-creat="plantilla"], 
-[data-creat="publica"] { width: 1.2em; height: 1.2em; margin-top: 0.25em; border-radius: 6px !important; border: 2px solid #e0e0e0; cursor: pointer;}
-[data-creat="plantilla"]:checked, 
-[data-creat="publica"]:checked { background-color: #b39ddb; border-color: #b39ddb; }
+[data-offcanvas-cu="plantilla"],
+[data-offcanvas-cu="publica"] { width: 1.2em; height: 1.2em; margin-top: 0.25em; border-radius: 6px !important; border: 2px solid #e0e0e0; cursor: pointer;}
+[data-offcanvas-cu="plantilla"]:checked,
+[data-offcanvas-cu="publica"]:checked { background-color: #b39ddb; border-color: #b39ddb; }
 /* ┌■■ Feedback de Error --- */
-[data-creat="feedback"] {border-radius: 10px;background-color: #fff5f5;border: 1px solid #feb2b2;color: #c53030;font-weight: 500;transition: all 0.3s ease;}
+[data-offcanvas-cu="feedback"] {border-radius: 10px;background-color: #fff5f5;border: 1px solid #feb2b2;color: #c53030;font-weight: 500;transition: all 0.3s ease;}
+
 /* ┌■■ Tipo: Success (Verde Pastel) Menta muy suave --- */
-[data-creat="feedback"].alert-success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;}
+[data-offcanvas-cu="feedback"].alert-success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;}
 /* ┌■■ Tipo: Warning (Naranja/Ámbar Pastel) --- */  /* Naranja crema */    
-[data-creat="feedback"].alert-warning { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2;}
+[data-offcanvas-cu="feedback"].alert-warning { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2;}
 /* ┌■■ Tipo: Danger (Rojo/Rosa Pastel) --- */ /* Rosa palo / Rojo nube */
-[data-creat="feedback"].alert-danger { background-color: #ffebee; color: #c62828;border: 1px solid #ffcdd2;}
+[data-offcanvas-cu="feedback"].alert-danger { background-color: #ffebee; color: #c62828;border: 1px solid #ffcdd2;}
 
 /* ┌■■ Acordeón Informativo de Guardar Foto --- */
-[data-creat="acordeon"] { margin-bottom: 0.75rem; border-radius: 10px; overflow: hidden; border: 1px solid rgba(179, 157, 219, 0.25);
+[data-offcanvas-cu="acordeon"] { margin-bottom: 0.75rem; border-radius: 10px; overflow: hidden; border: 1px solid rgba(179, 157, 219, 0.25);
   box-shadow: 0 12px 24px rgba(94, 75, 138, 0.12); background: linear-gradient(140deg, rgba(248, 245, 255, 0.8), rgba(255, 255, 255, 0.95)); box-sizing: border-box; }
-[data-creat="acordeon"] .accordion-item { border: 0; background: transparent; }
-[data-creat="acordeon"] .accordion-button {  font-size: 0.8rem; background: transparent; color: #5a4a78; font-weight: 500; padding-top: 0.5rem; padding-bottom: 0.5rem; }
-[data-creat="acordeon"] .accordion-button:focus { box-shadow: 0 0 0 3px rgba(179, 157, 219, 0.3); }
-[data-creat="acordeon"] .accordion-button:not(.collapsed) { color: #4b3f63; background: rgba(179, 157, 219, 0.12); }
-[data-creat="acordeon"] .accordion-body {   font-size: 0.75rem;   color: #6a6478;  padding-top: 0.4rem; padding-bottom: 0.5rem;}
-[data-creat="acordeon-reservas"],
-[data-creat="acordeon-mensajes"] {   line-height: 1.15;   white-space: normal;  word-break: break-word; }
+[data-offcanvas-cu="acordeon"] .accordion-item { border: 0; background: transparent; }
+[data-offcanvas-cu="acordeon"] .accordion-button {  font-size: 0.8rem; background: transparent; color: #5a4a78; font-weight: 500; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+[data-offcanvas-cu="acordeon"] .accordion-button:focus { box-shadow: 0 0 0 3px rgba(179, 157, 219, 0.3); }
+[data-offcanvas-cu="acordeon"] .accordion-button:not(.collapsed) { color: #4b3f63; background: rgba(179, 157, 219, 0.12); }
+[data-offcanvas-cu="acordeon"] .accordion-body {   font-size: 0.75rem;   color: #6a6478;  padding-top: 0.4rem; padding-bottom: 0.5rem;}
+[data-offcanvas-cu="acordeon-reservas"],
+[data-offcanvas-cu="acordeon-mensajes"] {   line-height: 1.15;   white-space: normal;  word-break: break-word; }
 
 /* ┌■■ Botón de Acción (Submit) --- */
-[data-creat="submit"] { background: linear-gradient(135deg, #90cdf4 0%, #63b3ed 100%); 
-    border: none; border-radius: 0; padding: 14px;font-weight: 700; text-transform: uppercase;letter-spacing: 1px;
+[data-offcanvas-cu="submit"] { background: linear-gradient(135deg, #90cdf4 0%, #63b3ed 100%);
+    border: none; border-radius: 0 !important; padding: 14px;font-weight: 700; text-transform: uppercase;letter-spacing: 1px;
     transition: all 0.3s transform; box-shadow: 0 4px 15px rgba(144, 205, 244, 0.4); width: auto;}
-[data-creat="submit"]:hover { background: linear-gradient(135deg, rgb(99, 179, 237) 0%, rgb(66, 153, 225) 100%);
-                              transform: translateY(-2px); box-shadow: 0 6px 20px rgba(144, 205, 244, 0.6);}
-[data-creat="submit"]:active {    transform: translateY(0);}
+
+[data-offcanvas-cu="submit"]:hover { background: linear-gradient(135deg, rgb(99, 179, 237) 0%, rgb(66, 153, 225) 100%);
+    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(144, 205, 244, 0.6);}
+
+[data-offcanvas-cu="submit"]:active {    transform: translateY(0);}
+
+/* ┌■■ Pie sin espacio: el botón ocupa todo el ancho y conserva esquinas rectas. --- */
+[data-offcanvas-cu="root"] .offcanvas-footer { padding: 0; }
+
 /* ┌■■ Botón Cerrar (X) --- */
-[data-creat="modal"] .btn-close {background-color: #ffffff; border-radius: 50%; opacity: 0.8; padding: 0.6rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+[data-offcanvas-cu="root"] .btn-close {margin-left: auto; background-color: #ffffff; border-radius: 50%; opacity: 0.8; padding: 0.6rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
 /* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 Side_Elementos: SIDE-BAR de elementos (mesa/silla)

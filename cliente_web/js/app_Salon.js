@@ -1329,7 +1329,7 @@ class e_Salon extends Tablero_Touch {
 		let element = null;		
 		try {
 
-			// Caso B: Es un selector explícito (empieza por #, . o [)  por ejemplo:  '[data-creat="formulario"]'
+			// Caso B: Es un selector explícito (empieza por #, . o [)  por ejemplo:  '[data-offcanvas-cu="formulario"]'
 			if (str.startsWith('#') || str.startsWith('.') || str.startsWith('[')) {
 				element = document.querySelector(str);
 				if(element) 
@@ -3313,12 +3313,6 @@ class Foto_CRUD{
 		/** ### Viene vacío, pero podemos meter configuracion de entrada con los elementos Dom-Html de Create/Update  */
 		this.diccionario_CU = diccionario_CU;		
 
-		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-		// Inyectar Html: Sólo en caso de que no exista 💉💉
-		// Si lo situo antes de cachar los elementos del crud, (aqui), se pregunta por la el elemento antes de cacharlos, ergo cacha el html si existe y si no, inyecta.
-		// Si lo situo despues de cachar los elementos del crud, se intentan cachar los elementos antes de preguntar si existe para inyectar, se pierde el codigo de Cachar si no hay html.
-		this._inyectar_offcanvas_CU();
-
 		const dRUD = this.diccionario_RUD;
 		this.RUD = {
 			$icono_trigger: e_Salon._to_element(dRUD.icono_trigger) || e_Salon._to_element('[data-action-nav="load"]') || null,			
@@ -3348,16 +3342,18 @@ class Foto_CRUD{
 			// ┌• Icono disparador de la accion CU.
 			$icono_trigger: e_Salon._to_element(dCU.icono_trigger) || e_Salon._to_element('[data-action-nav="save"]') || null,
 			// ┌• Dom-Html de CU(Create/Update)
-			$modal: e_Salon._to_element(dCU.modal) 				|| 	e_Salon._to_element('[data-creat="modal"]') || null,				
-			$feedback: e_Salon._to_element(dCU.feedback) 		||	e_Salon._to_element('[data-creat="feedback"]') || null,				// zona feedback   
-			$dimension: e_Salon._to_element(dCU.dimension) 		||	e_Salon._to_element('[data-dimension="dimension"]') || null,				// zona feedback   
-			$formulario: e_Salon._to_element(dCU.formulario) 	|| 	e_Salon._to_element('[data-creat="formulario"]') || null,	// formulario. el objeto padre.
-			$titulo: e_Salon._to_element(dCU.titulo) 			|| 	e_Salon._to_element('[data-creat="titulo"]') || null,  	// input título
-			$slug_publico: e_Salon._to_element(dCU.slug_publico) 				|| 	e_Salon._to_element('[data-creat="slug"]') || null,		// input slug
-			$mensaje_publico: e_Salon._to_element(dCU.mensaje_publico) 			|| 	e_Salon._to_element('[data-creat="mensaje"]') || null,	// input mensaje
-			$es_plantilla: e_Salon._to_element(dCU.es_plantilla) 	|| e_Salon._to_element('[data-creat="plantilla"]') || null,	// checkbox plantilla
-			$es_publica: e_Salon._to_element(dCU.es_publica) 		|| 	e_Salon._to_element('[data-creat="publica"]') || null,	// checkbox pública
-			$submit: e_Salon._to_element(dCU.submit) 			||	e_Salon._to_element('[data-creat="submit"]') || null,				// botón guardar
+			$offcanvas: e_Salon._to_element(dCU.offcanvas) || e_Salon._to_element('[data-offcanvas-cu="root"]') || null,
+			$feedback: e_Salon._to_element(dCU.feedback) ||	e_Salon._to_element('[data-offcanvas-cu="feedback"]') || null,				
+			$dimension: e_Salon._to_element(dCU.dimension) || e_Salon._to_element('[data-dimension="dimension"]') || null,				
+
+			$formulario: e_Salon._to_element(dCU.formulario) ||	e_Salon._to_element('[data-offcanvas-cu="formulario"]') || null,	// formulario. el objeto padre.
+			$titulo: e_Salon._to_element(dCU.titulo) ||	e_Salon._to_element('[data-offcanvas-cu="titulo"]') || null,  	// input título
+			$slug_publico: e_Salon._to_element(dCU.slug_publico) ||	e_Salon._to_element('[data-offcanvas-cu="slug"]') || null,		// input slug
+			$mensaje_publico: e_Salon._to_element(dCU.mensaje_publico) || e_Salon._to_element('[data-offcanvas-cu="mensaje"]') || null,		// input mensaje
+			$es_plantilla: e_Salon._to_element(dCU.es_plantilla) || e_Salon._to_element('[data-offcanvas-cu="plantilla"]') || null,	// checkbox plantilla
+			$es_publica: e_Salon._to_element(dCU.es_publica) ||	e_Salon._to_element('[data-offcanvas-cu="publica"]') || null,	// checkbox pública
+			$submit: e_Salon._to_element(dCU.submit) ||	e_Salon._to_element('[data-offcanvas-cu="submit"]') || null,				// botón guardar
+			
 		};
 
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -3368,7 +3364,7 @@ class Foto_CRUD{
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ VALIDAR ELEMENTOS CRUD ✔️
 		const cu = this.CU;
-		if(!cu.$modal || !cu.$feedback || !cu.$formulario || !cu.$titulo || !cu.$slug_publico || !cu.$mensaje_publico || !cu.$es_plantilla || !cu.$es_publica || !cu.$submit){
+		if(!cu.$offcanvas || !cu.$feedback || !cu.$formulario || !cu.$titulo || !cu.$slug_publico || !cu.$mensaje_publico || !cu.$es_plantilla || !cu.$es_publica || !cu.$submit){
 			console.log(`❌ Error en el Reconocimiento de objetos Dom . . . Create/Update`);
 			return;
 		}
@@ -3741,130 +3737,6 @@ class Foto_CRUD{
 		this.delete(foto_id);
 	}
 
-	// ■■■
-	// ■■■ Plantillas Html BootStrap
-	// ■■■
-
-	/** 
-	 * UI ■ PLANTILLA HTML 
-	 * ### Inyecta el HTML del offcanvas de CREAR / UPDATE
-	 * ### Al usar iconos de Bootstrap (bi-person, bi-key) queda mucho más visual.
-	*/
-    _inyectar_offcanvas_CU() {
-		// IF existe el objeto Offcanvas, Retorna, Solo pasa si el objeto no existe y lo autogeneramos.
-		// 	• Esto permite poder tener el objeto offcanvas en index.html o lo autogeneramos nosotros.
-		// 	• Hay que definir un diccionario con las clases, id's , data-sets .... identificadores.
-        
-		const bs_offcanvas_cu = document.querySelector('[data-creat="modal"]');
-		if (bs_offcanvas_cu) {
-			console.log('🍞 data-creat -  Objeto offcanvas CU Existe en Html, No lo inyecto.');
-			return;
-		}else{
-			console.log('🍞 data-creat -  Objeto offcanvas CU - NO Existe - en Html • • •  Lo Inyecto.');		
-		}
-		
-		const offcanvas_html = `
-			<div class="offcanvas offcanvas-start" id="id_modal_cu" tabindex="-1" aria-labelledby="etiqueta_guardar" aria-hidden="true" data-creat="modal" data-tipo-bs="modal-cu">
-			<div class="modal-dialog modal-dialog-centered"> 
-				 <div class="modal-content">
-				
-				<div class="modal-header">
-					<h5 class="modal-title" id="etiqueta_guardar" data-creat="titulares">📷 Guardar Foto del Salón 📷</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-				</div>
-
-				<!-- ■■■■■■■■■■■■■■■■■■■■■■ 
-				■■ AREA DE FEEDBACK ■■ 
-				■■■■■■■■■■■■■■■■■■■■■■■■■■■ -->				
-				<div class="alert alert-danger d-none p-2 small mb-3" role="alert" data-creat="feedback"></div>
-
-				<!-- ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-				■■ Formulario CREATE/UPDATE ■■ 
-				■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ -->
-				<div class="modal-body" data-creat="contenedor-formulario">
-					<form id="form_guardar_foto" class="small" data-creat="formulario">
-					<div  class="alert d-none" role="alert" ></div>
-
-					<div class="accordion accordion-flush" data-creat="acordeon">
-						<div class="accordion-item">
-							<h2 class="accordion-header">
-								<button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_reservas" aria-expanded="false" aria-controls="acordeon_reservas">
-									Reservas
-								</button>
-							</h2>
-							<div id="acordeon_reservas" class="accordion-collapse collapse">
-								<div class="accordion-body py-2" data-creat="acordeon-reservas"></div>
-							</div>
-						</div>
-						<div class="accordion-item">
-							<h2 class="accordion-header">
-								<button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_mensajes" aria-expanded="false" aria-controls="acordeon_mensajes">
-									Mensajes
-								</button>
-							</h2>
-							<div id="acordeon_mensajes" class="accordion-collapse collapse">
-								<div class="accordion-body py-2" data-creat="acordeon-mensajes"></div>
-							</div>
-						</div>
-						<div class="accordion-item">
-							<h2 class="accordion-header">
-								<button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_alergias" aria-expanded="false" aria-controls="acordeon_alergias">
-									Alergias
-								</button>
-							</h2>
-							<div id="acordeon_alergias" class="accordion-collapse collapse">
-								<div class="accordion-body py-2" data-creat="acordeon-alergias"></div>
-							</div>
-						</div>
-					</div>
-
-					<div class="mb-2">
-						<div class="d-flex justify-content-between align-items-center">
-							<label for="foto_titulo" class="form-label mb-1 text-black-50">Título</label>
-							<label class="form-label mb-1 text-black-50">Dimension</label>
-						</div>
-						
-						<input id="foto_titulo" type="text" class="form-control form-control-sm" data-creat="titulo" required>
-					</div>
-
-					<div class="mb-2">
-						<label for="foto_slug_publico" class="form-label mb-1 text-black-25">Slug público</label>
-						<input id="foto_slug_publico" type="text" class="form-control form-control-sm text-black-50" data-creat="slug">
-					</div>
-
-					<div class="mb-2">
-						<label for="foto_mensaje_publico" class="form-label mb-1 text-black-50">Descripción (opcional)</label>
-						<textarea id="foto_mensaje_publico" class="form-control form-control-sm" rows="2" data-creat="mensaje"></textarea>
-					</div>
-
-					<div class="form-check mb-2">
-						<input id="foto_es_plantilla" class="form-check-input" type="checkbox" data-creat="plantilla">
-						<label class="form-check-label text-black-50" for="foto_es_plantilla">Es plantilla  ( Copia Única... se Replica ) </label>
-					</div>
-
-					<div class="form-check mb-3">
-						<input id="foto_es_publica" class="form-check-input" type="checkbox" data-creat="publica">
-						<label class="form-check-label text-black-50" for="foto_es_publica">Es pública ( ⚠️ Sin Uso de Momento)</label>
-					</div>
-
-					<div class="modal-footer">
-						<div class="d-flex gap-2 w-100">
-							<button type="submit" class="btn btn-primary btn-sm w-100" data-creat="submit">Guardar</button>
-						</div>
-					</div>
-					</form>
-				</div>
-
-				</div>
-			</div>
-			</div>
-		`;
-
-        // document.body.insertAdjacentHTML('beforeend', html);
-        document.body.insertAdjacentHTML('beforeend', offcanvas_html);
-		
-    }
-
 	/** 
 	 * ### ■■■ Construye el HTML de la lista.
 	 * @param {Array} arrjson_fotos - Array de objetos foto. this.lista_fotos_RUD
@@ -4010,11 +3882,11 @@ class Foto_CRUD{
 	 */
 	_crear_offcanvas_CU() {
 		// 1. Verificación rápida (KISS)
-		if (!this.CU.$modal || !window.bootstrap?.Offcanvas) return null;
+		if (!this.CU.$offcanvas || !window.bootstrap?.Offcanvas) return null;
 		
 		// 2. Usamos el método seguro: recupera si existe, crea si no.
 		// Pasamos las opciones solo en caso de que tenga que crearlo.
-		const bs_offcanvas_CU = window.bootstrap.Offcanvas.getOrCreateInstance(this.CU.$modal, {
+		const bs_offcanvas_CU = window.bootstrap.Offcanvas.getOrCreateInstance(this.CU.$offcanvas, {
 			backdrop: true,
 			keyboard: true,
 			scroll: false,
@@ -4157,7 +4029,7 @@ class Foto_CRUD{
 
 		// ■■■
 		// 👂​👂​ GUARDAR FOTO 🎞️ SUBMIT SOBRE EL FORMULARIO 
-		cu.$submit.addEventListener('click', (event) => {
+		cu.$formulario.addEventListener('submit', (event) => {
 			event.preventDefault();			
 			this._accion_create();
 		});
@@ -4289,8 +4161,7 @@ class Foto_CRUD{
 					this.foto_work = FA_updated;
 			}	
 
-			const contenedor = document.querySelector('[data-creat="contenedor-formulario"]') || document.querySelector('.modal-body') || document.querySelector('[data-tipo-bs="modal-cu"]');
-			Foto_CRUD._limpiar_formularios(contenedor?contenedor:null);
+			Foto_CRUD._limpiar_formularios(this.CU.$formulario);
 			
 			// ┌• En caso de abrir una plantilla, hay que 'marcarla' obligatoriamente pq el usuario puede 'cambiar datos'.
 			// ┌• Este parametro le dice a {@link create} si la foto ha sido abierta como una plantilla.
@@ -4439,7 +4310,7 @@ class Foto_CRUD{
 			// ┌•• Cacho los Controles.
 			const UPDT = {
 				$updt: 			e_Salon._to_element('[data-updt="update"]') || null,				
-				$feedback: 		e_Salon._to_element('[data-updt="feedback"]') || null,	// zona feedback   
+				$feedback: 		e_Salon._to_element('[data-updt="feedback"]') || null,	// zona feedback
 				$formulario: 	e_Salon._to_element('[data-updt="formulario"]') || null, // formulario. el objeto padre.
 				$titulo: 		e_Salon._to_element('[data-updt="titulo"]') || null,  	// input título
 				$slug_publico: 	e_Salon._to_element('[data-updt="slug"]') || null,		// input slug
@@ -4493,12 +4364,12 @@ class Foto_CRUD{
 	 * {@link _abrir_ventana_CU}
 	 */
 	__actualizar_acordeon_CU() {
-		const acordeon = document.querySelector('[data-creat="acordeon"]');
+		const acordeon = document.querySelector('[data-offcanvas-cu="acordeon"]');
 		if (!acordeon) return;
 		// ┌■ Cacha el Dom
-		const $reservas = acordeon.querySelector('[data-creat="acordeon-reservas"]');
-		const $mensajes = acordeon.querySelector('[data-creat="acordeon-mensajes"]');
-		const $alergias = acordeon.querySelector('[data-creat="acordeon-alergias"]');
+		const $reservas = acordeon.querySelector('[data-offcanvas-cu="acordeon-reservas"]');
+		const $mensajes = acordeon.querySelector('[data-offcanvas-cu="acordeon-mensajes"]');
+		const $alergias = acordeon.querySelector('[data-offcanvas-cu="acordeon-alergias"]');
 		
 		// ┌■ Cacha los Datos
 		const MA = Catalogo.get_motor('motor_alergias');

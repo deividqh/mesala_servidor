@@ -32,7 +32,7 @@
 
   <!-- 
   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
-  ■■■■■■■■■■■■■ Navbar ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+  NAVBAR DE CABECERA   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
   -->
   <nav class="navbar fixed-top  border-bottom border-secondary">
@@ -95,14 +95,13 @@
           </div>
   </div>
   </nav>
-
-
-  <!-- █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ FIN HTML OBLIGATORIO .... a partir de aquí es Opcional -->
+  <!-- █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ FIN NAVBAR -->
+  
   
   <!-- 
   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
   Offcanvas CONFIGURACION ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   -->
+  -->
   <div class="offcanvas offcanvas-end off-config" tabindex="-1" id="offcanvas_configuracion" data-tipo-bs="offcanvas-configuracion">
     <div class="offcanvas-header">
       <!-- <i class="bi bi-cup-hot me-2"></i> -->
@@ -194,53 +193,49 @@
   <!-- 
   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
   OFFCANVAS CU - Create/Update    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ -->
-
-  <div class="offcanvas offcanvas-start" id="id_modal_cu" data-creat="modal" data-tipo-bs="modal-cu" tabindex="-1" aria-labelledby="etiqueta_modal_save" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-      
-      <div class="modal-header">
-        <h5 class="modal-title" id="etiqueta_modal_save" data-creat="titulares">📸 Guardar Foto del Salón Activo</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  -->
+   <div class="offcanvas offcanvas-start" id="offcanvas_cu" data-offcanvas-cu="root" tabindex="-1" aria-labelledby="etiqueta_offcanvas_cu">
+      <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="etiqueta_offcanvas_cu" data-offcanvas-cu="titulares">📸 Guardar Foto del Salón Activo</h5>
+          <button type="button" class="btn-close ms-auto" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
       </div>
 
-      <div class="modal-body" data-creat="contenedor-formulario">
+      <div class="offcanvas-body" data-offcanvas-cu="contenedor-formulario">
 
-        <form id="form_guardar_foto" class="small" data-creat="formulario">
+        <form id="form_guardar_foto" class="small" data-offcanvas-cu="formulario">
           
-          <div class="alert d-none" role="alert" data-creat="feedback">FeedBack</div>
+          <div class="alert d-none" role="alert" data-offcanvas-cu="feedback">FeedBack</div>
           
-          <div class="accordion accordion-flush" data-creat="acordeon">
+          <div class="accordion accordion-flush" data-offcanvas-cu="acordeon">
               <div class="accordion-item">
-                <h3 class="accordion-header">
-                  <button class="accordion-button collapsed " type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_reservas" aria-expanded="false" aria-controls="acordeon_reservas">
-                    Reservas
-                  </button>
-                </h3>
-                <div id="acordeon_reservas" class="accordion-collapse collapse">
-                  <div class="accordion-body " data-creat="acordeon-reservas"></div>
-                </div>
+                  <h3 class="accordion-header">
+                      <button class="accordion-button collapsed " type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_reservas" aria-expanded="false" aria-controls="acordeon_reservas">
+                        Reservas
+                      </button>
+                  </h3>
+                  <div id="acordeon_reservas" class="accordion-collapse collapse">
+                      <div class="accordion-body " data-offcanvas-cu="acordeon-reservas"></div>
+                  </div>
               </div>
               <div class="accordion-item">
-                <h3 class="accordion-header">
-                  <button class="accordion-button collapsed " type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_mensajes" aria-expanded="false" aria-controls="acordeon_mensajes">
-                    Mensajes
-                  </button>
-                </h3>
-                <div id="acordeon_mensajes" class="accordion-collapse collapse">
-                  <div class="accordion-body " data-creat="acordeon-mensajes"></div>
-                </div>
+                  <h3 class="accordion-header">
+                      <button class="accordion-button collapsed " type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_mensajes" aria-expanded="false" aria-controls="acordeon_mensajes">
+                        Mensajes
+                      </button>
+                  </h3>
+                  <div id="acordeon_mensajes" class="accordion-collapse collapse">
+                      <div class="accordion-body " data-offcanvas-cu="acordeon-mensajes"></div>
+                  </div>
               </div>
               <div class="accordion-item">
-                <h2 class="accordion-header">
-                  <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_alergias" aria-expanded="false" aria-controls="acordeon_alergias">
-                    Alergias
-                  </button>
-                </h2>
-                <div id="acordeon_alergias" class="accordion-collapse collapse">
-                  <div class="accordion-body py-2" data-creat="acordeon-alergias"></div>
-                </div>
+                  <h2 class="accordion-header">
+                      <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#acordeon_alergias" aria-expanded="false" aria-controls="acordeon_alergias">
+                        Alergias
+                      </button>
+                  </h2>
+                  <div id="acordeon_alergias" class="accordion-collapse collapse">
+                      <div class="accordion-body py-2" data-offcanvas-cu="acordeon-alergias"></div>
+                  </div>
               </div>
           </div>
 
@@ -250,100 +245,104 @@
                   <label class="form-label mb-1 text-black-50" data-dimension="dimension">Dimension</label>
               </div>
               
-              <input id="foto_titulo" type="text" class="form-control form-control-sm" data-creat="titulo" required>
+              <input id="foto_titulo" type="text" class="form-control form-control-sm" data-offcanvas-cu="titulo" required>
           </div>
 
           <div class="mb-2">
-            <label for="foto_slug_publico" class="form-label mb-1 text-black-25">Slug público</label>
-            <input id="foto_slug_publico" type="text" class="form-control form-control-sm text-black-50" data-creat="slug">
+              <label for="foto_slug_publico" class="form-label mb-1 text-black-25">Slug público</label>
+              <input id="foto_slug_publico" type="text" class="form-control form-control-sm text-black-50" data-offcanvas-cu="slug">
           </div>
 
           <div class="mb-2">
-            <label for="foto_mensaje_publico" class="form-label mb-1 text-black-50">Descripción (opcional)</label>
-            <textarea id="foto_mensaje_publico" class="form-control form-control-sm" rows="2" data-creat="mensaje"></textarea>
+              <label for="foto_mensaje_publico" class="form-label mb-1 text-black-50">Descripción (opcional)</label>
+              <textarea id="foto_mensaje_publico" class="form-control form-control-sm" rows="2" data-offcanvas-cu="mensaje"></textarea>
           </div>
 
           <div class="form-check mb-2">
-            <input id="foto_es_plantilla" class="form-check-input" type="checkbox" data-creat="plantilla">
-            <label class="form-check-label text-black-50" for="foto_es_plantilla">Es plantilla ( Copia Única... se Replica )</label>
+              <input id="foto_es_plantilla" class="form-check-input" type="checkbox" data-offcanvas-cu="plantilla">
+              <label class="form-check-label text-black-50" for="foto_es_plantilla">Es plantilla ( Copia Única... se Replica )</label>
           </div>
 
           <div class="form-check mb-3">
-            <input id="foto_es_publica" class="form-check-input" type="checkbox" data-creat="publica">
-            <label class="form-check-label text-black-50" for="foto_es_publica">Es pública ( ⚠️ Sin Uso de Momento)</label>
+              <input id="foto_es_publica" class="form-check-input" type="checkbox" data-offcanvas-cu="publica">
+              <label class="form-check-label text-black-50" for="foto_es_publica">Es pública ( ⚠️ Sin Uso de Momento)</label>
           </div>
 
         </form>
       </div>
-      <div class="modal-footer">
-        <div class="d-flex gap-2 w-100">
-          <button type="submit" class="btn btn-primary btn-sm w-100" data-creat="submit">Guardar</button>
-        </div>        
-			</div>
-    </div>
-    </div>
+      <div class="offcanvas-footer">
+          <button type="submit" form="form_guardar_foto" class="btn btn-primary btn-sm w-100" data-offcanvas-cu="submit">Guardar</button>
+      </div>    
+
   </div> 
 
 
 <!-- 
   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
   Offcanvas RUD - Load Foto ■■■■■■■■■■■■■■■■■■■■■■■■■
-  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ -->
+-->
   <div id="offcanvas_RUD" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="load_Label" data-rud="offcanvas">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="load_Label" data-rud="titulares">📝 Listado de •Fichas• de Foto.</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" data-rud="cerrar"></button>
-    </div>  
-  <div class="visibilidad-card-rud p-4 shadow-sm">
-      <!-- Cabecera: selector del tipo de filtro -->
+      <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="load_Label" data-rud="titulares">📝 Listado de •Fichas• de Foto.</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" data-rud="cerrar"></button>
+      </div>  
+      <div class="visibilidad-card-rud p-4 shadow-sm">
+      <!-- 
+        Cabecera: selector del tipo de filtro 
+        -->
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="text-uppercase fw-bold text-muted text-tracking">VISIBILIDAD</span>
+          <span class="text-uppercase fw-bold text-muted text-tracking">VISIBILIDAD</span>
 
-        <div class="segmented-control-rud" role="radiogroup">
-          <input type="radio" class="btn-check" name="filtro" id="radio-todos" value="todos" checked>
-          <label class="btn" for="radio-todos">Todos</label>
+          <div class="segmented-control-rud" role="radiogroup">
+              <input type="radio" class="btn-check" name="filtro" id="radio-todos" value="todos" checked>
+              <label class="btn" for="radio-todos">Todos</label>
 
-          <input type="radio" class="btn-check" name="filtro" id="radio-custom" value="custom">
-          <label class="btn" for="radio-custom">Personalizado</label>
-        </div>
+              <input type="radio" class="btn-check" name="filtro" id="radio-custom" value="custom">
+              <label class="btn" for="radio-custom">Personalizado</label>
+          </div>
       </div>
 
-      <!-- Opciones del filtro personalizado -->
+      <!-- 
+      Opciones del filtro personalizado 
+      -->
       <div id="opciones-personalizadas" class="d-flex flex-wrap gap-2 mb-1" style="transition: opacity 0.3s ease;">
-        <div class="chip-rud chip-plantilla-rud" data-visibilidad="plantilla">
-          <input type="checkbox" class="btn-check" id="check-plantilla" name="es_plantilla">
-          <label class="btn" for="check-plantilla">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-            </svg>
-            Plantilla
-          </label>
-        </div>
+          <div class="chip-rud chip-plantilla-rud" data-visibilidad="plantilla">
+              <input type="checkbox" class="btn-check" id="check-plantilla" name="es_plantilla">
+              <label class="btn" for="check-plantilla">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                  </svg>
+                  Plantilla
+              </label>
+          </div>
 
-        <div class="chip-rud chip-publica-rud" data-visibilidad="publica">
-          <input type="checkbox" class="btn-check" id="check-publica" name="es_publica">
-          <label class="btn" for="check-publica">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-            </svg>
-            Pública
-          </label>
-        </div>
+          <div class="chip-rud chip-publica-rud" data-visibilidad="publica">
+              <input type="checkbox" class="btn-check" id="check-publica" name="es_publica">
+              <label class="btn" for="check-publica">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  Pública
+              </label>
+          </div>
       </div>
 
       <div class="pt-1 border-top mt-1">
-        <small id="status-display" class="text-muted fst-italic" style="font-size: 0.65rem;">
-          Mostrando todos los elementos.
-        </small>
+          <small id="status-display" class="text-muted fst-italic" style="font-size: 0.65rem;">
+              Mostrando todos los elementos.
+          </small>
       </div>
     </div>
 
     <div class="offcanvas-body">
-      <div id="feedback_RUD" class="alert d-none" role="alert" data-rud="feedback"></div>
-      <div id="contenedor_RUD" data-rud="contenedor_lista"></div>
+        <div id="feedback_RUD" class="alert d-none" role="alert" data-rud="feedback"></div>
+        <div id="contenedor_RUD" data-rud="contenedor_lista"></div>
     </div>
   </div>
- 
+
+  
+
+
 </body>
 </html>
