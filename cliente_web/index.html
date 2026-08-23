@@ -54,7 +54,7 @@
           <div class="navbar-left col-auto d-flex align-items-center flex-nowrap">
              
             <!-- 
-            ■■■■■■■■■■■■ Papelera (Exit) (a la izquierda) 
+            ┌■■■ Papelera (Exit) (a la izquierda) ■■■┐ 
             -->
             <div id="id_exit" class="exit-container" data-id_key="exit" title="Mueve aquí para ELIMINAR elementos del Salón">
               <svg  class="imagen_exit" width="30" height="30" viewBox="0 0 1024 1024" fill="currentColor" class="icon"  version="1.1" xmlns="http://www.w3.org/2000/svg">
@@ -66,14 +66,14 @@
           </div>
       
           <!-- 
-          ■■■■■■■■■■■■ DISPARADOR DEL SIDEBAR DE ELEMENTOS 
+          ┌■■■ DISPARADOR DEL SIDEBAR DE ELEMENTOS ■■■┐
           -->
           <div class="navbar-elementos d-flex align-items-center flex-nowrap">
             <i class="bi bi-box-fill me-3 botones_accion" title="Elementos del salón" data-action-nav="elementos" data-side-active="false"></i>
           </div>
 
           <!-- 
-          ■■■■■■■■■■■■ BOTONES BI ACCIONES SOBRE EL NAVBAR
+          ┌■■■ BOTONES BI ACCIONES SOBRE EL NAVBAR ■■■┐
           -->
           <div class="navbar-actions d-flex align-items-center flex-nowrap">
             <div class="navbar-actions-group d-flex align-items-center flex-nowrap">
@@ -87,7 +87,7 @@
             </div>
             
             <!-- 
-            ■■■■■■■■■■■■ Toggler 
+            ┌■■■  Toggler  ■■■┐
             -->
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvas_configuracion" aria-label="Abrir menú de configuración">
               <span class="navbar-toggler-icon"></span>
@@ -99,8 +99,9 @@
   
   
   <!-- 
-  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-  Offcanvas CONFIGURACION ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  Offcanvas CONFIGURACION ■■■■■■■■■■■
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
   -->
   <div class="offcanvas offcanvas-end off-config" tabindex="-1" id="offcanvas_configuracion" data-tipo-bs="offcanvas-configuracion">
     <div class="offcanvas-header">
@@ -191,8 +192,9 @@
 
   
   <!-- 
-  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-  OFFCANVAS CU - Create/Update    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  OFFCANVAS CU - Create/Update  ■■■■■
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
   -->
    <div class="offcanvas offcanvas-start" id="offcanvas_cu" data-offcanvas-cu="root" tabindex="-1" aria-labelledby="etiqueta_offcanvas_cu">
       <div class="offcanvas-header">
@@ -278,8 +280,9 @@
 
 
 <!-- 
-  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-  Offcanvas RUD - Load Foto ■■■■■■■■■■■■■■■■■■■■■■■■■
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  Offcanvas RUD - Load Foto ■■■■■■■■■
+  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 -->
   <div id="offcanvas_RUD" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="load_Label" data-rud="offcanvas">
       <div class="offcanvas-header">
@@ -334,15 +337,44 @@
           </small>
       </div>
     </div>
-
+    <!-- 
+      
+    -->
     <div class="offcanvas-body">
         <div id="feedback_RUD" class="alert d-none" role="alert" data-rud="feedback"></div>
         <div id="contenedor_RUD" data-rud="contenedor_lista"></div>
+
+        <template data-rud-template="registro">
+            <div class="photo-registro-rud">
+                <div class="photo-info-section" data-rud-field="info" data-bs-toggle="tooltip">
+                    <div class="d-flex align-items-center gap-2">
+                        <span data-rud-field="visibilidad"></span>
+                        <span class="photo-titulo-rud" data-rud-field="titulo"></span>
+                    </div>
+                    <span class="photo-fecha-rud" data-rud-field="fecha"></span>
+                </div>
+
+                <div class="photo-actions-section">
+                    <button type="button" class="photo-btn-accion-rud" data-rud-action="cargar" title="Cargar salón" data-bs-toggle="tooltip">
+                        <i class="bi bi-play-circle-fill"></i>
+                    </button>
+                    <button type="button" class="photo-btn-accion-rud" data-rud-action="eliminar" title="Eliminar salón" data-bs-toggle="tooltip">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                    <button type="button" class="photo-btn-accion-rud" data-rud-action="actualizar" title="Actualizar salón" data-bs-toggle="tooltip">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <template data-rud-template="vacio">
+            <div class="text-white-50 p-3 text-center">Aún no has guardado ningún salón.</div>
+        </template>
     </div>
+
+        
   </div>
-
-  
-
 
 </body>
 </html>

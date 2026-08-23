@@ -12,10 +12,6 @@ class e_Salon extends Tablero_Touch {
 	LogIn = null;	
 	/** ### Clase que Hace el CRUD sobre la Base de Datos. */
 	crud = null; 
-	/** ### Alergias */
-	MSG_A=null;
-	/** ### Mensajes */
-	MSG_M=null;
 	
 	/** ### Diccionario principal de configuración. Se valida en el constructor de e-Salon. Contiene los datos de la app. */
 	dicc_config = null;	
@@ -29,8 +25,8 @@ class e_Salon extends Tablero_Touch {
 	last_reserva_clicked = -1;	// el ultimo click sobre que reserva.... indice en reservas
 
 	// ### limitado: Según el ancho del dispositivo se muestran 8,16,24 columnas. 
-	// ###			 dicc_config no tiene que poner columnas...necesita re-posicionar.
-	// ### 		 ACTUAL MODELO EN DESARROLLO, POR ESO SE PONE POR DEFECTO EN EL CONSTRUCTOR.
+	// ### dicc_config no tiene que poner columnas...necesita re-posicionar.
+	// ### ACTUAL MODELO EN DESARROLLO, POR ESO SE PONE POR DEFECTO EN EL CONSTRUCTOR.
 	//
 	// ### scrolado: Puedes poner tantas columnas como quieras pero según el ancho del dispositivoo, el contenedor scrolará al ancho especificado.
 	// ### apilado:  No tiene limite de columnas y no hace scroll, es el usuario quien tiene la responsabilidad.
@@ -3377,6 +3373,8 @@ class Foto_CRUD{
 		// ■ INICIALIZAR LISTENERS CRUD 👂👂
 		this._inicia_listeners_CU();
 		this._inicia_listeners_RUD();
+		this._inicializar_acciones_listado_RUD();
+		Foto_CRUD._inicializar_bootstrap_listado_RUD(this.RUD.$contenedor_dinamic);
 		
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ CREAR BS's PERO NO MOSTRAR 
@@ -3482,7 +3480,7 @@ class Foto_CRUD{
 				}
 			}
 		
-			// 💾 Guardado OK ✔️
+			// Guardado OK ✔️
 			if (guardado_bd?.ok) {
 				const hora = new Date().toLocaleTimeString('es-ES', { hour12: false });
 				this._feedback_CU(`♻️ Foto '${valores.slug_publico}' ${accion} con Éxito. ✔️ .... at: ${hora}`, 'success');
@@ -3517,6 +3515,7 @@ class Foto_CRUD{
 				this._set_UI_ojo(this.foto_work);				
 
 			} else {
+				// Guardar ❌ 
 				const mensaje = guardado_bd?.message || `⚠️ Fallo al guardar ${valores.slug_publico}`;
 				this._feedback_CU(mensaje, 'warning');
 				cu.$titulo?.focus();
@@ -3743,135 +3742,58 @@ class Foto_CRUD{
 	 */
 	_inyectar_lista_registros_RUD(arrjson_fotos, contenedor) {
 		
-		// ┌• Validaciones de entrada:
-		if(!contenedor) return;
+		if (!contenedor) return;
+
+		const template_registro = document.querySelector('[data-rud-template="registro"]');
+		const template_vacio = document.querySelector('[data-rud-template="vacio"]');
+		if (!template_registro) return;
+
 		if (!Array.isArray(arrjson_fotos) || arrjson_fotos.length === 0) {
-			contenedor.innerHTML = '<div class="text-white-50 p-3 text-center">Aún no has guardado ningún salón.</div>';
+			const estado_vacio = template_vacio?.content.cloneNode(true) || document.createTextNode('');
+			contenedor.replaceChildren(estado_vacio);
 			return;
 		}
 		
-		// ┌• Hay que limpiar antes de trabajar.
-		contenedor.innerHTML = '';
+		const fragmento = document.createDocumentFragment();
 
-		// ┌••••••••••••••••••••••••••••••••
-		// ┌• POR CADA Registro, una FOTO.
 		arrjson_fotos.forEach(foto => {
-
-			// ┌• capturo los datos de cada registro(la estructura de foto viene de fotoController get_foto_by_id):
-			const fecha_captured_at_bd = new Date(foto.captured_at).toLocaleString('es-ES', {
+			const fecha = new Date(foto.captured_at).toLocaleString('es-ES', {	
 				dateStyle: 'medium',
 				timeStyle: 'short'
 			});
 			const foto_id = foto.id;
-			const titulo_bd = Foto_CRUD._escapar_html_RUD(foto.titulo || 'Sin título');
-			const mensaje_bd = Foto_CRUD._escapar_html_RUD(foto.mensaje_publico || ' 🐍 ');
-			const slug_bd = Foto_CRUD._escapar_html_RUD(foto.slug_publico || '');
-			const es_publica = Boolean(foto.es_publica);
-			const es_plantilla = Boolean(foto.es_plantilla);
-			const filas = Foto_CRUD._escapar_html_RUD(foto.filas || '0' );
-			const columnas = Foto_CRUD._escapar_html_RUD(foto.columnas || '0');
+			const ficha = template_registro.content.cloneNode(true);
+			const info = ficha.querySelector('[data-rud-field="info"]');
+			const visibilidad = ficha.querySelector('[data-rud-field="visibilidad"]');
+			const titulo = ficha.querySelector('[data-rud-field="titulo"]');
+			const fecha_y_dimensiones = ficha.querySelector('[data-rud-field="fecha"]');
+			const estado = Foto_CRUD._get_estado_visibilidad_RUD(foto);
 
-			// ┌• Preparo el icono de es_plantilla para el registro.
-			let title = '';
-			let content = '';
-			if(es_publica && es_plantilla) {
-				title = "Publica - Plantilla";
-				content = '🌍🍞'
-			}else if (es_publica && !es_plantilla) {
-				title += 'Publica';
-				content = '🌍 - '
-			}else if (!es_publica && es_plantilla) {
-				title += 'Plantilla';
-				content = '🍞 - '
-			}else if (!es_publica && !es_plantilla) {
-				title += 'Ordinary';
-				content = '🙃 - '
-			}
+			info.dataset.photoId = foto_id;
+			visibilidad.title = estado.titulo;
+			visibilidad.textContent = estado.icono;
+			titulo.textContent = foto.titulo || 'Sin título';
+			titulo.title = `slug: ${foto.slug_publico || ''}`;
+			fecha_y_dimensiones.textContent = `${fecha} 🔲 ( ${foto.filas || 0} x ${foto.columnas || 0} )`;
 
-			// ┌•• Preparo el icono inicial de la lista 🌍 🍞 🙃:
-			const $icono_slug = `<span title=${title}>${content}</span>`
+			if (this.foto_work?.id === foto_id) titulo.classList.add('clase_match_open');
+
+			ficha.querySelectorAll('[data-rud-action]').forEach(boton => {
+				boton.dataset.photoId = foto_id;
+			});
 			
-			// ┌•• Marca el registro_abierto_ con una clase ad-hoc ('clase_match_open') para ponerlo en color distintivo
-			const FA = this.foto_work || null;
-			let clase_match = '';
-			if(FA && FA.id === foto_id ) 
-				clase_match = 'clase_match_open';
-			else
-				clase_match = '';
-			
-			// ┌•••••••••
-			// ┌•• Html:
-			// ┌•••••••••
-			const item_Html = `
-				<div class="photo-registro-rud">
-					
-					<!-- ■■■■■■ 
-					Titulo y Fecha 
-					■■■■■■ -->
-					<div class="photo-info-section"  data-photo-id="${foto_id}" data-bs-toggle="tooltip" >
-						<div class="d-flex align-items-center gap-2 ">
-							${$icono_slug} <span class="photo-titulo-rud  ${clase_match}" title="slug: ${slug_bd}">${titulo_bd}</span>
-						</div>
-						<span class="photo-fecha-rud">${fecha_captured_at_bd} 🔲 ( ${filas} x ${columnas} ) </span>
-						<!-- <span class="photo-fecha-rud">${slug_bd}</span> -->
-					</div>
-
-					<!-- ■■■■■■■■■■■■■■■■■■■ 
-					Botones de Acciones 
-					■■■■■■■■■■■■■■■■■■■■■■■■ -->
-					<div class="photo-actions-section">
-						<!-- 
-						■■■■■■ ▶️ LOAD -->
-						<button type="button" class="photo-btn-accion-rud js-load-salon" data-photo-id="${foto_id}" title="Cargar Salon" data-bs-toggle="tooltip" >
-							<i class="bi bi-play-circle-fill"></i>
-						</button>
-
-						<!-- 
-						■■■■■■ 👁️‍🗨️ INFO 
-						<button type="button" class="photo-btn-accion-rud" 
-							data-bs-toggle="popover" 
-							data-bs-trigger="focus" 
-							data-bs-custom-class="popover-mensaje"
-							title="Mensaje del Salón" 
-							data-bs-content="${mensaje_bd}"
-							data-photo-id="mensaje"
-							>							
-							<i class="bi bi-eye"></i>
-						</button> 
-						-->
-						<!-- 
-						■■■■■■ 🗑️ DELETE -->
-						<button type="button" class="photo-btn-accion-rud js-delete-salon" data-photo-id="${foto_id}" title="Eliminar salón" data-bs-toggle="tooltip" >
-							<i class="bi bi-trash3"></i>
-						</button>
-						
-						<!-- 
-						■■■■■■  UPDATE -->
-						<button type="button" class="photo-btn-accion-rud js-update-salon" data-photo-id="${foto_id}" title="Actualizar salón" data-bs-toggle="tooltip" >
-							<i class="bi bi-arrow-repeat"></i>
-						</button>
-
-					</div>
-				</div>
-			`;
-
-			contenedor.insertAdjacentHTML('beforeend', item_Html);
+			fragmento.appendChild(ficha);
 		});
-		// • • • Después de esto, hemos creado varios registros y por cada registro, 
-		// 4 iconos bi de accion (ver-info/update/delete/load), ahora hay darles accion(listenners)
-
-		// ┌■■ Carga Listeners para cada elemento  '.js-load-salon' y '.js-delete-salon' 'js-update-salon' recien creados
-		this._init_listeners_listado_fotos(contenedor);
-
-		// ┌■■ UI  
-		Foto_CRUD._crear_dinamic_bs_elements_RUD(contenedor);
+		contenedor.replaceChildren(fragmento);
 	}
 
+	static _get_estado_visibilidad_RUD(foto) {
+		if (foto.es_publica && foto.es_plantilla) return { titulo: 'Pública - Plantilla', icono: '🌍🍞' };
+		if (foto.es_publica) return { titulo: 'Pública', icono: '🌍 - ' };
+		if (foto.es_plantilla) return { titulo: 'Plantilla', icono: '🍞 - ' };
+		return { titulo: 'Ordinaria', icono: '🙃 - ' };
+	}
 	
-	// ■■■
-	// ■■■ Creo los objetos BootStrap, pero no los muestro.	
-	// ■■■
-		
 	/**
 	 * ### Crea una instancia del objeto Offcanvas de Bootstrap para crear/actualizar que tenemos registrado, si no existe lo crea.
 	 * {@link Foto_CRUD constructor}
@@ -3900,7 +3822,7 @@ class Foto_CRUD{
 	}
 
 	/** UI 	 */
-	static _crear_dinamic_bs_elements_RUD(contenedor = null) {
+	static _inicializar_bootstrap_listado_RUD(contenedor = null) {
 		const bootstrap = window.bootstrap;
 		if (!bootstrap) return;
 
@@ -4041,85 +3963,59 @@ class Foto_CRUD{
 	// hidden (El final) Cuándo ocurre: Cuando el componente ya no es visible y la animación terminó
 	// Truco Si alguna vez necesitas que el menú no se abra bajo cierta condición, usa el evento show y añade event.preventDefault(). Bootstrap detendrá la apertura antes de que empiece la animación.
 	_inicia_listeners_RUD(){
-		
-		// 1. Justo antes de mostrarse: ¿Hay datos?
-		// this.RUD.$offcanvas.addEventListener('show.bs.offcanvas', () => {
-		// 	console.log("Preparando el menú...");
-		// });
-
-		// 2. Cuando ya se ve:
 		if (!this.RUD.$offcanvas) return;
-		
 		const $offcanvas = this.RUD.$offcanvas;
-
 		// ■ Salta Cuando el offcanvas se ha cargado completamente
 		$offcanvas.addEventListener('shown.bs.offcanvas',async () => {
-			// Carga la lista de fotos dinamica en el offcanvas modal	
 			const ok = await this._load_lista_registros();
-			// ┌•• Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
 			if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
 
 		});
-
 	}
 
 	/**
-	 * ### Carga las acciones sobre los iconos bi del offcanvas_RUD. 
+	 * ### Inicializa una sola vez las acciones del listado mediante delegación de eventos.
 	 * #### • RUD ( Read , Update, Delete )
-	 * @param {object} contenedor Es el objeto sobre el que se aplican los listeners con delegacion de eventos.
 	 * {@link _inyectar_lista_registros_RUD}
 	 */
-	_init_listeners_listado_fotos(contenedor){
-		if(!contenedor) return;
-
-		// 👂​👂 CARGAR - LOAD
-		contenedor.querySelectorAll('.js-load-salon').forEach((button) => {
-			button.addEventListener('click', () => {
-				const foto_id = Number(button.dataset.photoId); 		// button.dataset.photoId equivale a  <button data-photo-id="xxx" 				
-				if (Number.isFinite(foto_id)) {
+	_inicializar_acciones_listado_RUD(){
+		const contenedor = this.RUD.$contenedor_dinamic;
+		if (!contenedor) return;
+		contenedor.addEventListener('click', event => {
+			const boton = event.target.closest('[data-rud-action]');
+			if (!boton || !contenedor.contains(boton)) return;
+			const foto_id = Number(boton.dataset.photoId);
+			if (!Number.isFinite(foto_id)) return;
+			switch (boton.dataset.rudAction) {
+				case 'cargar':
 					this._accion_cargar_elementos_en_Salon(foto_id);
-				}
-			});
+					break;
+				case 'eliminar':
+					this._accion_delete(foto_id);
+					break;
+				case 'actualizar':
+					this._abrir_ventana_update_ficha_RUD(foto_id);
+					break;
+			}
 		});
-		// ┌• dblclick click sobre el div de titulo + fecha (lo pongo por intuitivo. hasta yo clicko ahí)		
-		contenedor.querySelectorAll('.photo-info-section').forEach((item) => {
-			item.addEventListener('dblclick', () => {
-				// ┌•• Cacho el id del data-set que generó el evento.
-				const foto_id = Number(item.dataset.photoId);
-				// ┌•• Cargo los elementos en el Salon.	
-				if (Number.isFinite(foto_id)) 
-					this._accion_cargar_elementos_en_Salon(foto_id);
-			});
-		});		
-		// 👂​👂 ELIMINAR 
-		contenedor.querySelectorAll('.js-delete-salon').forEach((button) => {
-			button.addEventListener('click', () => {
-				const foto_id = Number(button.dataset.photoId);
-				if (Number.isFinite(foto_id)) this._accion_delete(foto_id);				
-			});
-		});
-		// 👂​👂 UPDATE 
-		contenedor.querySelectorAll('.js-update-salon').forEach((button) => {
-			button.addEventListener('click', () => {
-				const foto_id = Number(button.dataset.photoId);
-				if (Number.isFinite(foto_id)) this._abrir_ventana_update_ficha_RUD(foto_id);
-				
-			});
+		contenedor.addEventListener('dblclick', event => {
+			const info = event.target.closest('[data-rud-field="info"]');
+			if (!info || !contenedor.contains(info)) return;
+			const foto_id = Number(info.dataset.photoId);
+			if (Number.isFinite(foto_id)) this._accion_cargar_elementos_en_Salon(foto_id);
 		});
 	}
-
 
 	// ■■■
 	// ■■■ Abro Los objetos BootStrap.	
 	// ■■■
-	// ► IF objeto se crea con ■new■, se queda en memoria y se abre con show. 
-	// 		• y puede duplicar ante multiples clicks, hay que controlarlo.
-	// ► IF objeto se crea con ■getOrCreateInstance■, Es "a prueba de balas" frente a múltiples clics.(para MOVIL)
+	// ► SI objeto se crea con ■new■, se queda en memoria y se abre con show. 
+	// • y puede duplicar ante multiples clicks, hay que controlarlo.
+	// ► SI objeto se crea con ■getOrCreateInstance■, Es "a prueba de balas" frente a múltiples clics.(para MOVIL)
 	
 	/**
 	 * ### Abre el offcanvas de Bootstrap para guardar o actualizar fotos.
-	 * {@link accion_CU}
-	 */
+	 * {@link accion_CU}  */
 	_abrir_ventana_CU(){
 		this._feedback_CU('👍 Preparado para Guardar la Foto!! ');
 		
@@ -4136,8 +4032,8 @@ class Foto_CRUD{
 			return;
 		}		
 		try {			
-			// ┌•• 🧠🧠 POLITICA/LOGICA DE LA VENTANA: Tener un registro abierto actualizado:🔥
-			// ┌•• Accedo al dato en la lista de registros(en update se actualiza esta lista.) 
+			// ┌■■ POLITICA/LOGICA DE LA VENTANA: Tener un registro abierto actualizado:🔥
+			// ┌■■ Accedo al dato en la lista de registros(en update se actualiza esta lista.) 
 			if (this.lista_fotos_RUD && this.foto_work){
 				const FA_updated = this.lista_fotos_RUD.find( item => { item.id === this.foto_work.id; } );
 				if(FA_updated) 
@@ -4199,7 +4095,7 @@ class Foto_CRUD{
 	}
 	
 	/** 
-	 * ## • Evento 'click' sobre los elementos de la clase '.js-update-salon' en: {@link _init_listeners_listado_fotos}
+	 * ## • Evento 'click' sobre la acción `actualizar` en: {@link _inicializar_acciones_listado_RUD}
 	 * ## • Crea un Objeto Modal Bootstrap 'Al vuelo', que:
 	 * ### Muestra la -FICHA- de la foto del Salon para -UPDATE-
 	 * *  Para ello, recorro todas las **reservas** y las muestro en un formato legible.
@@ -4572,9 +4468,7 @@ class Foto_CRUD{
 			const payload = {
 				slug_publico: slug_candidato
 			};
-			// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 			// REALIZO LA PETICIÓN POST AL SERVIDOR
-			// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 			const response = await fetch(`/api/fotos/check-existing`, {
 				method: 'POST',
 				headers: {
@@ -4602,9 +4496,7 @@ class Foto_CRUD{
 	/** ### Obtiene las dimensiones del salon con las que fue tomada la foto */
 	async _get_dimension_foto_API(foto_id){
 		try {
-			// ┌••••••••••••••••••••••••••••••••
 			// ┌•• CONSULTA A LA BASE DE DATOS.
-			// ┌••••••••••••••••••••••••••••••••
 			const token = localStorage.getItem('token');
 			const response = await fetch(`/api/fotos/${foto_id}/dimensiones`, {
 				method: 'GET',
@@ -4613,9 +4505,7 @@ class Foto_CRUD{
 					'Authorization': `Bearer ${token}`,
 				},
 			});
-			// ┌••••••••••••••••••••••••••••••••
 			// ┌•• ANALISIS DE LAS RESPUESTAS
-			// ┌••••••••••••••••••••••••••••••••
 			// ┌•• Si el token expiró o no existe, el servidor devolverá 401 o 403
 			if (response.status === 401 || response.status === 403) {
 				// alert("Sesión expirada. Por favor, vuelve a iniciar sesión.");
@@ -4626,9 +4516,7 @@ class Foto_CRUD{
 			if (!response.ok) 
 				throw new Error(` _get_dimension_foto_API ::: Error en la red ::: id_foto: ${foto_id}` );			
 			
-			// ┌•••••••••••••••••••••••••••
 			// ┌•• Tenemos datos  ✔️
-			// ┌•••••••••••••••••••••••••••
 			const dimensiones = await response.json();						
 			if(!dimensiones || dimensiones.ok === false)
 				throw "Lanzado ::: Error Lógico, No tenemos dimensiones !!! "
@@ -4636,13 +4524,8 @@ class Foto_CRUD{
 			// ┌•• LOG 
 			console.log(`Dimensiones: ${JSON.stringify(dimensiones, 2)}`);
 			console.log(`Dimensiones: ${dimensiones.filas} x ${dimensiones.columnas} `);
-						
-			// ┌••••••••••••
 			// ┌•• Retorno 
-			// ┌••••••••••••
-			// return {filas: dimensiones.filas, columnas:dimensiones.columnas};
 			return dimensiones;
-			
 		} catch (error) {			
 			console.log(`❌ _get_dimension_foto_ ::: Error Inesperado ::: ${error}`);
 			return false;
@@ -4650,7 +4533,7 @@ class Foto_CRUD{
 	}	
 
 	
-	/** 🔗🔗🔗   • • • Enlance con Salon:: api__foto
+	/** 
 	 * ### Construye el payload para guardar/actualizar una foto.
 	 * @param {object} valores_offcanvas - Datos del formulario.
 	 */
@@ -5137,8 +5020,6 @@ class Foto_CRUD{
 		updateUI();
 	}
 	
-	
-	
 	// ■■■
 	// ■■■ Helpper's
 	// ■■■
@@ -5242,8 +5123,6 @@ class Foto_CRUD{
 	 * @returns {string} Título normalizado con la fecha y hora actual.
 	 */
 	static _get_fechahora_tituled() {
-		
-
 		const ahora = new Date();
 		const formatter = new Intl.DateTimeFormat('es-ES', {
 			day: 'numeric',
@@ -5259,11 +5138,10 @@ class Foto_CRUD{
 
 		// Quitamos el punto del mes si existe
 		const mesLimpio = partes.month.replace('.', '');
-
 		// Ahora puedes acceder a cada dato individualmente
 		const fecha = `${partes.day} ${mesLimpio} ${partes.year}`;
-
 		// console.log(resultado); // Ejemplo: "7 ene 26"
+
 		// Formatear hora, minutos y segundos con padStart para asegurar dos dígitos (ej: 07 en vez de 7)
 		const horas = ahora.getHours().toString().padStart(2, '0');
 		const minutos = ahora.getMinutes().toString().padStart(2, '0');
@@ -5271,8 +5149,6 @@ class Foto_CRUD{
 		
 		// Construir la cadena final		
 		return `foto_${fecha}__${horas}h_${minutos}'_${segundos}"`;
-		// // Construir la cadena final
-		// return `${formato.day} ${formato.month} ${formato.year} -x- ${horas}h${minutos}'${segundos}"`;
 	}
 
 	/** 
@@ -5303,8 +5179,7 @@ class Foto_CRUD{
 			return true;
 		} catch (error) {
 			// 🆕 Aqui tendría que cachar el tipo de error para mandar un mensaje personalizado
-			// console.error("Fail al cargar los registros de fotos:", error);
-			// cd.innerHTML = '<div class="text-danger p-3 text-center">❌ No se pudieron cargar tus salones.</div>';
+			console.error("Fail al cargar los registros de fotos:", error);
 			this.is_lista_registros_completa = false;			
 			return false;
 		}
@@ -5445,7 +5320,7 @@ class Foto_CRUD{
 
 // ◘◘◘◘
 // Side__Elementos: Sidebar de elementos (mesa/silla)
-//  ◘◘◘
+// ◘◘◘◘
 class Side_Elementos {
 	/**
 	 * ### Inicializa el sidebar persistente de elementos del Salón.
@@ -5501,7 +5376,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Crea el sidebar una sola vez o reutiliza el existente para mantenerlo vivo.
-	 * @link constructor
+	 * {@link constructor}
 	 */
 	_crear_sidebar() {
 		const sidebar_existente = document.querySelector('[data-side-elementos="sidebar"]');
@@ -5568,7 +5443,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Sincroniza el sidebar reutilizado con el estado y los elementos actuales.
-	 * @link _crear_sidebar
+	 * {@link _crear_sidebar}
 	 */
 	_sincronizar_sidebar_existente() {
 		if (!this.$sidebar) return;
@@ -5586,7 +5461,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Asegura el indicador/handle (BOTONCITO DE ABAJO) de movimiento del sidebar.
-	 * @link _crear_sidebar
+	 * {@link _crear_sidebar}
 	 */
 	_asegurar_handle() {	
 		if (!this.$sidebar) return;
@@ -5618,7 +5493,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Configura el estado inicial del icono disparador.
-	 * @link constructor
+	 * {@link constructor}
 	 */
 	_configurar_icono() {
 		this.icono_disparador.setAttribute('aria-pressed', 'false');
@@ -5672,7 +5547,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Activa drag/touch para clonar elementos desde el sidebar.
-	 * @link _crear_sidebar
+	 * {@link _crear_sidebar}
 	 */
 	_activar_drag(item) {
 		if (!item) return;
@@ -5681,7 +5556,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Abre el sidebar y activa el estado visual del icono (verde inmediato).
-	 * @link _vincular_eventos
+	 * {@link _vincular_eventos}
 	 */
 	abrir() {
 		this._estado = 'open';
@@ -5692,7 +5567,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Cierra el sidebar y desconecta la UI del icono.
-	 * @link _vincular_eventos
+	 * {@link _vincular_eventos}
 	 */
 	cerrar() {
 		this._estado = 'closed';
@@ -5704,7 +5579,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Inicia el arrastre del sidebar guardando referencias y estado.
-	 * @link _vincular_eventos
+	 * {@link _vincular_eventos}
 	 */
 	_on_pointer_down(event) {
 		if (this._estado !== 'open' || this._bloqueo_movimiento) return;
@@ -5844,7 +5719,7 @@ class Side_Elementos {
 
 	/**
 	 * ### Resetea el estado de drag visual al terminar la interacción.
-	 * @link cerrar
+	 * {@link cerrar}
 	 */
 	_resetear_drag() {
 		this.d_drag.delta_x = 0;
