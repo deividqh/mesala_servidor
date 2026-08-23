@@ -3318,7 +3318,7 @@ class Foto_CRUD{
 		// Si lo situo antes de cachar los elementos del crud, (aqui), se pregunta por la el elemento antes de cacharlos, ergo cacha el html si existe y si no, inyecta.
 		// Si lo situo despues de cachar los elementos del crud, se intentan cachar los elementos antes de preguntar si existe para inyectar, se pierde el codigo de Cachar si no hay html.
 		this._inyectar_modal_CU();
-		this._inyectar_offcanvas_RUD();
+		// this._inyectar_offcanvas_RUD();
 
 
 		const dRUD = this.diccionario_RUD;
@@ -3764,8 +3764,6 @@ class Foto_CRUD{
 			console.log('🍞 data-creat -  Objeto modal CU - NO Existe - en Html • • •  Lo Inyecto.'); 			
 		}
 		
-		// if (e_Salon._to_element('[data-creat="modal"]')) return;
-		
 		const modal_html = `
 			<div class="modal fade" id="id_modal_cu" tabindex="-1" aria-labelledby="etiqueta_guardar" aria-hidden="true"  data-creat="modal">
 			<div class="modal-dialog modal-dialog-centered"> 
@@ -3873,92 +3871,92 @@ class Foto_CRUD{
 	 * ### Inyecta el HTML Modal BootStrap para:  READ | UPDATE | DELETE
 	 * 				• Tiene que generar una lista dinámica de photos de salones guardadas en BD que cargará en id='contenedor_RUD'
 	*/
-    _inyectar_offcanvas_RUD() {
-		// IF existe el objeto Modal, Retorna, Solo pasa si el objeto no existe y lo autogeneramos.
-		// 	• Esto permite poder tener el objeto modal en index.html o lo autogeneramos nosotros.
-		// 	• Hay que definir un diccionario con las clases, id's , data-sets .... identificadores.
+    // _inyectar_offcanvas_RUD() {
+	// 	// IF existe el objeto Modal, Retorna, Solo pasa si el objeto no existe y lo autogeneramos.
+	// 	// 	• Esto permite poder tener el objeto modal en index.html o lo autogeneramos nosotros.
+	// 	// 	• Hay que definir un diccionario con las clases, id's , data-sets .... identificadores.
 
-		const bs_offcanvas_rud = document.querySelector('[data-rud="offcanvas"]');
-        if (bs_offcanvas_rud) {
-			console.log('🍞 data-rud =  objeto offcanvas RUD - Existe - en Html, No lo inyecto.'); 
-			return;
-		}else{
-			console.log('🍞 data-rud -  Objeto Offcanvas RUD - NO Existe - en Html • • •  Lo Inyecto.'); 			
-		}
+	// 	const bs_offcanvas_rud = document.querySelector('[data-rud="offcanvas"]');
+    //     if (bs_offcanvas_rud) {
+	// 		console.log('🍞 data-rud =  objeto offcanvas RUD - Existe - en Html, No lo inyecto.'); 
+	// 		return;
+	// 	}else{
+	// 		console.log('🍞 data-rud -  Objeto Offcanvas RUD - NO Existe - en Html • • •  Lo Inyecto.'); 			
+	// 	}
 
-		// Solo si no Existe el objeto modal lo creamos
-        const html = `
-		<div id="offcanvas_RUD" class = "offcanvas offcanvas-end" tabindex="-1"  aria-labelledby="load_Label" data-rud="offcanvas">
-			<div class="offcanvas-header">
-				<h5 class="offcanvas-title" id="load_Label"  data-rud="titulares">📝 Listado de •Fichas• de Foto.</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" data-rud="cerrar"></button>				
-			</div>`
-			+ this._inyectar_filtros_visibilidad_RUD() +
-			`<div class="offcanvas-body">
-				<div id="feedback_RUD" class="alert d-none" role="alert" data-rud="feedback"></div>     <!-- FEED BACK -->
-				<div id="contenedor_RUD" data-rud="contenedor_lista"> </div>
-			</div>
-		</div>
-		`;
+	// 	// Solo si no Existe el objeto modal lo creamos
+    //     const html = `
+	// 	<div id="offcanvas_RUD" class = "offcanvas offcanvas-end" tabindex="-1"  aria-labelledby="load_Label" data-rud="offcanvas">
+	// 		<div class="offcanvas-header">
+	// 			<h5 class="offcanvas-title" id="load_Label"  data-rud="titulares">📝 Listado de •Fichas• de Foto.</h5>
+	// 			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" data-rud="cerrar"></button>				
+	// 		</div>`
+	// 		+ this._inyectar_filtros_visibilidad_RUD() +
+	// 		`<div class="offcanvas-body">
+	// 			<div id="feedback_RUD" class="alert d-none" role="alert" data-rud="feedback"></div>     <!-- FEED BACK -->
+	// 			<div id="contenedor_RUD" data-rud="contenedor_lista"> </div>
+	// 		</div>
+	// 	</div>
+	// 	`;
 
-        document.body.insertAdjacentHTML('beforeend', html);		
+    //     document.body.insertAdjacentHTML('beforeend', html);		
 
-		this._filtros_plantilla_publica_RUD();
-    }
+	// 	this._filtros_plantilla_publica_RUD();
+    // }
 	/** 
 	 * ### Inyecta el Html de los filtros de Publica/Plantilla en el offcanvas de listado-de-registros 
 	 * ### {@link _inyectar_offcanvas_RUD} 
 	 * */
-	_inyectar_filtros_visibilidad_RUD(){
-		const html = `
-		<div class="visibilidad-card-rud p-4 shadow-sm">
-			<!-- Header: Título y Radios -->
-			<div class="d-flex justify-content-between align-items-center mb-2">
-				<span class="text-uppercase fw-bold text-muted text-tracking">VISIBILIDAD</span>
+	// _inyectar_filtros_visibilidad_RUD(){
+	// 	const html = `
+	// 	<div class="visibilidad-card-rud p-4 shadow-sm">
+	// 		<!-- Header: Título y Radios -->
+	// 		<div class="d-flex justify-content-between align-items-center mb-2">
+	// 			<span class="text-uppercase fw-bold text-muted text-tracking">VISIBILIDAD</span>
 				
-				<div class="segmented-control-rud" role="radiogroup">
-					<input type="radio" class="btn-check" name="filtro" id="radio-todos" value="todos" checked>
-					<label class="btn" for="radio-todos">Todos</label>
+	// 			<div class="segmented-control-rud" role="radiogroup">
+	// 				<input type="radio" class="btn-check" name="filtro" id="radio-todos" value="todos" checked>
+	// 				<label class="btn" for="radio-todos">Todos</label>
 
-					<input type="radio" class="btn-check" name="filtro" id="radio-custom" value="custom">
-					<label class="btn" for="radio-custom">Personalizado</label>
-				</div>
-			</div>
+	// 				<input type="radio" class="btn-check" name="filtro" id="radio-custom" value="custom">
+	// 				<label class="btn" for="radio-custom">Personalizado</label>
+	// 			</div>
+	// 		</div>
 
-			<!-- Cuerpo: Chips de Checkbox -->
-			<div id="opciones-personalizadas" class="d-flex flex-wrap gap-2 mb-1" style="transition: opacity 0.3s ease;">
-				<div class="chip-rud chip-plantilla-rud" data-visibilidad="plantilla">
-					<input type="checkbox" class="btn-check" id="check-plantilla" name="es_plantilla">
-					<label class="btn" for="check-plantilla">
-						<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-							<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-						</svg>
-						Plantilla
-					</label>
-				</div>
+	// 		<!-- Cuerpo: Chips de Checkbox -->
+	// 		<div id="opciones-personalizadas" class="d-flex flex-wrap gap-2 mb-1" style="transition: opacity 0.3s ease;">
+	// 			<div class="chip-rud chip-plantilla-rud" data-visibilidad="plantilla">
+	// 				<input type="checkbox" class="btn-check" id="check-plantilla" name="es_plantilla">
+	// 				<label class="btn" for="check-plantilla">
+	// 					<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+	// 						<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+	// 					</svg>
+	// 					Plantilla
+	// 				</label>
+	// 			</div>
 
-				<div class="chip-rud chip-publica-rud"  data-visibilidad="publica">
-					<input type="checkbox" class="btn-check" id="check-publica" name="es_publica">
-					<label class="btn" for="check-publica">
-						<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-							<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-							<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-						</svg>
-						Pública
-					</label>
-				</div>
-			</div>
+	// 			<div class="chip-rud chip-publica-rud"  data-visibilidad="publica">
+	// 				<input type="checkbox" class="btn-check" id="check-publica" name="es_publica">
+	// 				<label class="btn" for="check-publica">
+	// 					<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+	// 						<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+	// 						<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+	// 					</svg>
+	// 					Pública
+	// 				</label>
+	// 			</div>
+	// 		</div>
 
-			<!-- Footer / Feedback -->
-			<div class="pt-1 border-top mt-1">
-				<small id="status-display" class="text-muted fst-italic" style="font-size: 0.65rem;">
-					Mostrando todos los elementos.
-				</small>
-			</div>
-		</div>
-		`;
-		return html;
-	}
+	// 		<!-- Footer / Feedback -->
+	// 		<div class="pt-1 border-top mt-1">
+	// 			<small id="status-display" class="text-muted fst-italic" style="font-size: 0.65rem;">
+	// 				Mostrando todos los elementos.
+	// 			</small>
+	// 		</div>
+	// 	</div>
+	// 	`;
+	// 	return html;
+	// }
 
 	/** 
 	 * ### ■■■ Construye el HTML de la lista.
@@ -4043,9 +4041,9 @@ class Foto_CRUD{
 						<!-- <span class="photo-fecha-rud">${slug_bd}</span> -->
 					</div>
 
-					<!-- ■■■■■■ 
+					<!-- ■■■■■■■■■■■■■■■■■■■ 
 					Botones de Acciones 
-					■■■■■■ -->
+					■■■■■■■■■■■■■■■■■■■■■■■■ -->
 					<div class="photo-actions-section">
 						<!-- 
 						■■■■■■ ▶️ LOAD -->
@@ -5321,7 +5319,7 @@ class Foto_CRUD{
 
 	/** ## 👂 PANEL DE FILTROS PLANTILLA / PUBLICA
 	 * ### Actualiza la UI + Pone los Listeners para la visualización que ejecuta la Lógica cuando se Seleccionan los Filtros.
-	 * {@link _inyectar_offcanvas_RUD}
+	 * ### Los controles de filtro están definidos en index.html.
 	*/
 	_filtros_plantilla_publica_RUD(){
 		const $radioTodos = document.getElementById('radio-todos');
