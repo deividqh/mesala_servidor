@@ -3357,7 +3357,7 @@ class Foto_CRUD{
 		};
 
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-		// ■ Los Objetos BootStrap. No son objetos DOM son variables js. 📄
+		// ■ Los Objetos BootStrap. No son objetos DOM son variables js. 
 		this.bs_offcanvas_CU = null;
 		this.bs_offcanvas_RUD = null;
 
@@ -3379,13 +3379,9 @@ class Foto_CRUD{
 		this._inicia_listeners_RUD();
 		
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-		// ■ CREAR BS's PERO NO MOSTRAR 🏢
-		// this.bs_modal_CU = this._crear_modal_CU();
+		// ■ CREAR BS's PERO NO MOSTRAR 
 		this.bs_offcanvas_CU = this._crear_offcanvas_CU();
 		this.bs_offcanvas_RUD = this._crear_offcanvas_RUD();
-
-		// y con el objeto creado nos quedamos plantados ESPERANDO AL TRIGGER  • • • • 
-
 	}
 	// ■■■
 	// ■■■ C. R. U. D.
@@ -3881,17 +3877,12 @@ class Foto_CRUD{
 	 * {@link Foto_CRUD constructor}
 	 */
 	_crear_offcanvas_CU() {
-		// 1. Verificación rápida (KISS)
 		if (!this.CU.$offcanvas || !window.bootstrap?.Offcanvas) return null;
-		
-		// 2. Usamos el método seguro: recupera si existe, crea si no.
-		// Pasamos las opciones solo en caso de que tenga que crearlo.
 		const bs_offcanvas_CU = window.bootstrap.Offcanvas.getOrCreateInstance(this.CU.$offcanvas, {
 			backdrop: true,
 			keyboard: true,
 			scroll: false,
 		});
-		
 		return bs_offcanvas_CU || null;
 	}
 	/**
@@ -3899,17 +3890,12 @@ class Foto_CRUD{
 	 * ### {@link Foto_CRUD constructor}
 	 */
 	_crear_offcanvas_RUD() {
-		// 1. Verificación rápida (KISS)
 		if (!this.RUD.$offcanvas || !window.bootstrap?.Offcanvas) return null;
-
-		// 2. Usamos el método seguro: recupera si existe, crea si no.
-		// Pasamos las opciones solo en caso de que tenga que crearlo.
 		const bs_offcanvas_RUD = window.bootstrap.Offcanvas.getOrCreateInstance(this.RUD.$offcanvas, {
 			backdrop: true,
 			keyboard: true,
 			scroll: false
 		});
-
 		return bs_offcanvas_RUD || null;
 	}
 
@@ -4017,8 +4003,8 @@ class Foto_CRUD{
 	// ■■■
 	// ■■■ Inicializo_listeners.
 	// ■■■
+
 	/**
-	 * 
 	 * @returns 
 	 */
 	_inicia_listeners_CU(){
@@ -4136,9 +4122,6 @@ class Foto_CRUD{
 	 */
 	_abrir_ventana_CU(){
 		this._feedback_CU('👍 Preparado para Guardar la Foto!! ');
-		const filas_Salon = this.Salon.CFG.configuracion.salon.filas;
-		const columnas_Salon = this.Salon.CFG.configuracion.salon.columnas;
-
 		
 		// ┌•• Primero muestra la ventana, luego cargala de datos
 		if (!this.bs_offcanvas_CU || !window.bootstrap?.Offcanvas) return;
@@ -4370,7 +4353,7 @@ class Foto_CRUD{
 		const $reservas = acordeon.querySelector('[data-offcanvas-cu="acordeon-reservas"]');
 		const $mensajes = acordeon.querySelector('[data-offcanvas-cu="acordeon-mensajes"]');
 		const $alergias = acordeon.querySelector('[data-offcanvas-cu="acordeon-alergias"]');
-		
+
 		// ┌■ Cacha los Datos
 		const MA = Catalogo.get_motor('motor_alergias');
 		const MM = Catalogo.get_motor('motor_mensajes');
@@ -4797,8 +4780,7 @@ class Foto_CRUD{
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#39;');
-	}
-	
+	}	
 
 	/**
 	 * ## Valida la carga de la foto en el salon:
@@ -4819,15 +4801,11 @@ class Foto_CRUD{
 			return true;
 		}
 		return true;
-
 	}
 	
 	/** 
 	 * ### Lógica crítica al cargar un salón Guardado.
-	 * 1. Pregunta confirmación.
-	 * 2. Limpia el salón actual.
-	 * 3. Buscamos datos de la foto_id
-	 * 4. Carga datos Nuevos  */
+	 * */
 	async _accion_cargar_elementos_en_Salon(foto_id) {
 		const Salon = this.Salon || null;
 		const CFG = this?.Salon?.CFG;			
@@ -4866,9 +4844,7 @@ class Foto_CRUD{
 			// ┌■■ Comparo Dimensiones.
 			if(filas_bdd !== filas_salon || columnas_bdd !== columnas_salon){
 				Alertas_UI._NotA("Dimensiones Distintas", `■ Dimension <b>Salon:</b> ${filas_salon}x${columnas_salon}<br>■ Dimension <b>Foto:</b> ${filas_bdd}x${columnas_bdd}`, "warning");
-				console.log(`Dimensiones Distintas:  ■ Dimension Salon: ${filas_salon}x${columnas_salon}  ■ Dimension Foto: ${filas_bdd}x${columnas_bdd}`);
-				// return;
-				throw('Dimensiones Distintas');
+				throw(`Dimensiones Distintas:  ■ Dimension Salon: ${filas_salon}x${columnas_salon}  ■ Dimension Foto: ${filas_bdd}x${columnas_bdd}`);
 			}
 
 			console.log( `\n${'█ '*10} INICIO CARGA ELEMENTOS ::  id_foto: ${foto_id} | titulo: ${foto_bdd.titulo}`);
@@ -4898,23 +4874,25 @@ class Foto_CRUD{
 				});
 			}
 
-			// ┌■ Elementos visuales: cada uno conserva su propia celda en un rango 1x1.
+			// ┌■■ Elementos visuales: cada uno conserva su propia celda en un rango 1x1.
 			this._cargar_rangos_otros(foto_bdd?.rangos?.otros, RAN, Salon);
 
-			// ┌■ Cacho los datos que nos interesan para cargar las sillas y las mesas.
-			const d_indices = foto_bdd.dicc_indices;
+			// ┌■■ Cacho los datos de la BDD para representar en el Salon.
+			// const d_indices = foto_bdd.dicc_indices;
 			const d_mensajes = foto_bdd.dicc_mensajes;
 			const d_alergias = foto_bdd.dicc_alergias;
 
-			// ┌■ INDICES ( Sustituto seguro de Rangos)
+			// ┌■ Carga de INDICES en el Salon ( Sustituto seguro de Rangos)
 			// Salon._load_elementos_en_Salon(d_indices);
-			// ┌■ MENSAJES
-			Salon._load_mensajes_en_Salon(d_mensajes);
-			// ┌■ ALERGIAS
-			Salon._load_alergias_en_Salon(d_alergias);
 
+			// ┌■ Carga de MENSAJES en el Salon
+			Salon._load_mensajes_en_Salon(d_mensajes);
+			// ┌■ Carga de ALERGIAS en el Salon
+			Salon._load_alergias_en_Salon(d_alergias);
 			// ┌■ REGISTRAR.
 			Salon.RegisteR();
+			
+			// ┌■ Mensajes de Confirmación.
 			console.log("█ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ FIN CARGAR ELEMENTOS");
 			Alertas_UI._NotA('✅ Foto Cargada con Exito', 'Listo para empezar!', 'success', 1500);
 			
