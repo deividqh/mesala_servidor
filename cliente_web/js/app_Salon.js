@@ -3317,9 +3317,7 @@ class Foto_CRUD{
 		// Inyectar Html: Sólo en caso de que no exista 💉💉
 		// Si lo situo antes de cachar los elementos del crud, (aqui), se pregunta por la el elemento antes de cacharlos, ergo cacha el html si existe y si no, inyecta.
 		// Si lo situo despues de cachar los elementos del crud, se intentan cachar los elementos antes de preguntar si existe para inyectar, se pierde el codigo de Cachar si no hay html.
-		this._inyectar_modal_CU();
-		// this._inyectar_offcanvas_RUD();
-
+		this._inyectar_offcanvas_CU();
 
 		const dRUD = this.diccionario_RUD;
 		this.RUD = {
@@ -3364,7 +3362,7 @@ class Foto_CRUD{
 
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ Los Objetos BootStrap. No son objetos DOM son variables js. 📄
-		this.bs_modal_CU = null;
+		this.bs_offcanvas_CU = null;
 		this.bs_offcanvas_RUD = null;
 
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -3386,7 +3384,8 @@ class Foto_CRUD{
 		
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ CREAR BS's PERO NO MOSTRAR 🏢
-		this.bs_modal_CU = this._crear_modal_CU();
+		// this.bs_modal_CU = this._crear_modal_CU();
+		this.bs_offcanvas_CU = this._crear_offcanvas_CU();
 		this.bs_offcanvas_RUD = this._crear_offcanvas_RUD();
 
 		// y con el objeto creado nos quedamos plantados ESPERANDO AL TRIGGER  • • • • 
@@ -3397,7 +3396,7 @@ class Foto_CRUD{
 	// ■■■
 	/**  
 	 * ### 💾 Create_R_Update_D  
-	 * #### Un sólo botón para crear o actualizar una Photo del Usuario mediante un Modal bootstrap.
+	 * #### Un sólo botón para crear o actualizar una foto del usuario mediante un offcanvas de Bootstrap.
 	 * @see {@link _accion_create} | {@link _inicia_listeners_CU}
 	 * @param {dataForm} form_data valores del formulario(form_data.titulo, form_data.slug...)
 	 */
@@ -3747,31 +3746,31 @@ class Foto_CRUD{
 	// ■■■
 
 	/** 
-	 *  🖼️ UI 🖼️ ■■■ PLANTILLA HTML 
-	 * ### Inyecta el HTML del modal de CREAR / UPDATE
-	 * 				• Al usar iconos de Bootstrap (bi-person, bi-key) queda mucho más visual.
+	 * UI ■ PLANTILLA HTML 
+	 * ### Inyecta el HTML del offcanvas de CREAR / UPDATE
+	 * ### Al usar iconos de Bootstrap (bi-person, bi-key) queda mucho más visual.
 	*/
-    _inyectar_modal_CU() {
-		// IF existe el objeto Modal, Retorna, Solo pasa si el objeto no existe y lo autogeneramos.
-		// 	• Esto permite poder tener el objeto modal en index.html o lo autogeneramos nosotros.
+    _inyectar_offcanvas_CU() {
+		// IF existe el objeto Offcanvas, Retorna, Solo pasa si el objeto no existe y lo autogeneramos.
+		// 	• Esto permite poder tener el objeto offcanvas en index.html o lo autogeneramos nosotros.
 		// 	• Hay que definir un diccionario con las clases, id's , data-sets .... identificadores.
         
-		const bs_modal_cu = document.querySelector('[data-creat="modal"]');
-		if (bs_modal_cu) {
-			console.log('🍞 data-creat -  Objeto modal CU Existe en Html, No lo inyecto.'); 
+		const bs_offcanvas_cu = document.querySelector('[data-creat="modal"]');
+		if (bs_offcanvas_cu) {
+			console.log('🍞 data-creat -  Objeto offcanvas CU Existe en Html, No lo inyecto.');
 			return;
 		}else{
-			console.log('🍞 data-creat -  Objeto modal CU - NO Existe - en Html • • •  Lo Inyecto.'); 			
+			console.log('🍞 data-creat -  Objeto offcanvas CU - NO Existe - en Html • • •  Lo Inyecto.');		
 		}
 		
-		const modal_html = `
-			<div class="modal fade" id="id_modal_cu" tabindex="-1" aria-labelledby="etiqueta_guardar" aria-hidden="true"  data-creat="modal">
+		const offcanvas_html = `
+			<div class="offcanvas offcanvas-start" id="id_modal_cu" tabindex="-1" aria-labelledby="etiqueta_guardar" aria-hidden="true" data-creat="modal" data-tipo-bs="modal-cu">
 			<div class="modal-dialog modal-dialog-centered"> 
 				 <div class="modal-content">
 				
 				<div class="modal-header">
 					<h5 class="modal-title" id="etiqueta_guardar" data-creat="titulares">📷 Guardar Foto del Salón 📷</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 				</div>
 
 				<!-- ■■■■■■■■■■■■■■■■■■■■■■ 
@@ -3862,101 +3861,9 @@ class Foto_CRUD{
 		`;
 
         // document.body.insertAdjacentHTML('beforeend', html);
-        document.body.insertAdjacentHTML('beforeend', modal_html);
+        document.body.insertAdjacentHTML('beforeend', offcanvas_html);
 		
     }
-	
-	/** 
-	 *  🖼️ UI 🖼️ ■■■■■■■■■■■■■■■■■■■■ PLANTILLA HTML 
-	 * ### Inyecta el HTML Modal BootStrap para:  READ | UPDATE | DELETE
-	 * 				• Tiene que generar una lista dinámica de photos de salones guardadas en BD que cargará en id='contenedor_RUD'
-	*/
-    // _inyectar_offcanvas_RUD() {
-	// 	// IF existe el objeto Modal, Retorna, Solo pasa si el objeto no existe y lo autogeneramos.
-	// 	// 	• Esto permite poder tener el objeto modal en index.html o lo autogeneramos nosotros.
-	// 	// 	• Hay que definir un diccionario con las clases, id's , data-sets .... identificadores.
-
-	// 	const bs_offcanvas_rud = document.querySelector('[data-rud="offcanvas"]');
-    //     if (bs_offcanvas_rud) {
-	// 		console.log('🍞 data-rud =  objeto offcanvas RUD - Existe - en Html, No lo inyecto.'); 
-	// 		return;
-	// 	}else{
-	// 		console.log('🍞 data-rud -  Objeto Offcanvas RUD - NO Existe - en Html • • •  Lo Inyecto.'); 			
-	// 	}
-
-	// 	// Solo si no Existe el objeto modal lo creamos
-    //     const html = `
-	// 	<div id="offcanvas_RUD" class = "offcanvas offcanvas-end" tabindex="-1"  aria-labelledby="load_Label" data-rud="offcanvas">
-	// 		<div class="offcanvas-header">
-	// 			<h5 class="offcanvas-title" id="load_Label"  data-rud="titulares">📝 Listado de •Fichas• de Foto.</h5>
-	// 			<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" data-rud="cerrar"></button>				
-	// 		</div>`
-	// 		+ this._inyectar_filtros_visibilidad_RUD() +
-	// 		`<div class="offcanvas-body">
-	// 			<div id="feedback_RUD" class="alert d-none" role="alert" data-rud="feedback"></div>     <!-- FEED BACK -->
-	// 			<div id="contenedor_RUD" data-rud="contenedor_lista"> </div>
-	// 		</div>
-	// 	</div>
-	// 	`;
-
-    //     document.body.insertAdjacentHTML('beforeend', html);		
-
-	// 	this._filtros_plantilla_publica_RUD();
-    // }
-	/** 
-	 * ### Inyecta el Html de los filtros de Publica/Plantilla en el offcanvas de listado-de-registros 
-	 * ### {@link _inyectar_offcanvas_RUD} 
-	 * */
-	// _inyectar_filtros_visibilidad_RUD(){
-	// 	const html = `
-	// 	<div class="visibilidad-card-rud p-4 shadow-sm">
-	// 		<!-- Header: Título y Radios -->
-	// 		<div class="d-flex justify-content-between align-items-center mb-2">
-	// 			<span class="text-uppercase fw-bold text-muted text-tracking">VISIBILIDAD</span>
-				
-	// 			<div class="segmented-control-rud" role="radiogroup">
-	// 				<input type="radio" class="btn-check" name="filtro" id="radio-todos" value="todos" checked>
-	// 				<label class="btn" for="radio-todos">Todos</label>
-
-	// 				<input type="radio" class="btn-check" name="filtro" id="radio-custom" value="custom">
-	// 				<label class="btn" for="radio-custom">Personalizado</label>
-	// 			</div>
-	// 		</div>
-
-	// 		<!-- Cuerpo: Chips de Checkbox -->
-	// 		<div id="opciones-personalizadas" class="d-flex flex-wrap gap-2 mb-1" style="transition: opacity 0.3s ease;">
-	// 			<div class="chip-rud chip-plantilla-rud" data-visibilidad="plantilla">
-	// 				<input type="checkbox" class="btn-check" id="check-plantilla" name="es_plantilla">
-	// 				<label class="btn" for="check-plantilla">
-	// 					<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-	// 						<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-	// 					</svg>
-	// 					Plantilla
-	// 				</label>
-	// 			</div>
-
-	// 			<div class="chip-rud chip-publica-rud"  data-visibilidad="publica">
-	// 				<input type="checkbox" class="btn-check" id="check-publica" name="es_publica">
-	// 				<label class="btn" for="check-publica">
-	// 					<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-	// 						<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-	// 						<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-	// 					</svg>
-	// 					Pública
-	// 				</label>
-	// 			</div>
-	// 		</div>
-
-	// 		<!-- Footer / Feedback -->
-	// 		<div class="pt-1 border-top mt-1">
-	// 			<small id="status-display" class="text-muted fst-italic" style="font-size: 0.65rem;">
-	// 				Mostrando todos los elementos.
-	// 			</small>
-	// 		</div>
-	// 	</div>
-	// 	`;
-	// 	return html;
-	// }
 
 	/** 
 	 * ### ■■■ Construye el HTML de la lista.
@@ -4098,22 +4005,22 @@ class Foto_CRUD{
 	// ■■■
 		
 	/**
-	 * ### Crea una instancia del objeto Modal de BootStrap para crear/actualizar que tenemos registrado, si no existe lo crea.
+	 * ### Crea una instancia del objeto Offcanvas de Bootstrap para crear/actualizar que tenemos registrado, si no existe lo crea.
 	 * {@link Foto_CRUD constructor}
 	 */
-	_crear_modal_CU() {
+	_crear_offcanvas_CU() {
 		// 1. Verificación rápida (KISS)
-		if (!this.CU.$modal || !window.bootstrap?.Modal) return null;
+		if (!this.CU.$modal || !window.bootstrap?.Offcanvas) return null;
 		
 		// 2. Usamos el método seguro: recupera si existe, crea si no.
 		// Pasamos las opciones solo en caso de que tenga que crearlo.
-		const bs_modal_CU = window.bootstrap.Modal.getOrCreateInstance(this.CU.$modal, {
+		const bs_offcanvas_CU = window.bootstrap.Offcanvas.getOrCreateInstance(this.CU.$modal, {
 			backdrop: true,
 			keyboard: true,
-			focus: true,
+			scroll: false,
 		});
 		
-		return bs_modal_CU || null;
+		return bs_offcanvas_CU || null;
 	}
 	/**
 	 * ### Crea una instancia de un objeto Offcanvas de BootStrap para crear/actualizar que tenemos registrado, si no existe lo crea.
@@ -4352,7 +4259,7 @@ class Foto_CRUD{
 	// ► IF objeto se crea con ■getOrCreateInstance■, Es "a prueba de balas" frente a múltiples clics.(para MOVIL)
 	
 	/**
-	 * ### Abre la ventana Modal bootstrap para Guardar o Actualizar Fotos.
+	 * ### Abre el offcanvas de Bootstrap para guardar o actualizar fotos.
 	 * {@link accion_CU}
 	 */
 	_abrir_ventana_CU(){
@@ -4362,8 +4269,8 @@ class Foto_CRUD{
 
 		
 		// ┌•• Primero muestra la ventana, luego cargala de datos
-		if (!this.bs_modal_CU || !window.bootstrap?.Offcanvas) return;
-		this.bs_modal_CU.show();
+		if (!this.bs_offcanvas_CU || !window.bootstrap?.Offcanvas) return;
+		this.bs_offcanvas_CU.show();
 		this.__actualizar_acordeon_CU();
 		
 		// ┌•• Valida Authentication para no tener que esperar el error de la API al intentar guardar la foto.
