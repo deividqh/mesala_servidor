@@ -1,0 +1,47 @@
+quiero trabajar sobre offcanvas-logica. Motor_Mensajes
+Zonas:
+	■[HEAD] 		
+		■ icono + id_elemento  ■  boton_cerrar
+		margin-bottom
+	■[ZONA_NEWS]	
+
+		SI•	SUMATORIO
+			verde/rojo (avisa que hay alergia en esta reserva)
+			lbl_alergia (todas las distintas de toda la reserva)
+	
+		ELSE •	SINGLE
+			verde/rojo + lbl_alergia con x
+
+	■[PESTAÑAS]		
+		SI• [Motor_Mensajes]
+			
+			SI•	SUMATORIO
+				lbl_mensajes_otros OR icono mesa con title nombre. + MENSAJE. si pulso, PARPADEA FONDO GRIS
+				text-area Mensaje de id_elemento
+			
+			ELSE •	SINGLE
+				text-area Mensaje de id_elemento
+		
+		SI• [Motor_Alergias]
+			Boton Hacia ► Modal-Alergenos ... dado que hemos pasado este Motor a News.
+			quitar lbl_alergia de este panel.
+		FIN-SI
+	
+		•[BTN_CRUD_GRABAR]
+			mas Grandes de tamaño y espacio.		
+			ESTADOS DE LOS BOTONES CON LAS ACCIONES.
+				• ACC-GRABAR: Graba el audio.
+					click + acc-guardar or acc-eliminar
+				• ACC-GUARDAR: Guarda lo que haya en el text-area.
+					
+				• ACC-RESET: Vacia el text-area. 
+					
+				• ACC-ELIMINAR: Elimina un mensaje de un elemento.
+					Ventana de Estas Seguro??
+			
+
+
+
+
+
+

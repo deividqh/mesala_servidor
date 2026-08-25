@@ -3320,7 +3320,7 @@ class Foto_CRUD{
 		/** ## Antes de _load__lista_registros = false , Despues de _load__lista_registros = true. Ver {@link create} - {@link read} - {@link delete} */
 		this.is_lista_registros_completa = false;
 		/** ## JSON de metadatos(titulo/slug...) de fotos. 
-		 * #### Se Carga ► {@link _load_lista_registros} - Se Usa ► {@link _get_regitro_from_lista} | {@link update} 
+		 * #### Se Carga ► {@link _get_lista_fotos_from_bbdd} - Se Usa ► {@link _get_regitro_from_lista} | {@link update} 
 		 * ```javascript
 		 * ejemplo = {id: 45, titulo:'Lunes', slug_publico:'lunes', mensaje_publico:'', es_plantilla:false, es_publica=true , captured_at:"2026-01-21T22:22:29.119Z" , dicc_config: [Object] }
 		 * ```
@@ -3342,6 +3342,11 @@ class Foto_CRUD{
 			$feedback: e_Salon._to_element(dCU.feedback) ||	e_Salon._to_element('[data-offcanvas-cu="feedback"]') || null,				
 			$dimension: e_Salon._to_element(dCU.dimension) || e_Salon._to_element('[data-dimension="dimension"]') || null,				
 
+			$selector_accion: e_Salon._to_element(dCU.selector_accion) || e_Salon._to_element('[data-offcanvas-cu="selector-accion"]') || null,
+			$ayuda_accion: e_Salon._to_element(dCU.ayuda_accion) || e_Salon._to_element('[data-offcanvas-cu="ayuda-accion"]') || null,
+			$accion_actualizar: e_Salon._to_element(dCU.accion_actualizar) || e_Salon._to_element('#accion_actualizar_foto') || null,
+			$accion_copiar: e_Salon._to_element(dCU.accion_copiar) || e_Salon._to_element('#accion_copiar_foto') || null,
+
 			$formulario: e_Salon._to_element(dCU.formulario) ||	e_Salon._to_element('[data-offcanvas-cu="formulario"]') || null,	// formulario. el objeto padre.
 			$titulo: e_Salon._to_element(dCU.titulo) ||	e_Salon._to_element('[data-offcanvas-cu="titulo"]') || null,  	// input título
 			$slug_publico: e_Salon._to_element(dCU.slug_publico) ||	e_Salon._to_element('[data-offcanvas-cu="slug"]') || null,		// input slug
@@ -3351,16 +3356,22 @@ class Foto_CRUD{
 			$submit: e_Salon._to_element(dCU.submit) ||	e_Salon._to_element('[data-offcanvas-cu="submit"]') || null,				// botón guardar
 			
 		};
+		
+		/** @type {'crear'|'actualizar'|'copiar'} Acción explícita del formulario CU. */
+		this.modo_CU = 'crear';
 
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ Los Objetos BootStrap. No son objetos DOM son variables js. 
-		this.bs_offcanvas_CU = null;
-		this.bs_offcanvas_RUD = null;
+		this.ventana_CU = null;
+		this.ventana_RUD = null;
 
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ VALIDAR ELEMENTOS CRUD ✔️
 		const cu = this.CU;
-		if(!cu.$offcanvas || !cu.$feedback || !cu.$formulario || !cu.$titulo || !cu.$slug_publico || !cu.$mensaje_publico || !cu.$es_plantilla || !cu.$es_publica || !cu.$submit){
+		if(!cu.$offcanvas || !cu.$feedback || !cu.$formulario || !cu.$titulo || 
+			!cu.$slug_publico || !cu.$mensaje_publico || !cu.$es_plantilla || 
+			!cu.$es_publica || !cu.$submit || !cu.$selector_accion || !cu.$ayuda_accion || 
+			!cu.$accion_actualizar || !cu.$accion_copiar){
 			console.log(`❌ Error en el Reconocimiento de objetos Dom . . . Create/Update`);
 			return;
 		}
@@ -3378,8 +3389,8 @@ class Foto_CRUD{
 		
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ CREAR BS's PERO NO MOSTRAR 
-		this.bs_offcanvas_CU = this._crear_offcanvas_CU();
-		this.bs_offcanvas_RUD = this._crear_offcanvas_RUD();
+		this.ventana_CU = this._crear_offcanvas_CU();
+		this.ventana_RUD = this._crear_offcanvas_RUD();
 	}
 	// ■■■
 	// ■■■ C. R. U. D.
@@ -3435,40 +3446,64 @@ class Foto_CRUD{
 				this.last_payload_CU = payload;
 			}
 		
-			// ┌•• Ha sido Abierto de la lista de registros?
-			// ┌•• Variable fundamental para la Logica de Guardar.
-			const FA = this.foto_work;
-			const lFA = this.lista_fotos_RUD;
+			// // ┌•• Ha sido Abierto de la lista de registros?
+			// // ┌•• Variable fundamental para la Logica de Guardar.
+			// const FA = this.foto_work;
+			// const lFA = this.lista_fotos_RUD;
 
-			// const hay_registro = (lFA?lFA:false && FA?FA:false); 	
-			const hay_registro = this.lista_fotos_RUD.some(item => item.id === FA?.id );			
+			// // const hay_registro = (lFA?lFA:false && FA?FA:false); 	
+			// const hay_registro = this.lista_fotos_RUD.some(item => item.id === FA?.id );			
 
 			// ┌•• Existe el slug en la BDD? :: para saberlo, busco un registro con ese slug en la Base de Datos. 
 			const registro_BDD = await this._get_registro_by_slug_API(valores.slug_publico, datos_auth.token);
 			const hay_slug = registro_BDD != false;
 			
 			// ■■■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ 
-			// ┌•• LOGICA DEL NEGOCIO: 🧠🧠			
+			// ┌•• LOGICA DEL NEGOCIO: 		
 			let guardado_bd = null;
 			let accion = '';
-			if(hay_registro){
-				if(this.marca_plantilla){
-					if (hay_slug){
-						// PLANTILLA ✔️ -  SLUG en BD ✔️ ► notificar y salir
-						this._feedback_CU('⚠️ Una Plantilla NO se puede Guardar\n... Cambia el Slug para crear una Copia', 'warning');
-						cu.$slug_publico?.focus();
-						return;
-					}else{
-						// PLANTILLA ✔️ -  SLUG en BD ❌  ► Guardar 
-						guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
-						accion = 'Guardada';
-					}
-				}else{
-					// REGISTRO ✔️ -  PLANTILLA ❌  ► Actualizar
-					guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
-					accion = 'Actualizada';
+			// if(hay_registro){
+			// 	if(this.marca_plantilla){
+			// 		if (hay_slug){
+			// 			// PLANTILLA ✔️ -  SLUG en BD ✔️ ► notificar y salir
+			// 			this._feedback_CU('⚠️ Una Plantilla NO se puede Guardar\n... Cambia el Slug para crear una Copia', 'warning');
+			// 			cu.$slug_publico?.focus();
+			// 			return;
+			// 		}else{
+			// 			// PLANTILLA ✔️ -  SLUG en BD ❌  ► Guardar 
+			// 			guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
+			// 			accion = 'Guardada';
+			// 		}
+			// 	}else{
+			// 		// REGISTRO ✔️ -  PLANTILLA ❌  ► Actualizar
+			// 		guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
+			// 		accion = 'Actualizada';
+			// 	}
+			// }else{
+			// 	if(registro_BDD){
+			// 		// REGISTRO ❌ -  SLUG ✔️  ► Actualizar
+			// 		guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
+			// 		accion = 'Actualizada';					
+			// 	}else{
+			// 		// REGISTRO ❌ -  SLUG ❌  ► Guardar
+			// 		guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
+			// 		accion = 'Guardada';
+			// 	}
+			// }
+
+
+			if (this.modo_CU === 'actualizar') {
+				guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
+				accion = 'Actualizada';
+			}else if (this.modo_CU === 'copiar') {
+				if (hay_slug) {
+					this._feedback_CU('⚠️ Cambia el slug para crear una copia nueva.', 'warning');
+					cu.$slug_publico?.focus();
+					return;
 				}
-			}else{
+				guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
+				accion = 'Copiada';
+			}else {
 				if(registro_BDD){
 					// REGISTRO ❌ -  SLUG ✔️  ► Actualizar
 					guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
@@ -3479,6 +3514,7 @@ class Foto_CRUD{
 					accion = 'Guardada';
 				}
 			}
+
 		
 			// Guardado OK ✔️
 			if (guardado_bd?.ok) {
@@ -3490,14 +3526,14 @@ class Foto_CRUD{
 				
 				// ┌•••••••••••••••••••••••••••••••••••••
 				// ┌•• Despues de Guardar o Actualizar Ok ► Cambio la lista para que tenga los ultimos cambios.
-				const ok = await this._load_lista_registros();
+				const ok = await this._get_lista_fotos_from_bbdd();
 				if(!ok) 
 					throw `❌ Error ::: Guardado Ok, pero Error Recargando la lista de registros.`;
 				
-				// ┌•• En caso de Guardar una foto como plantilla this.marca_plantilla = true y  funciona ok.
-				// ┌•• En caso de Guardar NO plantilla, si está marca_plantilla a true entraría la siguiente por plantilla aunque no lo sea.
-				if(payload.foto.es_plantilla === false) 
-					this.marca_plantilla = false;
+				// // ┌•• En caso de Guardar una foto como plantilla this.marca_plantilla = true y  funciona ok.
+				// // ┌•• En caso de Guardar NO plantilla, si está marca_plantilla a true entraría la siguiente por plantilla aunque no lo sea.
+				// if(payload.foto.es_plantilla === false) 
+				// 	this.marca_plantilla = false;
 
 				// ┌•• Buscar en la lista de registros recien actualizada con la BDD...con el payload(sanitizado en _set_payload_create_())
 				const reg_recien_guardado = this.lista_fotos_RUD.find( item =>{ 
@@ -3529,15 +3565,9 @@ class Foto_CRUD{
 	}
 	
 	/** 
-	 * ### 📚 C_Read_UD 
+	 * ### 📚 C_Read_UpdateDelete ( ventana RUD )
 	 * #### - Lista las fotos del Usuario en un offcanvas bootstrap. 1 registro por foto.
-	 * #### - por cada foto se puede: 
-	 * * Ver-Mensaje 
-	 * * Cargar en el Salon 
-	 * * Eliminar 
-	 * * Actualizar.
-	 * #### NOTA: Actualizar te lleva a la ventana Modal Create/Upt( _CU ). 
-	 * #### {@link ../../server/fotoController. read_fotos}
+	 * #### {@link ./../server/fotoController. read_fotos}
 	 */
 	async read(){
 		if(!this.RUD) return;
@@ -3550,8 +3580,6 @@ class Foto_CRUD{
 				this?.Salon?.LogIn?._sincroniza_UI();
 				return;
 			}
-			// console.log("📲 Empieza Accion LOAD • • • • ");
-			
 			// Limpio el contenido del contenedor anterior
 			this.RUD.$contenedor_dinamic.innerHTML='';	
 			// Limpia el feedback ... hay que limpiar la mesa de trabajo antes de empezar a trabajar.
@@ -3561,10 +3589,12 @@ class Foto_CRUD{
 			if (this.is_lista_registros_completa === false) {
 				try {
 					// ┌■ Carga la lista de Fotos 
-					const ok = await this._load_lista_registros();
-					
+					const lista_fotos_rud = await this._get_lista_fotos_from_bbdd();					
 					// ┌■ Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
-					if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
+					if(lista_fotos_rud) 
+						this._inyectar_lista_registros_RUD(lista_fotos_rud, this.RUD.$contenedor_dinamic);
+					else
+						throw ('No Puedo conseguir la lista de fotos.');
 
 				} catch (error) {
 					this._feedback_RUD(`❌ Error al conectar con el servidor`, 'danger');
@@ -3577,7 +3607,7 @@ class Foto_CRUD{
 	}
 	
 	/** 
-	 * #### Click desde el Offcanvas_RUD. ► Abre la ventana Modal CU para Actualizar Los datas Externos de la Foto Seleccionada.
+	 * #### Click desde la ventana RUD. 
 	 * @param {number} foto_id es el indice de la foto seleccionada en la BD.
 	 */
 	async update(foto_id, dom_updt){
@@ -3640,7 +3670,7 @@ class Foto_CRUD{
 				
 				// ┌•• Una vez que el registro está actualizado, recargo la lista de registros y obtengo el registro abierto para tener 
 				// la última actualización de la base de datos
-				const ok = await this._load_lista_registros();
+				const ok = await this._get_lista_fotos_from_bbdd();
 				// ┌•• Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
 				if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
 
@@ -3662,8 +3692,8 @@ class Foto_CRUD{
 		}					
 	}
 	
-	/** ✖️ RUD ► load - OffCanvas 
-	 * ###
+	/** 
+	 * ### Elimina una foto guardada del listado en la ventana RUD 
 	 */
 	async delete(foto_id){
 		try {
@@ -3683,7 +3713,7 @@ class Foto_CRUD{
 			if (!response.ok)  throw new Error('Error al eliminar');				
 
 			// ► IF todo Ok ✔️  Volvemos a cargar las fotos del salon en el offcanvas
-			const ok = await this._load_lista_registros();
+			const ok = await this._get_lista_fotos_from_bbdd();
 			// ┌•• Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
 			if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
 
@@ -3786,39 +3816,40 @@ class Foto_CRUD{
 		});
 		contenedor.replaceChildren(fragmento);
 	}
-
+	
+	/**
+	 * Devuelve un objeto {titulo:"Publica|Plantilla", icono:'ico'} 
+	 *  {@link _inyectar_lista_registros_RUD} */
 	static _get_estado_visibilidad_RUD(foto) {
-		if (foto.es_publica && foto.es_plantilla) return { titulo: 'Pública - Plantilla', icono: '🌍🍞' };
+		if (foto.es_publica && foto.es_plantilla) return { titulo: 'Pública - Permite Copia', icono: '🌍🍞' };
 		if (foto.es_publica) return { titulo: 'Pública', icono: '🌍 - ' };
-		if (foto.es_plantilla) return { titulo: 'Plantilla', icono: '🍞 - ' };
-		return { titulo: 'Ordinaria', icono: '🙃 - ' };
+		if (foto.es_plantilla) return { titulo: 'Permite Copia', icono: '🍞 - ' };
+		return { titulo: 'No permite Copias', icono: '🙃 - ' };
 	}
 	
 	/**
 	 * ### Crea una instancia del objeto Offcanvas de Bootstrap para crear/actualizar que tenemos registrado, si no existe lo crea.
-	 * {@link Foto_CRUD constructor}
-	 */
+	 * {@link Foto_CRUD constructor}  */
 	_crear_offcanvas_CU() {
 		if (!this.CU.$offcanvas || !window.bootstrap?.Offcanvas) return null;
-		const bs_offcanvas_CU = window.bootstrap.Offcanvas.getOrCreateInstance(this.CU.$offcanvas, {
+		const ventana_CU = window.bootstrap.Offcanvas.getOrCreateInstance(this.CU.$offcanvas, {
 			backdrop: true,
 			keyboard: true,
 			scroll: false,
 		});
-		return bs_offcanvas_CU || null;
+		return ventana_CU || null;
 	}
 	/**
 	 * ### Crea una instancia de un objeto Offcanvas de BootStrap para crear/actualizar que tenemos registrado, si no existe lo crea.
-	 * ### {@link Foto_CRUD constructor}
-	 */
+	 * ### {@link Foto_CRUD constructor}  */
 	_crear_offcanvas_RUD() {
 		if (!this.RUD.$offcanvas || !window.bootstrap?.Offcanvas) return null;
-		const bs_offcanvas_RUD = window.bootstrap.Offcanvas.getOrCreateInstance(this.RUD.$offcanvas, {
+		const ventana_RUD = window.bootstrap.Offcanvas.getOrCreateInstance(this.RUD.$offcanvas, {
 			backdrop: true,
 			keyboard: true,
 			scroll: false
 		});
-		return bs_offcanvas_RUD || null;
+		return ventana_RUD || null;
 	}
 
 	/** UI 	 */
@@ -3945,16 +3976,55 @@ class Foto_CRUD{
 		// ■■■
 		// 👂​👂​ Al cambiar el título dinamicamente se normaliza el slug.
 		cu.$titulo.addEventListener('input', (event) => {
-			// console.log(`🖊️ slug cambiado: ${event.target.value}`);
 			const titulo_normalizado = Foto_CRUD._normalizar_slug_CU(event.target.value.trim());
 			cu.$slug_publico.value = titulo_normalizado;
 		});
 		
-		// ■■■
-		// 👂​👂 Activa guardar foto al CAMBIAR EL SLUG A MANO
-		// this.$slug.addEventListener('input', () => {
-		// 	// this._set_semaforo('save');
-		// });
+		cu.$selector_accion.addEventListener('change', (event) => {
+			if (event.target === cu.$accion_actualizar) this._cambiar_modo_CU('actualizar');
+			if (event.target === cu.$accion_copiar) this._cambiar_modo_CU('copiar');
+		});
+		
+	}
+
+	/**
+	 * Cambia la operación del formulario sin duplicar sus campos.
+	 * Las fotos plantilla permiten actualizar la original o preparar una copia.
+	 */
+	_cambiar_modo_CU(modo) {
+		const cu = this.CU;
+		const foto = this.foto_work;
+		if (!cu || !['crear', 'actualizar', 'copiar'].includes(modo)) return;
+
+		this.modo_CU = modo;
+		cu.$accion_actualizar.checked = modo === 'actualizar';
+		cu.$accion_copiar.checked = modo === 'copiar';
+
+		if (modo === 'crear') {
+			cu.$submit.textContent = 'Crear foto';
+			cu.$ayuda_accion.textContent = '';
+			return;
+		}
+
+		if (!foto) return;
+		if (modo === 'actualizar') {
+			cu.$titulo.value = foto.titulo || '';
+			cu.$slug_publico.value = foto.slug_publico || '';
+			cu.$es_plantilla.checked = Boolean(foto.es_plantilla);
+			cu.$submit.textContent = 'Actualizar foto';
+			cu.$ayuda_accion.textContent = 'Se sustituirá el contenido guardado de esta foto.';
+			return;
+		}
+
+		const titulo_copia = this._get_sugerencia_unica('titulo', foto.titulo || 'sin_titulo');
+		cu.$titulo.value = titulo_copia;
+		cu.$slug_publico.value = this._get_sugerencia_unica(
+			'slug_publico',
+			Foto_CRUD._normalizar_slug_CU(titulo_copia)
+		);
+		cu.$es_plantilla.checked = false;
+		cu.$submit.textContent = 'Crear copia';
+		cu.$ayuda_accion.textContent = 'Se creará una foto nueva. La original no se modificará.';
 	}
 	
 	// show (El inicio) Ideal para validaciones. Cuándo ocurre: En el instante exacto en que pulsas el botón o llamas a .show()
@@ -3967,8 +4037,8 @@ class Foto_CRUD{
 		const $offcanvas = this.RUD.$offcanvas;
 		// ■ Salta Cuando el offcanvas se ha cargado completamente
 		$offcanvas.addEventListener('shown.bs.offcanvas',async () => {
-			const ok = await this._load_lista_registros();
-			if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
+			const lista_fotos = await this._get_lista_fotos_from_bbdd();
+			if(lista_fotos) this._inyectar_lista_registros_RUD(lista_fotos, this.RUD.$contenedor_dinamic);
 
 		});
 	}
@@ -4020,8 +4090,8 @@ class Foto_CRUD{
 		this._feedback_CU('👍 Preparado para Guardar la Foto!! ');
 		
 		// ┌•• Primero muestra la ventana, luego cargala de datos
-		if (!this.bs_offcanvas_CU || !window.bootstrap?.Offcanvas) return;
-		this.bs_offcanvas_CU.show();
+		if (!this.ventana_CU || !window.bootstrap?.Offcanvas) return;
+		this.ventana_CU.show();
 		this.__actualizar_acordeon_CU();
 		
 		// ┌•• Valida Authentication para no tener que esperar el error de la API al intentar guardar la foto.
@@ -4042,31 +4112,35 @@ class Foto_CRUD{
 
 			Foto_CRUD._limpiar_formularios(this.CU.$formulario);
 			
-			// ┌• En caso de abrir una plantilla, hay que 'marcarla' obligatoriamente pq el usuario puede 'cambiar datos'.
-			// ┌• Este parametro le dice a {@link create} si la foto ha sido abierta como una plantilla.
-			this.marca_plantilla = false;
+			// // ┌• En caso de abrir una plantilla, hay que 'marcarla' obligatoriamente pq el usuario puede 'cambiar datos'.
+			// // ┌• Este parametro le dice a {@link create} si la foto ha sido abierta como una plantilla.
+			// this.marca_plantilla = false;
 			
 			// ┌••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
 			// ┌•• 🧠🧠 LOGICA DE ABRIR LA VENTANA DE CREAR-UPDATE FOTO. 🧠🧠
 			const FW = this.foto_work;
 			const cu = this.CU;
 			if ( FW ) {
-				if(Boolean(FW.es_plantilla) === true){
-					// ┌• Si viene de registro_abierto_, 
-					this._feedback_CU('⚠️ Abierta como Plantilla, Cambio/a el Titulo para Guardar', 'warning');
-					cu.$titulo.value = this._get_sugerencia_unica('titulo', FW.titulo) || this._get_sugerencia_unica('titulo', 'sin_titulo') || '';
-					cu.$slug_publico.value = cu.$titulo.value || '';
-					cu.$es_plantilla.checked = false;
-					// ┌•• Lo marco como plantilla para Create.
-					this.marca_plantilla = true;
-				}else{
-					cu.$titulo.value = FW?.titulo;
-					cu.$slug_publico.value = FW?.slug_publico || '';
-					cu.$es_plantilla.checked = Boolean(FW?.es_plantilla);
-				}
+				// if(Boolean(FW.es_plantilla) === true){
+				// 	// ┌• Si viene de registro_abierto_, 
+				// 	this._feedback_CU('⚠️ Abierta como Plantilla, Cambio/a el Titulo para Guardar', 'warning');
+				// 	cu.$titulo.value = this._get_sugerencia_unica('titulo', FW.titulo) || this._get_sugerencia_unica('titulo', 'sin_titulo') || '';
+				// 	cu.$slug_publico.value = cu.$titulo.value || '';
+				// 	cu.$es_plantilla.checked = false;
+				// 	// ┌•• Lo marco como plantilla para Create.
+				// 	this.marca_plantilla = true;
+				// }else{
+				// 	cu.$titulo.value = FW?.titulo;
+				// 	cu.$slug_publico.value = FW?.slug_publico || '';
+				// 	cu.$es_plantilla.checked = Boolean(FW?.es_plantilla);
+				// }
 				cu.$mensaje_publico.value = FW?.mensaje_publico || '';
 				cu.$es_publica.checked = Boolean(FW?.es_publica);				
 				cu.$dimension.textContent = `Dimension: ${FW?.filas || 'X'} x ${FW?.columnas || 'X'}`;
+				
+				
+				cu.$selector_accion.classList.toggle('d-none', !Boolean(FW.es_plantilla));
+				this._cambiar_modo_CU('actualizar');
 			}else {
 				// ┌• Si no viene de registro_abierto_, preparo un formulario basico con una sugerencia de titulo-slug
 				cu.$titulo.value = Foto_CRUD._get_fechahora_tituled();
@@ -4075,6 +4149,9 @@ class Foto_CRUD{
 				cu.$es_plantilla.checked = false;
 				cu.$es_publica.checked = false;
 				cu.$dimension.textContent = `Dimension: ${this.Salon?.filas || 'X'} x ${this.Salon?.columnas || 'X'}`;			
+				
+				cu.$selector_accion.classList.add('d-none');
+				this._cambiar_modo_CU('crear');
 			}
 			if (cu.$mensaje_publico) cu.$mensaje_publico.focus();
 			
@@ -4590,46 +4667,17 @@ class Foto_CRUD{
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#39;');
 	}	
-
-	/**
-	 * ## Valida la carga de la foto en el salon:
-	 * ### Hay que validar que las dimensiones de Salon y las dimensiones de la foto a cargar de la bdd sean iguales o distintas
-	 */
-	async __validar_carga(foto_id){
-		const Salon = this.Salon || null;
-		const lista_fotos = this.lista_fotos_RUD || [];
-		
-		const foto = lista_fotos.find(reg => reg.id === foto_id);
-		if(!foto) return;
-		
-		// ┌••••••••••••••••••••••••••••• 
-		// ┌•• 🧠🧠 VALIDO DIMENSIONES
-		const puedo_pasar = this._logica_match_dimensiones(foto);				
-		if (puedo_pasar === false){
-			const msg = `<br>■ Dimension <b>Salon:</b> ${Salon.filas}x${Salon.columnas}<br> ■ Dimension <b>Foto:</b> ${foto.filas}x${foto.columnas}`;
-			return true;
-		}
-		return true;
-	}
 	
 	/** 
 	 * ### Lógica crítica al cargar un salón Guardado.
 	 * */
 	async _accion_cargar_elementos_en_Salon(foto_id) {
 		const Salon = this.Salon || null;
+		if(!Salon) throw(`No existe Salon`);
 		const CFG = this?.Salon?.CFG;			
+		if(!CFG) throw(`No existe Configuracion`);
 		const RAN = this?.Salon?.eRdS || null;
-		// ┌■ Validacion
-		if(!Salon || !CFG || !RAN) 
-			return;
-
-		// ┌■ De Salon a los rangos abiertos.
-		RAN.pull_all();
-		// ┌■ Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
-		CFG.limpiar_Salon();		
-		// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos
-		this._ocultar_offcanvas_abiertos();
-
+		if(!RAN) throw(`No existe Clase Rangos`);
 		try {
 			// ┌■■ Datos en BDD:
 			// ------------------
@@ -4656,7 +4704,14 @@ class Foto_CRUD{
 				throw(`Dimensiones Distintas:  ■ Dimension Salon: ${filas_salon}x${columnas_salon}  ■ Dimension Foto: ${filas_bdd}x${columnas_bdd}`);
 			}
 
-			console.log( `\n${'█ '*10} INICIO CARGA ELEMENTOS ::  id_foto: ${foto_id} | titulo: ${foto_bdd.titulo}`);
+			console.log( `\n${'█ '.repeat(10)} INICIO CARGA ELEMENTOS ::  id_foto: ${foto_id} | titulo: ${foto_bdd.titulo}`);
+
+			// ┌■ De Salon a los rangos. 
+			RAN.pull_all();
+			// ┌■ Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
+			CFG.limpiar_Salon();		
+			// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos
+			this._ocultar_offcanvas_abiertos();
 			
 			// 🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳🔳
 			// 🔳🔳🔳🔳🔳 CARGA de SALON 🔳🔳🔳🔳🔳
@@ -4755,10 +4810,16 @@ class Foto_CRUD{
 		return ids_elementos.length === 1 && this._es_player_no_reservable(ids_elementos[0]);
 	}
 
-	/** ### Lleva la lógica de abrir una foto del Salón:
+	/** 
+	 * ### Lleva la lógica de abrir una foto del Salón:
 	 * ### • Comprueba dimensiones.
-	 * ### • Si hay cambiio de dimensiones gestiona las opciones	 */
-	async __el_portero_de_carga(modelo_salon, filas_salon, columnas_salon, filas_bdd, columnas_bdd){
+	 * ### • Si hay cambiio de dimensiones gestiona las opciones	 
+	 * @param {Number} filas_salon
+	 * @param {Number} columnas_salon
+	 * @param {Number} filas_bdd
+	 * @param {Number} columnas_bdd
+	 * */
+	async __el_portero_de_carga(filas_salon, columnas_salon, filas_bdd, columnas_bdd){
 		
 		const RAN = this.Salon.eRdS || null;
 		if(!RAN) return;
@@ -4770,13 +4831,13 @@ class Foto_CRUD{
 		let celda_inicio_rango_open = '';
 
 		// ┌■■■
-		// ┌■■■ opcion 1
+		// ┌■■■ opcion 1 ■■■┐
 		// ┌■■■
 		const puedo_pasar = this._logica_match_dimensiones(photo);				
 		let fila = '';
 		let columna = '';
 		if (puedo_pasar === false){
-			// ┌• de Mayor Dimension en BD a Menor Dimension en Salon.
+			// ┌■ de Mayor Dimension en BD a Menor Dimension en Salon.
 			
 			// Alertas_UI._NotA("Operacion Anulada", `${msg}<br><br>🟥 🟥 🟥 🟥 QUITO EL RETURN PARA PRUEBAS....VOLVER A PONER!!!!!`, "danger");
 			const titulo = "Advertencia: Dimensiones Distintas!";
@@ -4797,13 +4858,13 @@ class Foto_CRUD{
 			columna = RAN._AZ_to_numcol(match[1]);
 
 		}else{
-			// ┌•• Mensaje Confirmacion - Dimension
+			// ┌■ Mensaje Confirmacion - Dimension
 			let mensaje = `Al cargar este salón se perderá el trabajo actual no guardado.`;				
 			const confirmacion = await Alertas_UI.ConfirM("❔ Confirmación:", mensaje, "warning");
 			if(!confirmacion) return;
 		}
 		// ┌■■■
-		// ┌■■■ opcion 2
+		// ┌■■■ opcion 2 ■■■┐
 		// ┌■■■
 
 		// ┌■ COMPARAMOS DIMENSIONES EN SALON Y EN BASE-DATOS y Planes(limitado/scrollado/apilado)
@@ -4823,22 +4884,16 @@ class Foto_CRUD{
 			console.log('modelo_salon No registrado!, columnas puestas = 8');
 		}
 
-		// ┌■■■
-		// ┌■■■ Acciones Finales
-		// ┌■■■
-
-		//       •••••••••••           ••••• ••    •••••
-		// 🧠🧠 PREPARACION DEL SALON ANTES DE LA CARGA DE ELEMENTOS.
-
+		// ┌■■
+		// ┌■■ PREPARACION DEL SALON ANTES DE LA CARGA DE ELEMENTOS. ■■┐
+		
 		// ┌■ Dejo Limpio el Salon de mesas, sillas, mensajes, reservas, etc...
 		CFG.limpiar_Salon();
-
 		// ┌■ Oculto todos los "posibles" anteriores offcanvas abiertos
 		this._ocultar_offcanvas_abiertos();
-
 	}
 
-	/** ## Maneja la 🧠🧠 Logica para re-posicionar o no un Salon. Devuelve true / false
+	/** ## Maneja la Logica para re-posicionar o no un Salon. Devuelve true / false
 	 * ### Compara las dimensiones del salon actual con las dimensiones de la foto a cargar.
 	 * ### Si son iguales devuelve true.
 	 * ### Si son distintas: si viene de menos a mas devuelve true, si viene de mas a menos devuelve false.
@@ -5082,7 +5137,7 @@ class Foto_CRUD{
 	 * ### Limpia el contenedor y renderiza de nuevo. Carga dinámica de la Consulta a la BDD.
 	 * {@link _inyectar_lista_registros_RUD}
 	 */
-	async _load_lista_registros() {
+	async _get_lista_fotos_from_bbdd() {
 		const cd = this.RUD.$contenedor_dinamic;
 
 		this.lista_fotos_RUD = [];
@@ -5102,12 +5157,12 @@ class Foto_CRUD{
 			this.lista_fotos_RUD = data_json;
 			this.is_lista_registros_completa = true;			
 
-			return true;
+			return this.lista_fotos_RUD;
 		} catch (error) {
 			// 🆕 Aqui tendría que cachar el tipo de error para mandar un mensaje personalizado
 			console.error("Fail al cargar los registros de fotos:", error);
 			this.is_lista_registros_completa = false;			
-			return false;
+			return [];
 		}
 	}
 
@@ -5259,7 +5314,7 @@ class Side_Elementos {
 
 		/** ### Es el enlace disparador del sidebar en el navbar(cubo). */
 		this.icono_disparador = icono_disparador;
-		/** ### Callback para manejar el arrastre de elementos. */
+		/** ### Callback para manejar el arrastre de elementos. (api con Salon) */
 		this.dragCallback = typeof dragCallback === 'function' ? dragCallback : null;
 		
 		/** sidebar del dom */

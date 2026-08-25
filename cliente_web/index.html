@@ -198,7 +198,9 @@
   -->
    <div class="offcanvas offcanvas-start" id="offcanvas_cu" data-offcanvas-cu="root" tabindex="-1" aria-labelledby="etiqueta_offcanvas_cu">
       <div class="offcanvas-header">
-          <h5 class="offcanvas-title" id="etiqueta_offcanvas_cu" data-offcanvas-cu="titulares">📸 Guardar Foto del Salón Activo</h5>
+          <h5 class="offcanvas-title" id="etiqueta_offcanvas_cu" data-offcanvas-cu="titulares">
+            📸 Guardar Foto del Salón Activo
+          </h5>
           <button type="button" class="btn-close ms-auto" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
       </div>
 
@@ -207,6 +209,18 @@
         <form id="form_guardar_foto" class="small" data-offcanvas-cu="formulario">
           
           <div class="alert d-none" role="alert" data-offcanvas-cu="feedback">FeedBack</div>
+
+          <div class="mb-3 d-none" data-offcanvas-cu="selector-accion">
+              <span class="form-label d-block mb-2 text-black-50">¿Qué quieres hacer?</span>
+              <div class="btn-group w-100" role="group" aria-label="Acción sobre la foto">
+                  <input type="radio" class="btn-check" name="accion_foto" id="accion_actualizar_foto" value="actualizar" autocomplete="off">
+                  <label class="btn btn-outline-primary btn-sm" for="accion_actualizar_foto">Actualizar</label>
+
+                  <input type="radio" class="btn-check" name="accion_foto" id="accion_copiar_foto" value="copiar" autocomplete="off">
+                  <label class="btn btn-outline-primary btn-sm" for="accion_copiar_foto">Crear una copia</label>
+              </div>
+              <p class="small text-body-secondary mb-0 mt-2" data-offcanvas-cu="ayuda-accion"></p>
+          </div>
           
           <div class="accordion accordion-flush" data-offcanvas-cu="acordeon">
               <div class="accordion-item">
@@ -262,7 +276,7 @@
 
           <div class="form-check mb-2">
               <input id="foto_es_plantilla" class="form-check-input" type="checkbox" data-offcanvas-cu="plantilla">
-              <label class="form-check-label text-black-50" for="foto_es_plantilla">Es plantilla ( Copia Única... se Replica )</label>
+              <label class="form-check-label text-black-50" for="foto_es_plantilla">Marcar para Permitir Hacer Copias</label>
           </div>
 
           <div class="form-check mb-3">
@@ -273,7 +287,9 @@
         </form>
       </div>
       <div class="offcanvas-footer">
-          <button type="submit" form="form_guardar_foto" class="btn btn-primary btn-sm w-100" data-offcanvas-cu="submit">Guardar</button>
+          <button type="submit" form="form_guardar_foto" class="btn btn-primary btn-sm w-100" data-offcanvas-cu="submit">
+            Crear Foto
+          </button>
       </div>    
 
   </div> 
@@ -315,7 +331,7 @@
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                   </svg>
-                  Plantilla
+                  Pemite Copias
               </label>
           </div>
 
