@@ -3384,6 +3384,7 @@ class Foto_CRUD{
 		// ■ INICIALIZAR LISTENERS CRUD 👂👂
 		this._inicia_listeners_CU();
 		this._inicia_listeners_RUD();
+		this._filtros_plantilla_publica_RUD();
 		this._inicializar_acciones_listado_RUD();
 		Foto_CRUD._inicializar_bootstrap_listado_RUD(this.RUD.$contenedor_dinamic);
 		
@@ -4038,7 +4039,7 @@ class Foto_CRUD{
 		// ■ Salta Cuando el offcanvas se ha cargado completamente
 		$offcanvas.addEventListener('shown.bs.offcanvas',async () => {
 			const lista_fotos = await this._get_lista_fotos_from_bbdd();
-			if(lista_fotos) this._inyectar_lista_registros_RUD(lista_fotos, this.RUD.$contenedor_dinamic);
+			if(lista_fotos) this._renderizar_lista_filtrada_RUD();
 
 		});
 	}
@@ -4942,63 +4943,38 @@ class Foto_CRUD{
 	 * ### Los controles de filtro están definidos en index.html.
 	*/
 	_filtros_plantilla_publica_RUD(){
-		const $radioTodos = document.getElementById('radio-todos');
-		const $radioCustom = document.getElementById('radio-custom');
+		const $activarFiltros = document.getElementById('activar-filtros-rud');
 		const $optionsPanel = document.getElementById('opciones-personalizadas');
-		const $statusDisplay = document.getElementById('status-display');
 		const $es_publica = document.getElementById('check-publica');
 		const $es_plantilla = document.getElementById('check-plantilla');
 
-		if (!$radioTodos || !$radioCustom || !$optionsPanel || !$statusDisplay) return;
-		/**
-		 * ## Actualiza el UI cuando hay un cambio en las pestañas Todos/Personalizado.
-		 */
-		const updateUI = () => {
-			if ($radioTodos.checked) {
-				$optionsPanel.style.opacity = '0.4';
-				$optionsPanel.style.pointerEvents = 'none';
-				$statusDisplay.textContent = 'Estado: Mostrando todo.';
-			} else {
-				$optionsPanel.style.opacity = '1';
-				$optionsPanel.style.pointerEvents = 'auto';
-				$statusDisplay.textContent = 'Estado: Filtros personalizados activos.';
-			}
+		if (!$activarFiltros || !$optionsPanel || !$es_publica || !$es_plantilla) return;
+
+		const actualizarFiltros = () => {
+			$optionsPanel.classList.toggle('filtros-inactivos-rud', !$activarFiltros.checked);
+			this._renderizar_lista_filtrada_RUD();
 		};
 
-		/**
-		 * ## Plantilla ó Publica
-		 */
-		const switch_publica_plantilla = () => {
-			const lista_datos = this.lista_fotos_RUD;
-			if (!lista_datos) return;
+		$activarFiltros.addEventListener('change', actualizarFiltros);
+		$es_publica.addEventListener('change', actualizarFiltros);
+		$es_plantilla.addEventListener('change', actualizarFiltros);
+		
+	}
 
-			// 1. Capturamos el estado actual de los checks (true o false)
-			const valor_check_publica = document.getElementById('check-publica').checked;
-			const valor_check_plantilla = document.getElementById('check-plantilla').checked;
-
-			// 2. Filtramos la lista buscando la coincidencia exacta
-			const lista_filtrada = lista_datos.filter(reg => Boolean(reg.es_publica) === valor_check_publica && Boolean(reg.es_plantilla) === valor_check_plantilla);
-
-			// 3. Enviamos la lista resultante al renderizador
-			this._inyectar_lista_registros_RUD(lista_filtrada, this.RUD.$contenedor_dinamic);
-
-		};
-
-		/**
-		 * ## Cuando se hace click sobre 'Todos'
-		 */
-		const update_estado = () => {
-			this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
-			updateUI();
-		}	
-
-		$radioTodos.addEventListener('change', update_estado);
-		$radioCustom.addEventListener('change', updateUI);		
-		$es_publica.addEventListener('change', switch_publica_plantilla);
-		$es_plantilla.addEventListener('change', switch_publica_plantilla);
-
-		// Ejecución inicial para establecer el estado correcto
-		updateUI();
+	/** Muestra todos los registros o la coincidencia exacta de los filtros activos. */
+	_renderizar_lista_filtrada_RUD(){
+		if (!Array.isArray(this.lista_fotos_RUD)) return;
+		const filtrosActivos = document.getElementById('activar-filtros-rud')?.checked;
+		let lista = this.lista_fotos_RUD;
+		if (filtrosActivos) {
+			const esPublica = document.getElementById('check-publica')?.checked ?? false;
+			const permiteCopias = document.getElementById('check-plantilla')?.checked ?? false;
+			lista = lista.filter(foto =>
+				Boolean(foto.es_publica) === esPublica &&
+				Boolean(foto.es_plantilla) === permiteCopias
+			);
+		}
+		this._inyectar_lista_registros_RUD(lista, this.RUD.$contenedor_dinamic);
 	}
 	
 	// ■■■
