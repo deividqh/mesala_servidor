@@ -16,7 +16,6 @@ const authMiddleware = require('../middleware/authMiddleware');
 const {
   createFoto,
   updateFoto,
-  update_ficha_foto,
   select_foto_by_slug,
   read_fotos, 
   delete_foto,
@@ -46,9 +45,6 @@ router.post('/check-existing', authMiddleware, select_foto_by_slug);
 
 // Ruta para ACTUALIZAR una foto existente y su ficha(titulo, slug, fecha,...) (protegida por authMiddleware)
 router.put('/update', authMiddleware, updateFoto);
-
-// Ruta para ACTUALIZAR una foto existente y su ficha(titulo, slug, fecha,...) (protegida por authMiddleware)
-router.put('/:id', authMiddleware, update_ficha_foto);
 
 // Ruta para eliminar una foto del usuario (protegida por authMiddleware)
 router.delete('/:id', authMiddleware, delete_foto);

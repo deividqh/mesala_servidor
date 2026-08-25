@@ -306,54 +306,6 @@ async function delete_foto(req, res) {
   }
 }
 
-/** ## Actualiza la ficha(titulo, slug, plantilla, publica, mensaje, captured_at) de una foto ► {@link ../../cliente_web/js/div_x_div. abrir_ventana_updt}   */
-async function update_ficha_foto(req, res){  
-
-  const foto_id = Number(req.params?.id);
-  const ficha_foto = req?.body?.ficha_foto ?? req?.body;
-  if (!Number.isFinite(foto_id)) return res.status(400).json({ message: 'ID de foto inválido' });
-  if (!ficha_foto) return res.status(400).json({ message: '⭕ Ficha de Foto Vacía' });
-
-  const connection = await pool.getConnection();
-
-  try {
-    await connection.beginTransaction();
-    // ┌•• Asigno los valores.ficha_foto se establece en _set_payload_updt() [ div_x_div.js ]
-    const ficha = {
-      titulo: String(ficha_foto.titulo).trim(),
-      slug_publico: String(ficha_foto.slug_publico).trim(),
-      mensaje_publico: String(ficha_foto.mensaje_publico || '').trim(),
-      es_plantilla: Boolean(ficha_foto.es_plantilla),
-      es_publica: Boolean(ficha_foto.es_publica),
-    }
-    await connection.query(
-      `UPDATE foto SET
-        titulo = ?,
-        slug_publico = ?,
-        mensaje_publico = ?,
-        es_plantilla = ?,
-        es_publica = ?
-       WHERE id = ?`,
-      [
-        ficha.titulo,
-        ficha.slug_publico,
-        ficha.mensaje_publico || null,
-        ficha.es_plantilla ? 1 : 0,
-        ficha.es_publica ? 1 : 0,
-        foto_id
-      ]
-    );
-
-    await connection.commit();
-    res.status(200).json({ message: 'Foto Actualizada ✔️' });
-  }catch(error){
-     await connection.rollback();
-    console.log(`Error ::: update_ficha_foto ::: ${error}`);
-    res.status(500).json({ message: '⭕ Error interno del servidor' });
-  }finally {
-    connection.release();
-  }
-}
 
 /**  ## Verifica si una foto con un slug público ya existe. */
 async function select_foto_by_slug(req, res) {
@@ -478,7 +430,6 @@ async function get_dimension_foto(req, res){
 module.exports = {
   createFoto,
   updateFoto,
-  update_ficha_foto,
   select_foto_by_slug,
   read_fotos,
   delete_foto,

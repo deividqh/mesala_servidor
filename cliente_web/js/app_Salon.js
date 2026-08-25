@@ -3303,7 +3303,7 @@ class Foto_CRUD{
 		/** ### Instancia de e-Salon */
 		this.Salon = salon;
 		
-		/** ### Viene vacío, pero podemos meter configuracion de entrada con los elementos Dom-Html de Read/Update/Delete */
+		/** ### Permite configurar los elementos DOM del listado de carga y borrado. */
 		this.diccionario_RUD = diccionario_RUD;
 		
 		/** ### Viene vacío, pero podemos meter configuracion de entrada con los elementos Dom-Html de Create/Update  */
@@ -3377,7 +3377,7 @@ class Foto_CRUD{
 		}
 		const rud = this.RUD;
 		if(!rud.$contenedor_dinamic || !rud.$feedback || !rud.$icono_trigger || !rud.$offcanvas){
-			console.log(`❌ Error en el Reconocimiento de objetos Dom . . . Read/Update/Delete`);
+			console.log(`❌ Error en el reconocimiento de objetos DOM de lectura/borrado`);
 			return;
 		}
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -3566,7 +3566,7 @@ class Foto_CRUD{
 	}
 	
 	/** 
-	 * ### 📚 C_Read_UpdateDelete ( ventana RUD )
+	 * ### Read/Delete (ventana RUD)
 	 * #### - Lista las fotos del Usuario en un offcanvas bootstrap. 1 registro por foto.
 	 * #### {@link ./../server/fotoController. read_fotos}
 	 */
@@ -3607,91 +3607,6 @@ class Foto_CRUD{
 		}
 	}
 	
-	/** 
-	 * #### Click desde la ventana RUD. 
-	 * @param {number} foto_id es el indice de la foto seleccionada en la BD.
-	 */
-	async update(foto_id, dom_updt){
-		// ┌•• Valido Entrada.
-		if(!dom_updt) return false;
-		if(!foto_id) return false;
-		if (!dom_updt.$feedback)  return false;
-
-		try {		
-			// ┌•• Autenticación ┌• { is_authenticated:(bool), token:(string), user:(string) }
-			const datos_auth = Login_Modal.get_datos_auth();		
-			if (!datos_auth?.is_authenticated || !datos_auth?.token) {
-				this._feedback_updt_ficha_RUD('⚠️ Necesitas iniciar sesión para guardar la foto.', 'warning');
-				this?.Salon?.LogIn?._sincroniza_UI();
-				return;
-			}			
-			
-			// ┌•• Cacho Formulario.
-			const formulario = dom_updt;
-			
-			// ┌•• Limpio los mensajes.
-			this._feedback_updt_ficha_RUD('');
-			
-			// ┌•• Cacho valores
-			const valores ={ 			
-				id: 		foto_id,
-				titulo: 	formulario?.$titulo?.value?.trim() ?? '',
-				slug_publico: 		Foto_CRUD._normalizar_slug_CU( formulario?.$slug_publico.value?.trim() ),
-				mensaje_publico: 	formulario?.$mensaje_publico?.value?.trim() ?? '',
-				es_plantilla: 	Boolean(formulario?.$es_plantilla?.checked) || false,
-				es_publica: 	Boolean(formulario?.$es_publica?.checked) || false
-			};
-			
-			// ┌•• Valido Valores	
-			if (!valores.titulo) {
-				this._feedback_updt_ficha_RUD('⚠️ Título obligatorio.', 'warning');
-				formulario.$titulo.focus();
-				return;
-			}
-			if(!valores.slug_publico){
-				this._feedback_updt_ficha_RUD('⚠️ El slug público Obligatorio.', 'warning');
-				formulario.$slug_publico.focus();
-				return;
-			}
-			// ┌•••••••••••••••••••••••••••
-			// ┌•• ACTUALIZO EN LA BASE DE DATOS: 
-			
-			// ┌•••• prepara el payload ....  Asigno valores
-			const payload = this._set_payload_update_ficha(valores);
-			
-			// ┌•••• Actualiza en la Base de datos y me devuelves el Resultado.
-			let guardado_bd = null;
-			guardado_bd = await this._update_ficha_API(payload, datos_auth.token, `/api/fotos/${foto_id}`);
-			
-			// ┌•••• Analizo el Resultado.
-			if (guardado_bd?.ok) {
-				// 💾 Guardado OK ✔️
-				const hora = new Date().toLocaleTimeString('es-ES', { hour12: false });
-				this._feedback_updt_ficha_RUD( `♻️ Foto '${payload.slug_publico}' Actualizada  con Éxito. ✔️ .... at: ${hora}`, 'success');				
-				
-				// ┌•• Una vez que el registro está actualizado, recargo la lista de registros y obtengo el registro abierto para tener 
-				// la última actualización de la base de datos
-				const ok = await this._get_lista_fotos_from_bbdd();
-				// ┌•• Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
-				if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
-
-				// ┌•• Solo si coinciden el registro abierto con el payload de actualización es cuando realizo los cambios, 
-				// en caso contrario, no hago nada y cuando se cierre el listado seguimos donde estambamos....
-				const FA = this.foto_work;
-				if(FA && FA.id === payload.id){
-					// ┌•• La actualización del registro se tiene que hacer sobre la base de datos, porque si no te limita para cambiar titulo y slug
-					this.foto_work = await this._get_foto_from_BDD(foto_id);		
-					this._set_UI_ojo(this.foto_work);					
-				}
-			} else {
-				this._feedback_updt_ficha_RUD( `⚠️ Fallo al Actualizar ${valores.slug_publico}`, 'warning');
-				formulario.$slug_publico?.focus();
-			}
-		} catch (error) {
-			console.log(`❌ ERROR::: ${error}`);
-			return false;
-		}					
-	}
 	
 	/** 
 	 * ### Elimina una foto guardada del listado en la ventana RUD 
@@ -4046,7 +3961,7 @@ class Foto_CRUD{
 
 	/**
 	 * ### Inicializa una sola vez las acciones del listado mediante delegación de eventos.
-	 * #### • RUD ( Read , Update, Delete )
+	 * #### • Acciones de lectura y borrado del listado.
 	 * {@link _inyectar_lista_registros_RUD}
 	 */
 	_inicializar_acciones_listado_RUD(){
@@ -4063,9 +3978,6 @@ class Foto_CRUD{
 					break;
 				case 'eliminar':
 					this._accion_delete(foto_id);
-					break;
-				case 'actualizar':
-					this._abrir_ventana_update_ficha_RUD(foto_id);
 					break;
 			}
 		});
@@ -4172,80 +4084,6 @@ class Foto_CRUD{
 		offcanvas.show();		
 	}
 	
-	/** 
-	 * ## • Evento 'click' sobre la acción `actualizar` en: {@link _inicializar_acciones_listado_RUD}
-	 * ## • Abre el modal Bootstrap definido en index.html, que:
-	 * ### Muestra la -FICHA- de la foto del Salon para -UPDATE-
-	 * *  Para ello, recorro todas las **reservas** y las muestro en un formato legible.
-	 * *  Recorro el objeto 'MSG_S' con los mensajes de cada silla.
-	 * *  recorro el 'dicc_salon' con la configuración de la APP Salon.
-	 * 
-	 * JavaScript rellena los datos variables de la ficha antes de mostrarlo.
-	*/
-	async _abrir_ventana_update_ficha_RUD(foto_id, titulo_head='Actualizar Ficha del Salon:') {
-		
-		// ┌•• Cachar el foto abierto de la base de datos del offcanvas-RUD
-		const foto = this._get_regitro_from_lista( foto_id );
-		if(!foto) throw (`⚠️ Registro ${foto_id} No Encontrado en la lista de Memoria... Aborto mision`);
-		
-		const $modal = document.getElementById('modal_update_ficha');
-		if (!$modal || !window.bootstrap?.Modal) {
-			throw new Error('No se encontró el modal de actualización en index.html');
-		}
-		
-		try {			
-			// ┌•• Cacho los Controles.
-			const UPDT = {
-				$updt: $modal,
-				$feedback: $modal.querySelector('[data-updt="feedback"]'),
-				$formulario: $modal.querySelector('[data-updt="formulario"]'),
-				$titulo: $modal.querySelector('[data-updt="titulo"]'),
-				$slug_publico: $modal.querySelector('[data-updt="slug"]'),
-				$mensaje_publico: $modal.querySelector('[data-updt="mensaje"]'),
-				$es_plantilla: $modal.querySelector('[data-updt="plantilla"]'),
-				$es_publica: $modal.querySelector('[data-updt="publica"]'),
-				$submit: $modal.querySelector('[data-updt="submit"]'),
-			};
-			const $titulo_modal = $modal.querySelector('[data-updt="titulo-modal"]');
-			const $dimension = $modal.querySelector('[data-updt="dimension"]');
-			if (Object.values(UPDT).some(elemento => !elemento) || !$titulo_modal || !$dimension) {
-				throw new Error('El modal de actualización está incompleto');
-			}
-
-			$titulo_modal.textContent = titulo_head;
-			$dimension.textContent = `Dimensión: ${foto.filas || 'X'} x ${foto.columnas || 'X'}`;
-
-			// ┌•• Rellenar los controles de this.CU con los datos del foto a Actualizar.
-			// captured_at | dicc_configuracion | id | mensaje_publico | slug_publico | titulo
-			UPDT.$titulo.value = foto.titulo;
-			UPDT.$slug_publico.value = foto.slug_publico;
-			UPDT.$mensaje_publico.value = foto.mensaje_publico;
-			UPDT.$es_publica.checked = Boolean(foto.es_publica);
-			UPDT.$es_plantilla.checked = Boolean(foto.es_plantilla);
-			
-			// ┌•• Muestra el objeto Modal
-			bootstrap.Modal.getOrCreateInstance($modal).show();
-			
-			// ┌•• Muestra el Mensaje en la zona de Feedback.
-			this._feedback_updt_ficha_RUD('👍 Preparado para Actualizar!! ');
-			
-			// Asignar propiedades evita acumular listeners cada vez que se abre el modal.
-			UPDT.$formulario.onsubmit = (ev) => {
-				ev.preventDefault();
-				this.update(foto_id, UPDT);
-			};
-
-			// 👂​👂​ Al cambiar el título dinamicamente se normaliza el slug.
-			UPDT.$titulo.oninput = (event) => {
-				const titulo_normalizado = Foto_CRUD._normalizar_slug_CU(event.target.value.trim());
-				UPDT.$slug_publico.value = titulo_normalizado;
-			};
-		} catch (error) {
-			console.log(`❌ Error ► Abrir_ventana_updt ► ${error}`);
-			return null;	
-		}
-	}
-	
 	/**
 	 * ### Actualiza el acordeón de reservas y mensajes en la ventana de crear. 
 	 * {@link _abrir_ventana_CU}
@@ -4327,37 +4165,7 @@ class Foto_CRUD{
 		feedback.classList.add(`alert-${tipo}`);
 		feedback.textContent = mensaje;
 	}
-	/**
-	 * ## Muestra Mensajes en la Zona de Mensajes de la Ventana(Superior Centrado)
-	 * ### El cambio de color viene x css. estilo_salon.css ► [data-updt="feedback"].[alert-success, alert-danger, alert-warning]
-	 * @param {string} mensaje Texto del Feedback.
-	 * @param {string} tipo ► 'success', 'danger', 'warning'
-	 */
-	_feedback_updt_ficha_RUD(mensaje ='', tipo = 'success') {
-		const elemento = e_Salon._to_element('[data-updt="feedback"]') || null;
-		try {
-			const feedback = elemento;
-			if(!feedback) return;
-
-			const clase_tipo = tipo || 'success';
 	
-			feedback.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
-	
-			// si se envía mensaje = '', borra el mensaje del feedback
-			if (!mensaje) {
-				feedback.classList.add('d-none');
-				feedback.textContent = '';
-				return;
-			}		
-			// si se envía mensaje != '', escribe el mensaje y el tipo
-			feedback.classList.add(`alert-${clase_tipo}`);
-			feedback.textContent = mensaje;			
-		} catch (error) {
-			console.log(`Error::: _feedback_updt_ficha_RUD::: ${error}`);
-			return false;
-		}
-	}
-
 	/**  UI 
 	 * ### Muestra un MENSAJE en el offcanvas de carga.
 	 * @param {string} mensaje Mensaje a mostrar.
@@ -4429,34 +4237,7 @@ class Foto_CRUD{
 		}
 	}
     
-	/**   👂 ​👂​ 
-	 * ### Actualiza Los Metadatos titulo, slug, plantilla, publica, mensaje de una Foto del Salon si el usuario está autenticado.
-	 * @param {object} payload - Datos de salón y foto.
-	 * @param {string} token - Token de autenticación del usuario.
-	 * @param {string} api  `/api/fotos/${foto_id}`
-	 */
-	async _update_ficha_API(payload, token, api='') {
-
-		try {
-			const response = await fetch(api, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${token}`
-				},
-				body: JSON.stringify(payload)
-			});
-			const result = await response.json();
-			if (!response.ok) {
-				return { ok: false, message: result?.message || '❌ No se pudo actualizar la foto.' };
-			}
-			return { ok: true, message: result?.message || 'Foto Actualizada' };
-		
-		} catch (error) {
-			console.error('❌​ _update_ficha_API:: Error Guardando/Actualizando foto del Salon:', error);
-			return { ok: false, message: 'Error inesperado al GUARDAR la foto. 🎞️​' };
-		}
-	}
+	
 	/** 
 	 * ### Verifica si el slug ya existe en la base de datos( {@link create} ). . . select_foto_by_slug en fotoController.js
 	 * @param {string} slug_candidato - El slug a verificar.
@@ -4601,22 +4382,6 @@ class Foto_CRUD{
 				// rangos: rangos_reservas,
 			}
 		};
-	}
-
-	/**
-	 * Normalización de la ficha de BDD.	 */
-	_set_payload_update_ficha(valores_ficha_salon){
-		if(!valores_ficha_salon) return false;
-		const vfs = valores_ficha_salon;
-		return {
-			id:			vfs.id,
-			titulo: 	vfs.titulo,
-			slug_publico: 		vfs.slug_publico,
-			mensaje_publico: 	vfs.mensaje_publico,
-			es_plantilla: 	vfs.es_plantilla,
-			es_publica: 	vfs.es_publica,
-		};
-
 	}
 
 	/**
