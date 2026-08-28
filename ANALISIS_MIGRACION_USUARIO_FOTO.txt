@@ -1,0 +1,626 @@
+ANÁLISIS DE MIGRACIÓN: USUARIO -> FOTO (1:N)
+Fecha del análisis: 26/08/2026
+
+1. CONCLUSIÓN EJECUTIVA
+=======================
+
+El cambio es viable y mejora el modelo: cada foto pasa a ser una instantánea autónoma que contiene todo lo necesario para reconstruir el salón, sin depender de una fila mutable de la tabla salon.
+
+La relación final será:
+
+  usuario (1) -> (N) foto
+
+No debe eliminarse la tabla salon al principio. La transición segura consiste en crear foto_v2, copiar y transformar los datos, validar el resultado, adaptar la aplicación y sólo entonces retirar las tablas antiguas.
+
+No es necesario mantener dos bases de datos de producción. Sí es obligatorio probar primero sobre una copia independiente de la base actual. En producción resulta más sencillo y seguro crear foto_v2 dentro de la misma base, migrar, comparar y hacer el cambio de nombre al final.
+
+Viabilidad estimada: ALTA.
+Riesgo principal: MEDIO, debido a que el esquema SQL del repositorio no coincide con las consultas actuales y todavía no existe validación semántica del JSON.
+
+
+2. HALLAZGOS EN LA APLICACIÓN ACTUAL
+====================================
+
+2.1. El esquema documentado y el código no coinciden
+----------------------------------------------------
+
+db/schema.sql no declara en foto las columnas dicc_alergias, rangos, filas y columnas. Sin embargo, server/controllers/fotoController.js las inserta, actualiza y consulta.
+
+Antes de preparar la migración hay que obtener el esquema real desde DBeaver o INFORMATION_SCHEMA. db/schema.sql no debe tomarse como única fuente de verdad hasta reconciliarlo con la base que está funcionando.
+
+2.2. captured_at se guarda incorrectamente
+-------------------------------------------
+
+El requisito dice que captured_at lo crea el cliente. Actualmente createFoto y updateFoto lo sustituyen por NOW(3). Eso destruye la fecha real de captura y, al actualizar, hace que una foto antigua parezca recién capturada.
+
+El cliente deberá enviar una fecha ISO 8601, por ejemplo:
+
+  2026-07-12T18:22:03.123Z
+
+El servidor debe validarla y conservarla. No deben enviarse cadenas locales ambiguas como "12/7/2026 20:22:03".
+
+2.3. Falta control de propiedad en dos operaciones
+--------------------------------------------------
+
+GET /api/fotos/:id consulta sólo por foto.id. Un usuario autenticado podría solicitar el id de una foto de otro usuario si lo conoce.
+
+GET /api/fotos/:id/dimensiones tampoco filtra por usuario.
+
+En el modelo nuevo, todas las lecturas, actualizaciones y borrados privados deben utilizar simultáneamente:
+
+  WHERE id = ? AND usuario_id = ?
+
+2.4. La comprobación de slug tiene un desacuerdo de contrato
+------------------------------------------------------------
+
+El cliente envía:
+
+  { "slug_publico": "..." }
+
+El controlador intenta leer:
+
+  { "slug": "..." }
+
+Debe existir un solo nombre: slug. La comprobación previa del cliente es útil para la experiencia de usuario, pero la garantía real debe ser UNIQUE en la base de datos. Dos peticiones simultáneas podrían superar una comprobación previa; el servidor debe convertir el error de clave duplicada en HTTP 409.
+
+2.5. La actualización usa el slug como identidad
+-------------------------------------------------
+
+El slug es editable y no debe identificar internamente una actualización. La ruta recomendada es:
+
+  PUT /api/fotos/:id
+
+El servidor actualizará por id + usuario_id. Si cambia el slug, el índice UNIQUE decidirá si el nuevo valor está disponible.
+
+2.6. El límite actual del JSON es menor de lo que parece
+--------------------------------------------------------
+
+server/index.js usa express.json() sin configurar limit. El valor predeterminado de Express es aproximadamente 100 KiB. Una matriz de 50 x 25, con geo, items, values, rangos y reservas duplicando referencias, puede superar ese tamaño.
+
+2.7. No hay pruebas automatizadas
+---------------------------------
+
+package.json tiene un script test que siempre falla. Una migración de datos con referencias cruzadas no debe entrar en producción sin pruebas del contrato, autorizaciones, transformación y lectura de datos antiguos.
+
+
+3. DECISIONES DE NEGOCIO Y TÉCNICAS CERRADAS
+============================================
+
+3.1. Slug
+---------
+
+- Obligatorio para todas las fotos.
+- Formato canónico: minúsculas, números y guion bajo.
+- Expresión propuesta: ^[a-z0-9]+(?:_[a-z0-9]+)*$
+- Longitud propuesta: entre 3 y 190 caracteres.
+- Se genera inicialmente a partir del título.
+- Si ya existe, el cliente puede sugerir salon_miercoles_2, pero el usuario debe ver el resultado.
+- Unicidad global recomendada: UNIQUE(slug).
+- Las operaciones privadas usan id, no slug.
+- Una ruta pública por slug sólo devuelve la foto si es_closed es false.
+
+La unicidad global permite una URL pública como /f/salon_miercoles. Si se eligiera unicidad por usuario, la clave sería UNIQUE(usuario_id, slug) y la URL necesitaría también el usuario. Este análisis asume unicidad global.
+
+3.2. Significado de favorita y cerrada
+--------------------------------------
+
+- es_favorita sustituye a es_plantilla.
+- es_closed sustituye a es_publica.
+- es_closed = true significa privada/cerrada.
+- es_closed = false significa pública/abierta mediante slug.
+
+El nombre es_closed invierte la semántica anterior. Toda transformación debe usar:
+
+  es_closed = NOT es_publica
+
+Para evitar errores humanos sería más claro conservar is_public, pero si se adopta es_closed debe documentarse y probarse expresamente.
+
+3.3. Política de actualización
+------------------------------
+
+- Actualizar ficha_foto sobrescribe sus metadatos.
+- Actualizar la foto completa sobrescribe la instantánea.
+- No se crean revisiones.
+- created_at nunca cambia.
+- captured_at sólo cambia cuando el cliente declara que se trata de una nueva captura completa. Una edición de título, mensaje, favorita o visibilidad no debe cambiarlo.
+- updated_at cambia en cualquier modificación aceptada.
+
+3.4. Elementos inválidos dentro de una reserva
+----------------------------------------------
+
+Se rechaza el elemento, no toda la reserva. Para que esta regla no sea ambigua:
+
+- Se eliminan de central y clientes sólo los identificadores inexistentes.
+- La respuesta incluye warnings con la ruta exacta de cada elemento eliminado.
+- Si después de limpiar una reserva central y clientes quedan vacíos, se elimina esa reserva por carecer de contenido.
+- La versión saneada es la que se guarda y la que se devuelve al cliente.
+- No se permite que un mismo elemento aparezca dos veces en una reserva ni en dos reservas distintas, salvo que en el futuro se defina explícitamente otra regla.
+
+Ejemplo de advertencia:
+
+  {
+    "code": "ELEMENT_REFERENCE_REMOVED",
+    "path": "/app/reservas/2/clientes/0",
+    "value": "silla_23"
+  }
+
+No se deben corregir silenciosamente los datos.
+
+
+4. CONTRATO JSON CANÓNICO, VERSIÓN 1
+====================================
+
+schema_version es un entero de base de datos y debe valer 1, no 1.0. La versión del contrato no es la versión de la aplicación.
+
+Contrato externo recomendado:
+
+{
+  "schema_version": 1,
+  "slug": "salon_miercoles",
+  "captured_at": "2026-07-12T18:22:03.123Z",
+  "salon": {
+    "nombre_salon": "Gran_Salon",
+    "tipo_salon": "limitado",
+    "filas": 16,
+    "columnas": 8,
+    "contenedor": "salon_app",
+    "css": {
+      "baldosas": "estilo_baldosas",
+      "salon": "estilo_salon"
+    }
+  },
+  "app": {
+    "d_indices": {
+      "mesa_0": 15,
+      "mesa_1": 22,
+      "silla_1": 34
+    },
+    "reservas": [
+      {
+        "central": ["mesa_0"],
+        "clientes": ["silla_1"]
+      }
+    ]
+  },
+  "ficha_foto": {
+    "titulo": "Miércoles de Ceniza",
+    "es_favorita": false,
+    "es_closed": true,
+    "mensaje": "Todos los miércoles usamos esta disposición"
+  },
+  "motores": {
+    "motor_mensajes": {
+      "mesa_0": "Mensaje 0"
+    },
+    "motor_alergias": {
+      "silla_1": ["pescado"]
+    }
+  },
+  "rangos": {
+    "rango_reservas": [],
+    "rango_matriz": {},
+    "rango_otros": []
+  },
+  "app_compatible": {
+    "min_version": "1.0.0",
+    "features": ["rangos_v1", "motores_v1"]
+  }
+}
+
+El cliente no envía usuario_id, id, created_at ni updated_at como datos fiables:
+
+- usuario_id se obtiene del token autenticado.
+- id lo genera la base de datos.
+- created_at y updated_at los genera el servidor.
+- La respuesta del servidor puede incluir estas cuatro propiedades junto con el documento.
+
+No conviene duplicar captured_at, created_at y updated_at dentro de ficha_foto. Las fechas canónicas deben ser columnas relacionales. El servidor puede agruparlas en una vista de respuesta si la interfaz necesita mostrarlas, pero no debe haber dos valores persistidos que puedan contradecirse.
+
+app_compatible debe describir compatibilidad, no repetir schema_version. min_version es una versión SemVer de la aplicación que sabe abrir la foto. features permite detectar capacidades concretas sin comparar únicamente una cadena de versión.
+
+
+5. REGLAS DE VALIDACIÓN
+=======================
+
+La validación debe tener dos capas.
+
+Capa 1: forma y límites
+-----------------------
+
+- Todos los objetos principales son obligatorios y no aceptan null.
+- additionalProperties debe ser false donde el contrato sea cerrado.
+- Los identificadores de elementos deben cumplir una expresión acordada, por ejemplo ^[a-z][a-z0-9]*_[0-9]+$.
+- Strings se recortan y tienen límite de longitud.
+- Arrays tienen maxItems.
+- Números son enteros dentro de rango.
+- captured_at debe ser ISO 8601 con zona horaria.
+- Los objetos JSON deben contener sólo datos serializables; nunca DOM, funciones, HTML o referencias JavaScript.
+
+Esta capa puede implementarse con Ajv y un JSON Schema guardado en el repositorio, por ejemplo contracts/foto.schema.v1.json.
+
+Capa 2: coherencia cruzada
+--------------------------
+
+El JSON Schema por sí solo no puede resolver toda la coherencia. Se necesita una función JavaScript de dominio que aplique, en este orden:
+
+1. Construir el conjunto canónico de ids desde Object.keys(app.d_indices).
+2. Verificar que cada índice sea entero, único y esté entre 0 y filas * columnas - 1. Esta propuesta asume índices con base cero; debe confirmarse con el comportamiento actual antes de codificar.
+3. Verificar que las celdas de rango estén dentro de salon.filas y salon.columnas.
+4. Verificar celda_inicio, celda_fin y dimension de cada rango.
+5. Verificar que las claves de geo, items y values correspondan a celdas del rango.
+6. Verificar que todo id de ranges.values exista en app.d_indices.
+7. Verificar que los elementos de reservas existan en d_indices y estén representados en rangos.rango_reservas. Los que no cumplan se eliminan con warning.
+8. Verificar que cada clave de motor_mensajes y motor_alergias exista en d_indices y en algún rango guardado. Una clave inválida se elimina con warning.
+9. Verificar que un elemento no ocupe dos celdas ni participe en reservas incompatibles.
+10. Volver a validar el documento saneado antes de insertarlo.
+
+Debe definirse una fuente canónica para evitar ciclos. Recomendación:
+
+- app.d_indices y app.reservas expresan el estado lógico.
+- rangos expresa la geometría materializada necesaria para reconstruir fielmente la interfaz.
+- motores añade datos a ids ya existentes, nunca crea ids.
+
+Si rangos puede derivarse siempre sin pérdida desde app, sería mejor no guardarlo. El código actual, sin embargo, guarda rangos.otros para elementos visuales y rango_matriz para la disposición exacta; por ello conservarlo es razonable, pero exige la validación cruzada.
+
+
+6. LÍMITES PROPUESTOS PARA V1
+=============================
+
+Tipo de salón limitado:
+
+- filas: 1 a 50.
+- columnas persistidas: 1 a 25.
+- celdas máximas: 1.250.
+- móvil: muestra o edita hasta 8 columnas simultáneas.
+- tableta: hasta 16 columnas simultáneas.
+- escritorio: hasta 25 columnas simultáneas.
+
+Los límites de móvil/tableta/escritorio son reglas de presentación, no tres contratos de datos distintos. Una foto de 25 columnas debe seguir siendo válida aunque un móvil necesite scroll, reducción o modo de sólo lectura.
+
+Colecciones:
+
+- ids únicos en d_indices: máximo 1.250.
+- reservas: máximo 1.250, siempre que cada elemento sólo pueda pertenecer a una reserva.
+- referencias totales entre central y clientes: máximo 1.250.
+- elementos por motor: máximo 1.250.
+- alergias por elemento: máximo 32.
+- rango_otros: máximo 1.250 fichas 1x1.
+
+Texto:
+
+- título: 1 a 160 caracteres.
+- mensaje: 1 a 2.000 caracteres.
+- nombre_salon: 1 a 160 caracteres.
+- ids y nombres internos: máximo 100 caracteres.
+- clases CSS y contenedor: máximo 100 caracteres y sólo identificadores, no selectores arbitrarios ni HTML.
+
+Payload HTTP:
+
+- límite inicial recomendado: 1 MiB sin comprimir.
+- configurar app.use(express.json({ limit: '1mb' })).
+- rechazar excesos con HTTP 413.
+- registrar tamaño, schema_version y número de elementos, nunca el JSON completo si contiene información de clientes.
+- comprobar que max_allowed_packet de MariaDB es claramente superior al límite HTTP. No debe suponerse su valor: se consulta en cada entorno.
+
+Un límite de 1 MiB es razonable para 1.250 celdas, pero debe confirmarse generando el peor payload real de la aplicación. Si el rango_matriz con geo/items/values lo supera, primero se elimina duplicación innecesaria; sólo después se aumenta el límite a 2 MiB.
+
+
+7. FECHAS: DIFERENCIAS Y USOS
+=============================
+
+captured_at
+-----------
+
+- Momento real en que el cliente tomó la instantánea.
+- Lo envía el cliente en ISO 8601 con zona horaria.
+- Permite cargas históricas u offline.
+- No se sustituye por NOW al recibir la petición.
+- Puede ser anterior a created_at.
+- Debe limitarse un futuro tolerable para evitar errores de reloj, por ejemplo no más de 5 minutos por delante del servidor.
+
+created_at
+----------
+
+- Momento en que el servidor creó la fila.
+- Lo asigna la base de datos o el servidor.
+- Es inmutable.
+- Sirve para auditoría, orden de llegada y diagnóstico.
+
+updated_at
+----------
+
+- Momento de la última modificación aceptada por el servidor.
+- Lo asigna la base de datos o el servidor.
+- Cambia al editar ficha o instantánea.
+- No sustituye a captured_at.
+
+Todas las fechas deben tratarse en UTC y mostrarse en Europe/Madrid sólo en la interfaz. Si el sistema debe almacenar fechas posteriores a 2038, hay que verificar el rango de TIMESTAMP de la versión concreta de MariaDB y valorar DATETIME(3).
+
+
+8. MODELO DE BASE DE DATOS RECOMENDADO
+======================================
+
+Columnas canónicas:
+
+  id                 BIGINT UNSIGNED, PK, AUTO_INCREMENT
+  usuario_id         BIGINT UNSIGNED, NOT NULL
+  slug               VARCHAR(190), NOT NULL, UNIQUE
+  captured_at        TIMESTAMP(3), NOT NULL
+  created_at         TIMESTAMP(3), NOT NULL, DEFAULT CURRENT_TIMESTAMP(3)
+  updated_at         TIMESTAMP(3), NOT NULL, DEFAULT CURRENT_TIMESTAMP(3), ON UPDATE
+  schema_version     SMALLINT UNSIGNED, NOT NULL, DEFAULT 1
+  salon              JSON, NOT NULL
+  app                JSON, NOT NULL
+  ficha_foto         JSON, NOT NULL
+  motores            JSON, NOT NULL
+  rangos              JSON, NOT NULL
+  app_compatible     JSON, NOT NULL
+
+Restricciones e índices mínimos:
+
+- PRIMARY KEY(id).
+- FOREIGN KEY(usuario_id) REFERENCES usuario(id) ON DELETE CASCADE.
+- UNIQUE(slug), al asumir unicidad global.
+- INDEX(usuario_id, captured_at DESC) para la galería privada.
+- CHECK(schema_version >= 1).
+- Validación JSON nativa según la versión real de MariaDB.
+
+MariaDB implementa JSON de manera distinta de MySQL en algunas versiones. Antes de escribir el DDL definitivo hay que registrar SELECT VERSION() y probar en una copia la sintaxis exacta de JSON, CHECK, índices descendentes y columnas generadas.
+
+Problema práctico de ficha_foto JSON
+------------------------------------
+
+La galería filtra y muestra título, favorita y cerrada con frecuencia. Guardarlos únicamente dentro de JSON obliga a usar JSON_EXTRACT y complica índices.
+
+Hay dos opciones:
+
+A. Mantener el esquema solicitado y crear columnas generadas de sólo lectura para titulo, es_favorita y es_closed, derivadas de ficha_foto. Es la opción recomendada si la versión de MariaDB permite indexarlas de forma fiable.
+
+B. Convertir título, mensaje, es_favorita y es_closed en columnas ordinarias y no duplicarlas dentro de ficha_foto. Es la opción más simple para consultas, pero modifica el contrato físico inicialmente propuesto.
+
+No se recomienda guardar dos copias editables de los mismos metadatos. Si se elige A, ficha_foto es la fuente única. Si se elige B, las columnas ordinarias son la fuente única y el servidor construye el objeto ficha_foto de la respuesta.
+
+
+9. PLAN DE MIGRACIÓN SIN PÉRDIDA DE DATOS
+=========================================
+
+Fase 0. Congelar decisiones
+----------------------------
+
+- Aprobar contrato v1 y reglas anteriores.
+- Confirmar unicidad global del slug.
+- Confirmar base cero de d_indices.
+- Confirmar la forma real de cada ficha de rango.
+- Elegir opción A o B para los metadatos consultables.
+
+Fase 1. Inventario y copia
+--------------------------
+
+- Crear backup lógico completo con estructura y datos.
+- Restaurarlo en una base de ensayo independiente.
+- Exportar SHOW CREATE TABLE de usuario, salon y foto.
+- Consultar versión y configuración de MariaDB.
+- Contar filas y detectar JSON inválido, nulls, slugs duplicados y fotos huérfanas.
+- Guardar estos resultados como informe de pre-migración.
+
+DBeaver sirve para inspeccionar, exportar, restaurar y ejecutar scripts. No debe ser el único registro de la migración: los scripts deben quedar versionados en db/migrations.
+
+Fase 2. Crear foto_v2
+---------------------
+
+- Crear la tabla nueva sin tocar foto, salon ni usuario.
+- Añadir FK, UNIQUE e índices.
+- No renombrar todavía ninguna tabla.
+
+Fase 3. Transformar fila por fila
+--------------------------------
+
+Para cada foto antigua se hace JOIN con salon una sola vez durante la migración:
+
+- usuario_id <- salon.usuario_id.
+- slug <- foto.slug_publico normalizado.
+- captured_at <- foto.captured_at.
+- created_at <- foto.created_at.
+- updated_at <- el valor disponible más fiel entre foto y salon; si foto no tiene updated_at, documentar el fallback, no inventarlo silenciosamente.
+- schema_version <- 1.
+- salon <- combinación determinista de nombre, family, filas, columnas, configuracion_json, clases_json, rutas_json y tipos_json.
+- app.d_indices <- foto.dicc_indices.
+- app.reservas <- foto.dicc_reservas.
+- ficha_foto.titulo <- foto.titulo.
+- ficha_foto.es_favorita <- Boolean(foto.es_plantilla).
+- ficha_foto.es_closed <- NOT Boolean(foto.es_publica).
+- ficha_foto.mensaje <- foto.mensaje_publico.
+- motores.motor_mensajes <- foto.dicc_mensajes.
+- motores.motor_alergias <- foto.dicc_alergias.
+- rangos <- foto.rangos; si falta, derivarlo con una función de migración expresamente probada.
+- app_compatible <- valor v1 acordado por la aplicación.
+
+La configuración actual de salon debe copiarse completa antes de extraer campos. Si configuracion_json contiene propiedades aún no mapeadas, se conservan en una propiedad documentada de salon o se amplía el contrato. Nunca se descartan claves desconocidas durante la primera migración.
+
+Los slugs nulos o duplicados requieren un informe de conflicto. No deben renombrarse sin dejar una tabla de correspondencias old_foto_id -> old_slug -> new_slug.
+
+Fase 4. Validar la migración
+----------------------------
+
+- Mismo número de fotos antiguas y nuevas, salvo excepciones documentadas.
+- Ningún usuario_id huérfano.
+- Ningún JSON inválido.
+- Todos los documentos pasan contrato v1 y validación cruzada.
+- Comparar hashes de representaciones canónicas antes y después.
+- Abrir desde la interfaz muestras de todos los casos de salón y no sólo una foto típica.
+- Probar borrado en cascada dentro de una transacción que se revierte.
+- Probar colisión de slug y autorización entre dos usuarios.
+
+Fase 5. Adaptar y desplegar la aplicación
+----------------------------------------
+
+Para una aplicación pequeña, el método KISS es una ventana breve de mantenimiento:
+
+1. Impedir nuevas escrituras.
+2. Ejecutar una última migración incremental.
+3. Ejecutar verificaciones automáticas.
+4. Desplegar servidor y cliente nuevos.
+5. Cambiar foto -> foto_legacy y foto_v2 -> foto.
+6. Habilitar escrituras.
+7. Vigilar errores y métricas.
+
+Si no se admite parada, se necesita doble escritura temporal en foto y foto_v2, lo que aumenta bastante la complejidad y el riesgo. No se recomienda sin una necesidad real.
+
+Fase 6. Periodo de seguridad y retirada
+---------------------------------------
+
+- Mantener foto_legacy y salon en modo sólo lectura durante un periodo acordado.
+- Tener un script de rollback que vuelva al código y nombres antiguos.
+- Tras validar backups y uso real, eliminar las tablas antiguas en una migración separada.
+- La eliminación final es destructiva y no debe mezclarse con la migración inicial.
+
+
+10. CAMBIOS EN EL SERVIDOR
+==========================
+
+Estructura modular propuesta:
+
+  server/contracts/foto.schema.v1.json
+  server/domain/validarFoto.js
+  server/domain/sanitizarReferenciasFoto.js
+  server/domain/mapearFotoV1.js
+  server/repositories/fotoRepository.js
+  server/controllers/fotoController.js
+  db/migrations/001_create_foto_v2.sql
+  db/migrations/002_backfill_foto_v2.js
+  db/migrations/003_switch_foto_v2.sql
+
+Responsabilidades:
+
+- Controller: HTTP, autenticación, códigos y respuesta.
+- Validator: forma, límites y coherencia cruzada.
+- Mapper: contrato externo <-> columnas de base de datos.
+- Repository: SQL y transacciones.
+- Migration: transformación reproducible y auditable.
+
+Consultas que cambian:
+
+- Crear: un INSERT directo en foto con usuario_id; desaparece la búsqueda/inserción de salon.
+- Listar: WHERE usuario_id = ?, sin JOIN salon.
+- Obtener: WHERE id = ? AND usuario_id = ?.
+- Actualizar: WHERE id = ? AND usuario_id = ?.
+- Borrar: WHERE id = ? AND usuario_id = ?.
+- Comprobar slug: consulta global si el slug es global; nunca devuelve la foto completa.
+- Obtener dimensiones: leer salon.filas y salon.columnas del JSON de la propia foto, o incluirlos en la respuesta normal y retirar el endpoint adicional.
+
+Códigos HTTP propuestos:
+
+- 201: creada.
+- 200: leída o actualizada.
+- 400: JSON mal formado o fecha inválida.
+- 401/403: autenticación/autorización.
+- 404: foto no encontrada para ese propietario.
+- 409: slug duplicado.
+- 413: payload demasiado grande.
+- 422: contrato o coherencia semántica inválida cuando no sea saneable.
+
+No debe usarse SELECT * en respuestas. El servidor debe devolver únicamente el contrato público previsto.
+
+
+11. CAMBIOS EN EL CLIENTE
+=========================
+
+En cliente_web/js/app_Salon.js deben cambiar al menos estas áreas:
+
+- _set_payload_create: construir directamente el contrato v1.
+- create: usar slug, es_favorita y es_closed.
+- _create_foto_API y _update_foto_API: manejar 409, 413, 422 y warnings.
+- _get_registro_by_slug_API: unificar el nombre slug; idealmente reemplazar POST por GET /api/fotos/slug-disponible/:slug o confiar en el 409 final.
+- _get_foto_from_BDD: consumir la nueva forma anidada.
+- __cargar_elementos_en_Salon: leer salon.filas, salon.columnas, app, motores y rangos.
+- _get_dimension_foto_API: retirar si la foto completa o el listado ya trae dimensiones.
+- La galería y formularios: renombrar es_plantilla -> es_favorita y es_publica -> es_closed.
+- La fecha de captura: crearla una vez con new Date().toISOString() al tomar la foto, no al editar metadatos.
+- Mostrar al usuario los warnings de referencias eliminadas.
+
+Debe existir una sola función de serialización y una sola de hidratación. Ahora el formato se compone y descompone en varios lugares; centralizarlo evitará que la versión de lectura quede distinta de la de escritura.
+
+
+12. PRUEBAS MÍNIMAS ANTES DE PRODUCCIÓN
+=======================================
+
+Contrato:
+
+- Documento v1 válido.
+- Falta de cada bloque obligatorio.
+- Propiedades desconocidas.
+- Fechas locales ambiguas.
+- 50 x 25 aceptado y 51 filas o 26 columnas rechazado.
+- Payload justo debajo y encima del límite.
+
+Referencias:
+
+- silla inexistente eliminada sin perder el resto de la reserva.
+- reserva vacía después del saneado eliminada.
+- clave inválida de mensajes o alergias eliminada con warning.
+- índice duplicado o fuera de matriz rechazado.
+- rango fuera de límites rechazado.
+- values, items, geo y dimensión incoherentes rechazados.
+
+Seguridad:
+
+- Usuario A no puede leer, editar o borrar la foto de B.
+- Slug duplicado simultáneo produce un único éxito y un 409.
+- Ruta pública no devuelve una foto con es_closed = true.
+- usuario_id enviado por el cliente se ignora.
+
+Migración:
+
+- Cada foto conserva configuración de salon.
+- Conversión correcta de los dos booleanos.
+- captured_at no cambia.
+- Slugs conflictivos quedan documentados.
+- Una foto migrada puede abrirse, editarse, copiarse y borrarse.
+
+Se puede usar node:test, incluido en Node moderno, para mantener las pruebas simples. Para JSON Schema se recomienda Ajv y, si se valida format date-time, ajv-formats.
+
+
+13. ORDEN RECOMENDADO DE TRABAJO
+================================
+
+1. Exportar el esquema real y datos estadísticos desde DBeaver.
+2. Cerrar las cuatro decisiones pendientes: base de índices, forma exacta de rangos, metadatos JSON o generados y tratamiento de slugs conflictivos.
+3. Escribir contrato v1 y sus pruebas.
+4. Implementar validación y saneado como módulos puros, sin base de datos.
+5. Crear foto_v2 en una copia de ensayo.
+6. Crear y probar el transformador de datos antiguos.
+7. Adaptar repository, controller y rutas con autorización por propietario.
+8. Adaptar serializador e hidratador del cliente.
+9. Ejecutar pruebas de peor payload, migración y seguridad.
+10. Ensayar el procedimiento completo y su rollback.
+11. Programar ventana de mantenimiento y migrar producción.
+12. Retirar salon y foto_legacy sólo después del periodo de seguridad.
+
+
+14. DECISIÓN FINAL SOBRE CREAR UNA BASE EN PARALELO
+===================================================
+
+Sí para pruebas: crear una copia independiente de la base actual y ensayar allí tantas veces como sea necesario.
+
+No como arquitectura permanente: no conviene que la aplicación opere indefinidamente con dos bases que representen el mismo dato.
+
+Para el cambio real: usar foto_v2 junto a las tablas actuales en la misma base facilita el JOIN de migración, las comparaciones y el cambio final. Antes de tocar producción debe existir backup restaurable y un ensayo completo con los mismos scripts.
+
+
+15. CRITERIOS DE ACEPTACIÓN
+===========================
+
+La migración puede considerarse lista cuando:
+
+- La aplicación ya no necesita JOIN con salon para ninguna operación normal.
+- Toda consulta privada limita por usuario_id.
+- El contrato v1 se valida en servidor.
+- Las referencias cruzadas se validan y los elementos rechazados se informan.
+- Ninguna fecha de captura ha sido sustituida por la fecha del servidor.
+- El 100 % de las fotos migradas está contabilizado o tiene una excepción documentada.
+- La configuración antigua de salon puede reconstruirse desde cada foto nueva.
+- Los límites de 50 x 25 y 1 MiB están probados con datos reales.
+- Existe rollback ensayado.
+- db/schema.sql vuelve a coincidir con la base desplegada.
+
+Resultado: la operación es técnicamente recomendable, pero no debe empezar eliminando salon. Primero se convierte cada foto en una instantánea autónoma, se valida la equivalencia y sólo al final se retira la relación antigua.

@@ -3344,6 +3344,7 @@ class Foto_CRUD{
 
 			$selector_accion: e_Salon._to_element(dCU.selector_accion) || e_Salon._to_element('[data-offcanvas-cu="selector-accion"]') || null,
 			$ayuda_accion: e_Salon._to_element(dCU.ayuda_accion) || e_Salon._to_element('[data-offcanvas-cu="ayuda-accion"]') || null,
+			$accion_crear: e_Salon._to_element(dCU.accion_crear) || e_Salon._to_element('#accion_crear_foto') || null,
 			$accion_actualizar: e_Salon._to_element(dCU.accion_actualizar) || e_Salon._to_element('#accion_actualizar_foto') || null,
 			$accion_copiar: e_Salon._to_element(dCU.accion_copiar) || e_Salon._to_element('#accion_copiar_foto') || null,
 
@@ -3351,7 +3352,7 @@ class Foto_CRUD{
 			$titulo: e_Salon._to_element(dCU.titulo) ||	e_Salon._to_element('[data-offcanvas-cu="titulo"]') || null,  	// input título
 			$slug_publico: e_Salon._to_element(dCU.slug_publico) ||	e_Salon._to_element('[data-offcanvas-cu="slug"]') || null,		// input slug
 			$mensaje_publico: e_Salon._to_element(dCU.mensaje_publico) || e_Salon._to_element('[data-offcanvas-cu="mensaje"]') || null,		// input mensaje
-			$es_plantilla: e_Salon._to_element(dCU.es_plantilla) || e_Salon._to_element('[data-offcanvas-cu="plantilla"]') || null,	// checkbox plantilla
+			$es_plantilla: e_Salon._to_element(dCU.es_plantilla) || e_Salon._to_element('[data-offcanvas-cu="plantilla"]') || null,
 			$es_publica: e_Salon._to_element(dCU.es_publica) ||	e_Salon._to_element('[data-offcanvas-cu="publica"]') || null,	// checkbox pública
 			$submit: e_Salon._to_element(dCU.submit) ||	e_Salon._to_element('[data-offcanvas-cu="submit"]') || null,				// botón guardar
 			
@@ -3371,7 +3372,7 @@ class Foto_CRUD{
 		if(!cu.$offcanvas || !cu.$feedback || !cu.$formulario || !cu.$titulo || 
 			!cu.$slug_publico || !cu.$mensaje_publico || !cu.$es_plantilla || 
 			!cu.$es_publica || !cu.$submit || !cu.$selector_accion || !cu.$ayuda_accion || 
-			!cu.$accion_actualizar || !cu.$accion_copiar){
+			!cu.$accion_crear || !cu.$accion_actualizar || !cu.$accion_copiar){
 			console.log(`❌ Error en el Reconocimiento de objetos Dom . . . Create/Update`);
 			return;
 		}
@@ -3737,10 +3738,20 @@ class Foto_CRUD{
 	 * Devuelve un objeto {titulo:"Publica|Plantilla", icono:'ico'} 
 	 *  {@link _inyectar_lista_registros_RUD} */
 	static _get_estado_visibilidad_RUD(foto) {
-		if (foto.es_publica && foto.es_plantilla) return { titulo: 'Pública - Permite Copia', icono: '🌍🍞' };
-		if (foto.es_publica) return { titulo: 'Pública', icono: '🌍 - ' };
-		if (foto.es_plantilla) return { titulo: 'Permite Copia', icono: '🍞 - ' };
-		return { titulo: 'No permite Copias', icono: '🙃 - ' };
+		let titulo='';
+		let icono ='';
+		if (foto.es_plantilla) {
+			titulo += 'Favorita';
+			icono  += '⭐';
+		}else{
+			titulo += 'Ordinary';
+			icono  += '🙃';			
+		}
+		if (foto.es_publica) {
+			titulo += titulo==='' ? 'Closed' : ' - Closed';
+			icono +=  '🔐';
+		}
+		return {titulo:titulo, icono:icono};		
 	}
 	
 	/**
@@ -3897,6 +3908,7 @@ class Foto_CRUD{
 		});
 		
 		cu.$selector_accion.addEventListener('change', (event) => {
+			if (event.target === cu.$accion_crear) this._cambiar_modo_CU('crear');
 			if (event.target === cu.$accion_actualizar) this._cambiar_modo_CU('actualizar');
 			if (event.target === cu.$accion_copiar) this._cambiar_modo_CU('copiar');
 		});
@@ -3905,7 +3917,7 @@ class Foto_CRUD{
 
 	/**
 	 * Cambia la operación del formulario sin duplicar sus campos.
-	 * Las fotos plantilla permiten actualizar la original o preparar una copia.
+	 * Al trabajar con una foto guardada permite actualizarla o preparar una copia.
 	 */
 	_cambiar_modo_CU(modo) {
 		const cu = this.CU;
@@ -3913,6 +3925,7 @@ class Foto_CRUD{
 		if (!cu || !['crear', 'actualizar', 'copiar'].includes(modo)) return;
 
 		this.modo_CU = modo;
+		cu.$accion_crear.checked = modo === 'crear';
 		cu.$accion_actualizar.checked = modo === 'actualizar';
 		cu.$accion_copiar.checked = modo === 'copiar';
 
@@ -4051,8 +4064,9 @@ class Foto_CRUD{
 				cu.$es_publica.checked = Boolean(FW?.es_publica);				
 				cu.$dimension.textContent = `Dimension: ${FW?.filas || 'X'} x ${FW?.columnas || 'X'}`;
 				
-				
-				cu.$selector_accion.classList.toggle('d-none', !Boolean(FW.es_plantilla));
+				cu.$accion_crear.disabled = true;
+				cu.$accion_actualizar.disabled = false;
+				cu.$accion_copiar.disabled = false;
 				this._cambiar_modo_CU('actualizar');
 			}else {
 				// ┌• Si no viene de registro_abierto_, preparo un formulario basico con una sugerencia de titulo-slug
@@ -4063,7 +4077,9 @@ class Foto_CRUD{
 				cu.$es_publica.checked = false;
 				cu.$dimension.textContent = `Dimension: ${this.Salon?.filas || 'X'} x ${this.Salon?.columnas || 'X'}`;			
 				
-				cu.$selector_accion.classList.add('d-none');
+				cu.$accion_crear.disabled = false;
+				cu.$accion_actualizar.disabled = true;
+				cu.$accion_copiar.disabled = true;
 				this._cambiar_modo_CU('crear');
 			}
 			if (cu.$mensaje_publico) cu.$mensaje_publico.focus();
@@ -4733,10 +4749,10 @@ class Foto_CRUD{
 		let lista = this.lista_fotos_RUD;
 		if (filtrosActivos) {
 			const esPublica = document.getElementById('check-publica')?.checked ?? false;
-			const permiteCopias = document.getElementById('check-plantilla')?.checked ?? false;
+			const esFavorita = document.getElementById('check-plantilla')?.checked ?? false;
 			lista = lista.filter(foto =>
 				Boolean(foto.es_publica) === esPublica &&
-				Boolean(foto.es_plantilla) === permiteCopias
+				Boolean(foto.es_plantilla) === esFavorita
 			);
 		}
 		this._inyectar_lista_registros_RUD(lista, this.RUD.$contenedor_dinamic);
@@ -4911,19 +4927,19 @@ class Foto_CRUD{
 	 * ### Genera un valor secuencial único si el valor_inicial ya existe en la lista_fotos_RUD. {@link _abrir_ventana_CU}
 	 * @param {string} propiedad - La key (ej: 'titulo', 'slug') 
 	 * @param {string} valor_inicial - El valor inicial (ej: 'baron')
-	 * @example _get_sugerencia_unica('slug', 'lunes')  ■ RESULTADO ■ 'lunes_2'
+	 * @example _get_sugerencia_unica('titulo', 'Lunes')  ■ RESULTADO ■ 'Lunes_Copia(1)'
 	 * 
 	 */
 	_get_sugerencia_unica(propiedad, valor_inicial) {
-		let sugerencia = valor_inicial;
-		let contador = 0;
+		const base = String(valor_inicial || '').replace(/(?:_Copia\(\d+\))+$/i, '');
+		const sufijo = propiedad === 'slug_publico' ? '_copia' : '_Copia';
+		let contador = 1;
+		let sugerencia = `${base}${sufijo}(${contador})`;
 
-		// Mientras el valor exista en la lista, seguimos probando con el siguiente número
-		// Primera iteración: 'baron'
-		// Segunda: 'baron_0', luego 'baron_1', etc.
+		
 		while (this.__existe_en_lista_registros(propiedad, sugerencia)) {
-			sugerencia = `${valor_inicial}_Copia(${contador})`;
 			contador++;
+			sugerencia = `${base}${sufijo}(${contador})`;
 		}
 
 		return sugerencia;

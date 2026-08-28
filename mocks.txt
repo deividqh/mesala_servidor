@@ -1,0 +1,61 @@
+reservas =
+[
+  {
+    reservadores: [
+      "mesa_2",
+      "mesa_4",
+      "mesa_5",
+      "mesa_3",
+      "mesa_1",
+      "mesa_0",
+      "mesa_6",
+      "mesa_7",
+    ],
+    clientes: [
+      "silla_10",
+      "silla_1",
+      "silla_12",
+      "silla_17",
+      "silla_18",
+      "silla_20",
+      "silla_21",
+      "silla_15",
+      "silla_19",
+    ],
+  },
+  {
+    reservadores: [
+    ],
+    clientes: [
+      "silla_3",
+      "silla_7",
+      "silla_0",
+      "silla_6",
+      "silla_11",
+      "silla_2",
+      "silla_4",
+      "silla_8",
+      "silla_9",
+      "silla_5",
+      "silla_14",
+      "silla_16",
+    ],
+  },
+]
+
+
+const d_mensajs_mock = {silla_0: "Cliente Especial", 
+								mesa_0: 'Reserva Miguel Garrido', 
+								silla_2: 'Cliente Pesado', 
+								mesa_2: 'Mr Smith Jr', 
+								mesa_4: 'Quiere 5 sillas. No sabe cuantos van a venir. 3 mesas', 
+		};
+
+reservadores_reserva = 
+[
+  "mesa_2",
+  "mesa_4",
+  "mesa_7",
+  "mesa_5",
+  "mesa_6",
+]

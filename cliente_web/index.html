@@ -82,7 +82,7 @@
               <i class="bi bi-images me-3   botones_accion" title="Cargar Foto de BD"  data-action-nav="load" ></i>
               <i class="bi bi-info-circle me-3  botones_accion" title="Ver Info Salon" data-action-nav="info" ></i>
               <i class="bi bi-arrow-clockwise me-3  botones_accion" title="Limpiar Salon"  data-action-nav="re-init" > </i>
-              <i class="bi bi-bar-chart  me-3 botones_accion " title="Pruebas"  data-action-nav="pruebas" > </i>
+              <!-- <i class="bi bi-bar-chart  me-3 botones_accion " title="Pruebas"  data-action-nav="pruebas" > </i> -->
               <i class="bi bi-person-dash me-3 botones_accion navbar-login" title="Login / Registro"  data-action-nav="conn"></i>
             </div>
             
@@ -159,7 +159,6 @@
                   <input id="config_filas" type="text" name="filas" placeholder="Ej: 3" readonly>
                 </section>
 
-                <!-- <button type="submit">Guardar</button> -->
                 <div class="config-actions">
                   <button type="submit" disabled aria-disabled="true">Guardar</button>
                 </div>
@@ -210,9 +209,12 @@
           
           <div class="alert d-none" role="alert" data-offcanvas-cu="feedback">FeedBack</div>
 
-          <div class="mb-3 d-none" data-offcanvas-cu="selector-accion">
+          <div class="mb-3 " data-offcanvas-cu="selector-accion">
               <!-- <span class="form-label d-block mb-2 text-black-50">¿Qué quieres hacer?</span> -->
               <div class="btn-group w-100" role="group" aria-label="Acción sobre la foto">
+                  <input type="radio" class="btn-check" name="accion_foto" id="accion_crear_foto" value="crear" autocomplete="off">
+                  <label class="btn btn-outline-primary btn-sm" for="accion_crear_foto">Crear</label>
+
                   <input type="radio" class="btn-check" name="accion_foto" id="accion_actualizar_foto" value="actualizar" autocomplete="off">
                   <label class="btn btn-outline-primary btn-sm" for="accion_actualizar_foto">Actualizar</label>
 
@@ -264,24 +266,20 @@
               <input id="foto_titulo" type="text" class="form-control form-control-sm" data-offcanvas-cu="titulo" required>
           </div>
 
-          <div class="mb-2">
-              <label for="foto_slug_publico" class="form-label mb-1 text-black-25">Slug público</label>
-              <input id="foto_slug_publico" type="text" class="form-control form-control-sm text-black-50" data-offcanvas-cu="slug">
-          </div>
+          <input id="foto_slug_publico" type="hidden" data-offcanvas-cu="slug">
 
-          <div class="mb-2">
+          <div class="mb-3 descripcion-foto-cu">
               <label for="foto_mensaje_publico" class="form-label mb-1 text-black-50">Descripción (opcional)</label>
-              <textarea id="foto_mensaje_publico" class="form-control form-control-sm" rows="2" data-offcanvas-cu="mensaje"></textarea>
+              <textarea id="foto_mensaje_publico" class="form-control form-control-sm" rows="3" data-offcanvas-cu="mensaje"></textarea>
           </div>
-
           <div class="form-check mb-2">
               <input id="foto_es_plantilla" class="form-check-input" type="checkbox" data-offcanvas-cu="plantilla">
-              <label class="form-check-label text-black-50" for="foto_es_plantilla">Marcar para Permitir Hacer Copias</label>
+              <label class="form-check-label text-black-50" for="foto_es_plantilla">Marcar como favorita ⭐</label>
           </div>
 
           <div class="form-check mb-3">
               <input id="foto_es_publica" class="form-check-input" type="checkbox" data-offcanvas-cu="publica">
-              <label class="form-check-label text-black-50" for="foto_es_publica">Es pública ( ⚠️ Sin Uso de Momento)</label>
+              <label class="form-check-label text-black-50" for="foto_es_publica">Es pública ( Sin Uso de Momento)</label>
           </div>
 
         </form>
@@ -320,7 +318,7 @@
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                   </svg>
-                  Permite Copias
+                  Favoritas
               </label>
           </div>
 

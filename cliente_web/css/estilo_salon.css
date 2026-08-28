@@ -1,4 +1,6 @@
-/* Raíz: variables para mantener paleta consistente y fácil mantenimiento 
+/* 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+Raíz: variables para mantener paleta consistente y fácil mantenimiento 
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
 :root {
   --surface: 24 26 40; /* superficie/panel */
@@ -13,8 +15,9 @@
   --pastel-blue: #8fb4e8;
   --pastel-blue-deep: #5b8fd6;
 }
-
-/* TABS DEL OFFCANVAS de Configuracion 
+/* 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+TABS DEL OFFCANVAS de Configuracion 
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
 .custom-tabs { width: 100%; }
 .config-tabs { border-bottom: 1px solid #d8d0ad; margin-bottom: 0.6rem; }
@@ -22,16 +25,11 @@
 .config-tabs .nav-link.active { color: #353228; background: transparent; 
             border-color: transparent; border-bottom: 4px solid #422f0a; }
 .config-tab-content { min-height: 0; }
-
 [data-tipo-bs="offcanvas-configuracion"] .config-tab-content > .tab-pane { display: none; }
 [data-tipo-bs="offcanvas-configuracion"] .config-tab-content > .tab-pane.active { display: block; }
-
 .tab-content-custom { padding: 0; background: transparent; border: 0; }
-
-/* Alinea el texto a la izquierda en TODOS los TOOLTIP's 
-■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+/* Alinea el texto a la izquierda en TODOS los TOOLTIP's  */
 .tooltip-inner {   max-width: none !important;   text-align: left; }
-
 /* ■■■■■ Offcanvas Configuración: plano, limpio y mantenible ■■■■■ */
 [data-tipo-bs="offcanvas-configuracion"] { background: #fdf7df !important; border-left: 1px solid #d8d0ad; color: #353228; }
 [data-tipo-bs="offcanvas-configuracion"] .offcanvas-header { align-items: center; gap: 0.45rem; padding-top: 0.45rem; padding-bottom: 0.35rem; border-bottom: 1px solid #d8d0ad; }
@@ -64,8 +62,8 @@
 [data-tipo-bs="offcanvas-configuracion"] .config-catalog-table th { color: #5b563f; background: #f7efcf; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 [data-tipo-bs="offcanvas-configuracion"] .config-catalog-table tbody tr:hover { background: #fffdf3; }
 [data-tipo-bs="offcanvas-configuracion"] .social-icons-container { display: flex; gap: 12px; justify-content: center; border-top: 1px solid #d8d0ad; padding-top: 1.2rem; margin-top: 1.2rem; }
-
-/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+/* 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
 Iconos ( clase .bi de bootstrap icons) 
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
 .bi {   font-size: 0.8rem !important;   opacity: 0.92;   transition: transform 0.12s ease, opacity 0.12s ease; }
@@ -76,7 +74,8 @@ Iconos ( clase .bi de bootstrap icons)
   line-height: 1;
 }
 
-/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+/* 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
 Fullscreen en MOVILES 
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
 @media (max-width: 576px) {
@@ -142,8 +141,10 @@ Fullscreen en MOVILES
 .photo-btn-accion-rud:hover { color:rgb(16, 185, 129); transform: scale(1.55);  }
 
 
-/* DEL OFFCANVAS RUD: filtros del listado
-   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
+/* 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+DEL OFFCANVAS RUD: filtros del listado
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
 /* ┌■■ Estilos Base y Contenedor */
 .visibilidad-card-rud {
     border-radius: 1rem; border: 1px solid #dee2e6; background: #fff; width: 100%; margin-bottom: 0.7rem; }
@@ -178,23 +179,27 @@ Fullscreen en MOVILES
   font-size: 0.85rem;
 }
 /* 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
 Offcanvas de Bootstrap para crear/actualizar (data-offcanvas-cu)
-■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
-[data-offcanvas-cu="root"] { border: none; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
-    background-color: #ffffff; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-[data-offcanvas-cu="root"] .offcanvas-header { display: flex; width: 100%; }
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+*/
+[data-offcanvas-cu="root"] { border-right: 1px solid #d8d0ad; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+                             background-color: #fdf7df; color: #353228; }
+[data-offcanvas-cu="root"] .offcanvas-header { display: flex; width: 100%; border-bottom: 1px solid #d8d0ad; }
 [data-offcanvas-cu="root"] .offcanvas-body { overflow-y: auto; }
-[data-offcanvas-cu="titulares"] { color: #b2a3d4; font-weight: 700; letter-spacing: -0.5px; font-size: 1.25rem; }
+[data-offcanvas-cu="titulares"] { color: #353228; font-weight: 700; letter-spacing: -0.5px; font-size: 1.25rem; }
 /* ┌■■ Cuerpo y Formulario --- */
-[data-offcanvas-cu="contenedor-formulario"] { padding: 2rem; background-color: #ffffff; }
+[data-offcanvas-cu="contenedor-formulario"] { padding: 2rem; background-color: #fdf7df; }
 /* ┌■■ Inputs de Texto y Textarea */
 [data-offcanvas-cu="titulo"],
 [data-offcanvas-cu="slug"],
-[data-offcanvas-cu="mensaje"] { border: 2px solid #f5f5f7; border-radius: 12px; padding: 10px 12px; transition: all 0.3s ease; background-color: #fafafb; }
+[data-offcanvas-cu="mensaje"] { color: #353228; border: 1px solid #d8d0ad; border-radius: 8px; padding: 10px 12px; transition: all 0.3s ease; background-color: #fffdf3; }
 [data-offcanvas-cu="titulo"]:focus,
 [data-offcanvas-cu="slug"]:focus,
 [data-offcanvas-cu="mensaje"]:focus { border-color: #d1c4e9; background-color: #fff; box-shadow: 0 0 0 4px rgba(209, 196, 233, 0.25); outline: none; }
-[data-offcanvas-cu="formulario"] .form-label { font-weight: 600; color: #8e94a5 !important; margin-left: 4px; font-size: 0.85rem; }
+[data-offcanvas-cu="formulario"] .form-label,
+[data-offcanvas-cu="formulario"] .form-check-label { font-weight: 700; color: #5b563f !important; margin-left: 4px; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; }
+[data-offcanvas-cu="formulario"] .descripcion-foto-cu { margin-bottom: 1.25rem !important; }
 /* ┌■■ Checkboxes Personalizados --- */
 [data-offcanvas-cu="plantilla"],
 [data-offcanvas-cu="publica"] { width: 1.2em; height: 1.2em; margin-top: 0.25em; border-radius: 6px !important; border: 2px solid #e0e0e0; cursor: pointer;}
@@ -202,7 +207,6 @@ Offcanvas de Bootstrap para crear/actualizar (data-offcanvas-cu)
 [data-offcanvas-cu="publica"]:checked { background-color: #b39ddb; border-color: #b39ddb; }
 /* ┌■■ Feedback de Error --- */
 [data-offcanvas-cu="feedback"] {border-radius: 10px;background-color: #fff5f5;border: 1px solid #feb2b2;color: #c53030;font-weight: 500;transition: all 0.3s ease;}
-
 /* ┌■■ Tipo: Success (Verde Pastel) Menta muy suave --- */
 [data-offcanvas-cu="feedback"].alert-success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;}
 /* ┌■■ Tipo: Warning (Naranja/Ámbar Pastel) --- */  /* Naranja crema */    
@@ -222,22 +226,20 @@ Offcanvas de Bootstrap para crear/actualizar (data-offcanvas-cu)
 [data-offcanvas-cu="acordeon-mensajes"] {   line-height: 1.15;   white-space: normal;  word-break: break-word; }
 
 /* ┌■■ Botón de Acción (Submit) --- */
-[data-offcanvas-cu="submit"] { background: linear-gradient(135deg, #90cdf4 0%, #63b3ed 100%);
-    border: none; border-radius: 0 !important; padding: 14px;font-weight: 700; text-transform: uppercase;letter-spacing: 1px;
+[data-offcanvas-cu="submit"] { color: #353228; background: #e8dfb8;
+    border: 1px solid #d8d0ad; border-radius: 10px !important; padding: 12px;font-weight: 700; text-transform: uppercase;letter-spacing: 1px;
     transition: all 0.3s transform; box-shadow: 0 4px 15px rgba(144, 205, 244, 0.4); width: auto;}
-
-[data-offcanvas-cu="submit"]:hover { background: linear-gradient(135deg, rgb(99, 179, 237) 0%, rgb(66, 153, 225) 100%);
-    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(144, 205, 244, 0.6);}
-
+[data-offcanvas-cu="submit"]:hover { color: #fffdf3; background: #2f7a3a; border-color: #2f7a3a;
+    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(47, 122, 58, 0.22);}
 [data-offcanvas-cu="submit"]:active {    transform: translateY(0);}
 
 /* ┌■■ Pie sin espacio: el botón ocupa todo el ancho y conserva esquinas rectas. --- */
-[data-offcanvas-cu="root"] .offcanvas-footer { padding: 0; }
-
+[data-offcanvas-cu="root"] .offcanvas-footer { padding: 0 0.75rem 0.75rem; background: #fdf7df; }
 /* ┌■■ Botón Cerrar (X) --- */
 [data-offcanvas-cu="root"] .btn-close {margin-left: auto; background-color: #ffffff; border-radius: 50%; opacity: 0.8; padding: 0.6rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
-/* ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+/* 
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 Side_Elementos: SIDE-BAR de elementos (mesa/silla)
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ */
 [data-action-nav="elementos"][data-side-active="true"] {
@@ -294,12 +296,12 @@ Side_Elementos: SIDE-BAR de elementos (mesa/silla)
 [data-side-content="lista"] {  display: flex;  flex-direction: column;  align-items: center;  gap: var(--side-gap);  padding-block: var(--side-drag-space);  flex: 1;}
 [data-side-elementos][data-side-position="bottom"] [data-side-content="lista"] {  flex-direction: row;}
 [data-side-item] {  width: 42px;  height: 42px;  display: flex;  align-items: center;  justify-content: center;  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);  border: 1px solid rgba(255, 255, 255, 0.08);  transition: transform 0.2s ease, background 0.2s ease;}
+                    background: rgba(255, 255, 255, 0.04);  border: 1px solid rgba(255, 255, 255, 0.08);  transition: transform 0.2s ease, background 0.2s ease;}
 [data-side-item] svg {  width: 28px;  height: 28px;  fill: rgb(var(--navbar-icon-rgb));}
 [data-side-item]:hover {  transform: scale(1.35);  background: rgba(56, 189, 149, 0.12);}
 [data-side-handle] {display: flex;  align-items: center;  justify-content: center;  width: 100%;  padding-top: 2.5rem;
                     background: transparent;  border: 0;  font-size: 1rem;  color: rgba(255, 255, 255, 0.7);  cursor: grab;}
-[data-side-handle] i {  font-size: 1.5rem;}
+[data-side-handle] i { font-size: 1.5rem; }
 [data-side-elementos][data-side-locked="true"] [data-side-handle] {  cursor: not-allowed;  opacity: 0.45;  pointer-events: none;}
 
 /* ┌■■ ESPACIADO: Contenedor que agrupa todos los elementos */
@@ -315,5 +317,6 @@ Side_Elementos: SIDE-BAR de elementos (mesa/silla)
 }
 .menu_to_clone:hover { transform: scale(1.15);     background: rgba(56, 189, 149, 0.12); }
 .menu_to_clone:active { cursor: grabbing; }
+
 /* ┌■■ PROPORCIÓN DEL SVG: Adapatado a su caja */
 .menu_to_clone svg { width: 75%; height: 75%; object-fit: contain; pointer-events: none;  }
