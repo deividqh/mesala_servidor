@@ -3350,10 +3350,10 @@ class Foto_CRUD{
 
 			$formulario: e_Salon._to_element(dCU.formulario) ||	e_Salon._to_element('[data-offcanvas-cu="formulario"]') || null,	// formulario. el objeto padre.
 			$titulo: e_Salon._to_element(dCU.titulo) ||	e_Salon._to_element('[data-offcanvas-cu="titulo"]') || null,  	// input título
-			$slug_publico: e_Salon._to_element(dCU.slug_publico) ||	e_Salon._to_element('[data-offcanvas-cu="slug"]') || null,		// input slug
-			$mensaje_publico: e_Salon._to_element(dCU.mensaje_publico) || e_Salon._to_element('[data-offcanvas-cu="mensaje"]') || null,		// input mensaje
-			$es_plantilla: e_Salon._to_element(dCU.es_plantilla) || e_Salon._to_element('[data-offcanvas-cu="plantilla"]') || null,
-			$es_publica: e_Salon._to_element(dCU.es_publica) ||	e_Salon._to_element('[data-offcanvas-cu="publica"]') || null,	// checkbox pública
+			$slug: e_Salon._to_element(dCU.slug) ||	e_Salon._to_element('[data-offcanvas-cu="slug"]') || null,		// input slug
+			$mensaje: e_Salon._to_element(dCU.mensaje) || e_Salon._to_element('[data-offcanvas-cu="mensaje"]') || null,		// input mensaje
+			$es_favorita: e_Salon._to_element(dCU.es_favorita) || e_Salon._to_element('[data-offcanvas-cu="favorita"]') || null,
+			$es_cerrada: e_Salon._to_element(dCU.es_cerrada) ||	e_Salon._to_element('[data-offcanvas-cu="cerrada"]') || null,	// checkbox cerrada
 			$submit: e_Salon._to_element(dCU.submit) ||	e_Salon._to_element('[data-offcanvas-cu="submit"]') || null,				// botón guardar
 			
 		};
@@ -3370,8 +3370,8 @@ class Foto_CRUD{
 		// ■ VALIDAR ELEMENTOS CRUD ✔️
 		const cu = this.CU;
 		if(!cu.$offcanvas || !cu.$feedback || !cu.$formulario || !cu.$titulo || 
-			!cu.$slug_publico || !cu.$mensaje_publico || !cu.$es_plantilla || 
-			!cu.$es_publica || !cu.$submit || !cu.$selector_accion || !cu.$ayuda_accion || 
+			!cu.$slug || !cu.$mensaje || !cu.$es_favorita ||
+			!cu.$es_cerrada || !cu.$submit || !cu.$selector_accion || !cu.$ayuda_accion ||
 			!cu.$accion_crear || !cu.$accion_actualizar || !cu.$accion_copiar){
 			console.log(`❌ Error en el Reconocimiento de objetos Dom . . . Create/Update`);
 			return;
@@ -3420,12 +3420,12 @@ class Foto_CRUD{
 			// ┌•• Limpio los mensajes de la zona feedback.
 			this._feedback_CU('');
 			// ┌•• Cacho valores del Formulario
-			const valores ={ 			
-				titulo: 		cu?.$titulo?.value?.trim() ?? '',
-				slug_publico: 	Foto_CRUD._normalizar_slug_CU( cu?.$slug_publico.value?.trim() ),
-				mensaje_publico: cu?.$mensaje_publico?.value?.trim() ?? '',
-				es_plantilla: 	Boolean(cu?.$es_plantilla?.checked) || false,
-				es_publica: 	Boolean(cu?.$es_publica?.checked) || false
+			const valores = {
+				titulo: cu?.$titulo?.value?.trim() ?? '',
+				slug: Foto_CRUD._normalizar_slug_CU(cu?.$slug?.value),
+				mensaje: cu?.$mensaje?.value?.trim() || null,
+				es_favorita: Boolean(cu?.$es_favorita?.checked),
+				es_cerrada: Boolean(cu?.$es_cerrada?.checked),
 			};
 			// ┌•• Valido los datos fundamentales del 'Formulario'
 			if (!valores.titulo) {
@@ -3433,19 +3433,20 @@ class Foto_CRUD{
 				cu.$titulo.focus();
 				return;
 			}
-			if(!valores.slug_publico){
-				this._feedback_CU('⚠️ El slug público Obligatorio.', 'warning');
-				cu.$slug_publico.focus();
+			if(!valores.slug){
+				this._feedback_CU('⚠️ El slug es obligatorio.', 'warning');
+				cu.$slug.focus();
 				return;
-			} 
+			}
 
 			// ┌•• 			  •••••••
 			// ┌•• prepara el payload
 			const payload = this._set_payload_create(valores);
-			if(payload === this.last_payload_CU) {
-
-			}else{
-				this.last_payload_CU = payload;
+			if (!payload) throw new Error('No se pudo construir el contrato de la foto.');
+			const erroresContrato = FotoContratoV1.validarDocumento(payload);
+			if (erroresContrato.length > 0) {
+				this._feedback_CU(`⚠️ ${erroresContrato.join(' ')}`, 'warning');
+				return;
 			}
 		
 			// // ┌•• Ha sido Abierto de la lista de registros?
@@ -3457,8 +3458,7 @@ class Foto_CRUD{
 			// const hay_registro = this.lista_fotos_RUD.some(item => item.id === FA?.id );			
 
 			// ┌•• Existe el slug en la BDD? :: para saberlo, busco un registro con ese slug en la Base de Datos. 
-			const registro_BDD = await this._get_registro_by_slug_API(valores.slug_publico, datos_auth.token);
-			const hay_slug = registro_BDD != false;
+			const hay_slug = await this._get_registro_by_slug_API(valores.slug, datos_auth.token);
 			
 			// ■■■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ 
 			// ┌•• LOGICA DEL NEGOCIO: 		
@@ -3495,33 +3495,36 @@ class Foto_CRUD{
 
 
 			if (this.modo_CU === 'actualizar') {
-				guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
+				if (!this.foto_work?.id) {
+					this._feedback_CU('⚠️ No hay una foto identificada para actualizar.', 'warning');
+					return;
+				}
+				guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/${this.foto_work.id}`);
 				accion = 'Actualizada';
 			}else if (this.modo_CU === 'copiar') {
 				if (hay_slug) {
 					this._feedback_CU('⚠️ Cambia el slug para crear una copia nueva.', 'warning');
-					cu.$slug_publico?.focus();
+					cu.$slug?.focus();
 					return;
 				}
 				guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
 				accion = 'Copiada';
 			}else {
-				if(registro_BDD){
-					// REGISTRO ❌ -  SLUG ✔️  ► Actualizar
-					guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
-					accion = 'Actualizada';					
-				}else{
-					// REGISTRO ❌ -  SLUG ❌  ► Guardar
-					guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
-					accion = 'Guardada';
+				if (hay_slug) {
+					this._feedback_CU('⚠️ Ese slug ya existe. Cambia el título o abre la foto para actualizarla.', 'warning');
+					cu.$titulo?.focus();
+					return;
 				}
+				guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
+				accion = 'Guardada';
 			}
 
 		
 			// Guardado OK ✔️
 			if (guardado_bd?.ok) {
 				const hora = new Date().toLocaleTimeString('es-ES', { hour12: false });
-				this._feedback_CU(`♻️ Foto '${valores.slug_publico}' ${accion} con Éxito. ✔️ .... at: ${hora}`, 'success');
+				const avisos = guardado_bd.warnings?.length ? ` Avisos: ${guardado_bd.warnings.length}.` : '';
+				this._feedback_CU(`♻️ Foto '${valores.slug}' ${accion} con éxito. ✔️ ${hora}.${avisos}`, 'success');
 				
 				// ┌•• Me guardo el payload ( para controlar Si cambia datos o NO )
 				this.last_payload_CU = payload;
@@ -3538,23 +3541,21 @@ class Foto_CRUD{
 				// 	this.marca_plantilla = false;
 
 				// ┌•• Buscar en la lista de registros recien actualizada con la BDD...con el payload(sanitizado en _set_payload_create_())
-				const reg_recien_guardado = this.lista_fotos_RUD.find( item =>{ 
-					if (payload.foto.slug_publico === item.slug_publico  && payload.foto.titulo === item.titulo){
-						return item;
-					}
-				});
+				const fotoGuardada = guardado_bd.foto;
+				const reg_recien_guardado = this.lista_fotos_RUD.find((item) => item.id === fotoGuardada?.id);
 				if(!reg_recien_guardado) 
 					throw `❌ Error ::: No encuentro el registro que acabo de guardar. Reinicia.`;
 				
 				// ┌•• Asigno a registro__abierto y pongo el ojo para que se actualize la siguiente vez que Guarde.
-				this.foto_work = reg_recien_guardado;
+				this.foto_work = fotoGuardada || reg_recien_guardado;
 				
 				// ┌•• UI de (i)nformacion ... Lo ponemos en verde para avisar de que hay un registro.
 				this._set_UI_ojo(this.foto_work);				
 
 			} else {
 				// Guardar ❌ 
-				const mensaje = guardado_bd?.message || `⚠️ Fallo al guardar ${valores.slug_publico}`;
+				const detalle = guardado_bd?.errors?.length ? ` ${guardado_bd.errors.join(' ')}` : '';
+				const mensaje = `${guardado_bd?.message || `⚠️ Fallo al guardar ${valores.slug}`}${detalle}`;
 				this._feedback_CU(mensaje, 'warning');
 				cu.$titulo?.focus();
 				this.is_lista_registros_completa = false;
@@ -3615,7 +3616,7 @@ class Foto_CRUD{
 	async delete(foto_id){
 		try {
 			// cd.innerHTML =
-			const mensaje = "¿Seguro que quieres eliminar este salón? Esta acción no se puede deshacer.";
+			const mensaje = "¿Seguro que quieres eliminar esta foto? Esta acción no se puede deshacer.";
 			const confirmacion = await Alertas_UI.ConfirM("Confimación Accion Eliminar", mensaje, "warning")
 			if (!confirmacion) return;
 			// this._feedback_RUD('Eliminando photo...', 'warning');
@@ -3634,10 +3635,10 @@ class Foto_CRUD{
 			// ┌•• Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
 			if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
 
-			this._feedback_RUD('Salón eliminado correctamente. ✔️', 'success');
+			this._feedback_RUD('Foto eliminada correctamente. ✔️', 'success');
 				
 		} catch (error) {
-			console.error("❌ Fallé al eliminar salón:", error);
+			console.error("❌ Fallé al eliminar foto:", error);
 			this._feedback_RUD(`👎 No se pudo eliminar la foto ${foto_id}`, 'danger');
 		}
 		
@@ -3704,6 +3705,8 @@ class Foto_CRUD{
 		const fragmento = document.createDocumentFragment();
 
 		arrjson_fotos.forEach(foto => {
+			const fichaFoto = foto.ficha_foto || {};
+			const salonFoto = foto.salon || {};
 			const fecha = new Date(foto.captured_at).toLocaleString('es-ES', {	
 				dateStyle: 'medium',
 				timeStyle: 'short'
@@ -3719,9 +3722,9 @@ class Foto_CRUD{
 			info.dataset.photoId = foto_id;
 			visibilidad.title = estado.titulo;
 			visibilidad.textContent = estado.icono;
-			titulo.textContent = foto.titulo || 'Sin título';
-			titulo.title = `slug: ${foto.slug_publico || ''}`;
-			fecha_y_dimensiones.textContent = `${fecha} 🔲 ( ${foto.filas || 0} x ${foto.columnas || 0} )`;
+			titulo.textContent = fichaFoto.titulo || 'Sin título';
+			titulo.title = `slug: ${foto.slug || ''}`;
+			fecha_y_dimensiones.textContent = `${fecha} 🔲 ( ${salonFoto.filas || 0} x ${salonFoto.columnas || 0} )`;
 
 			if (this.foto_work?.id === foto_id) titulo.classList.add('clase_match_open');
 
@@ -3740,15 +3743,16 @@ class Foto_CRUD{
 	static _get_estado_visibilidad_RUD(foto) {
 		let titulo='';
 		let icono ='';
-		if (foto.es_plantilla) {
+		const fichaFoto = foto?.ficha_foto || {};
+		if (fichaFoto.es_favorita) {
 			titulo += 'Favorita';
 			icono  += '⭐';
 		}else{
 			titulo += 'Ordinary';
 			icono  += '🙃';			
 		}
-		if (foto.es_publica) {
-			titulo += titulo==='' ? 'Closed' : ' - Closed';
+		if (fichaFoto.es_cerrada) {
+			titulo += titulo==='' ? 'Cerrada' : ' - Cerrada';
 			icono +=  '🔐';
 		}
 		return {titulo:titulo, icono:icono};		
@@ -3891,7 +3895,7 @@ class Foto_CRUD{
 		const cu = this.CU;
 		if (!cu.$formulario) return;
 		if (!cu.$titulo) return;
-		if (!cu.$slug_publico) return;
+		if (!cu.$slug) return;
 
 		// ■■■
 		// 👂​👂​ GUARDAR FOTO 🎞️ SUBMIT SOBRE EL FORMULARIO 
@@ -3904,7 +3908,7 @@ class Foto_CRUD{
 		// 👂​👂​ Al cambiar el título dinamicamente se normaliza el slug.
 		cu.$titulo.addEventListener('input', (event) => {
 			const titulo_normalizado = Foto_CRUD._normalizar_slug_CU(event.target.value.trim());
-			cu.$slug_publico.value = titulo_normalizado;
+			cu.$slug.value = titulo_normalizado;
 		});
 		
 		cu.$selector_accion.addEventListener('change', (event) => {
@@ -3936,22 +3940,23 @@ class Foto_CRUD{
 		}
 
 		if (!foto) return;
+		const fichaFoto = foto.ficha_foto || {};
 		if (modo === 'actualizar') {
-			cu.$titulo.value = foto.titulo || '';
-			cu.$slug_publico.value = foto.slug_publico || '';
-			cu.$es_plantilla.checked = Boolean(foto.es_plantilla);
+			cu.$titulo.value = fichaFoto.titulo || '';
+			cu.$slug.value = foto.slug || '';
+			cu.$es_favorita.checked = Boolean(fichaFoto.es_favorita);
 			cu.$submit.textContent = 'Actualizar foto';
 			cu.$ayuda_accion.textContent = 'Se sustituirá el contenido guardado de esta foto.';
 			return;
 		}
 
-		const titulo_copia = this._get_sugerencia_unica('titulo', foto.titulo || 'sin_titulo');
+		const titulo_copia = this._get_sugerencia_unica('titulo', fichaFoto.titulo || 'sin_titulo');
 		cu.$titulo.value = titulo_copia;
-		cu.$slug_publico.value = this._get_sugerencia_unica(
-			'slug_publico',
+		cu.$slug.value = this._get_sugerencia_unica(
+			'slug',
 			Foto_CRUD._normalizar_slug_CU(titulo_copia)
 		);
-		cu.$es_plantilla.checked = false;
+		cu.$es_favorita.checked = false;
 		cu.$submit.textContent = 'Crear copia';
 		cu.$ayuda_accion.textContent = 'Se creará una foto nueva. La original no se modificará.';
 	}
@@ -4031,7 +4036,7 @@ class Foto_CRUD{
 			// ┌■■ POLITICA/LOGICA DE LA VENTANA: Tener un registro abierto actualizado:🔥
 			// ┌■■ Accedo al dato en la lista de registros(en update se actualiza esta lista.) 
 			if (this.lista_fotos_RUD && this.foto_work){
-				const FA_updated = this.lista_fotos_RUD.find( item => { item.id === this.foto_work.id; } );
+				const FA_updated = this.lista_fotos_RUD.find((item) => item.id === this.foto_work.id);
 				if(FA_updated) 
 					this.foto_work = FA_updated;
 			}	
@@ -4047,6 +4052,8 @@ class Foto_CRUD{
 			const FW = this.foto_work;
 			const cu = this.CU;
 			if ( FW ) {
+				const fichaFoto = FW.ficha_foto || {};
+				const salonFoto = FW.salon || {};
 				// if(Boolean(FW.es_plantilla) === true){
 				// 	// ┌• Si viene de registro_abierto_, 
 				// 	this._feedback_CU('⚠️ Abierta como Plantilla, Cambio/a el Titulo para Guardar', 'warning');
@@ -4060,9 +4067,9 @@ class Foto_CRUD{
 				// 	cu.$slug_publico.value = FW?.slug_publico || '';
 				// 	cu.$es_plantilla.checked = Boolean(FW?.es_plantilla);
 				// }
-				cu.$mensaje_publico.value = FW?.mensaje_publico || '';
-				cu.$es_publica.checked = Boolean(FW?.es_publica);				
-				cu.$dimension.textContent = `Dimension: ${FW?.filas || 'X'} x ${FW?.columnas || 'X'}`;
+				cu.$mensaje.value = fichaFoto.mensaje || '';
+				cu.$es_cerrada.checked = Boolean(fichaFoto.es_cerrada);
+				cu.$dimension.textContent = `Dimension: ${salonFoto.filas || 'X'} x ${salonFoto.columnas || 'X'}`;
 				
 				cu.$accion_crear.disabled = true;
 				cu.$accion_actualizar.disabled = false;
@@ -4071,10 +4078,10 @@ class Foto_CRUD{
 			}else {
 				// ┌• Si no viene de registro_abierto_, preparo un formulario basico con una sugerencia de titulo-slug
 				cu.$titulo.value = Foto_CRUD._get_fechahora_tituled();
-				cu.$slug_publico.value   = Foto_CRUD._normalizar_slug_CU(cu.$titulo.value);
-				cu.$mensaje_publico.value = '';
-				cu.$es_plantilla.checked = false;
-				cu.$es_publica.checked = false;
+				cu.$slug.value = Foto_CRUD._normalizar_slug_CU(cu.$titulo.value);
+				cu.$mensaje.value = '';
+				cu.$es_favorita.checked = false;
+				cu.$es_cerrada.checked = false;
 				cu.$dimension.textContent = `Dimension: ${this.Salon?.filas || 'X'} x ${this.Salon?.columnas || 'X'}`;			
 				
 				cu.$accion_crear.disabled = false;
@@ -4082,7 +4089,7 @@ class Foto_CRUD{
 				cu.$accion_copiar.disabled = true;
 				this._cambiar_modo_CU('crear');
 			}
-			if (cu.$mensaje_publico) cu.$mensaje_publico.focus();
+			if (cu.$mensaje) cu.$mensaje.focus();
 			
 		} catch (error) {
 			console.log(`❌ ERROR::: ${error}`);
@@ -4219,9 +4226,9 @@ class Foto_CRUD{
 			});
 			const result = await response.json();
 			if (!response.ok) {
-				return { ok: false, message: result?.message || 'No se pudo Actualizar la foto.' };
+				return { ok: false, message: result?.message || 'No se pudo actualizar la foto.', errors: result?.errors || [] };
 			}
-			return { ok: true, message: result?.message || 'Foto Actualizada'};
+			return { ok: true, message: result?.message || 'Foto actualizada', foto: result?.foto, warnings: result?.warnings || [] };
 		} catch (error) {
 			console.error('_update_foto_API:: Error Actualizando foto del Salon:', error);
 			return { ok: false, message: 'Error inesperado al ACTUALIZAR la foto. 🎞️​' };
@@ -4244,9 +4251,9 @@ class Foto_CRUD{
 			});
 			const result = await response.json();
 			if (!response.ok) {
-				return { ok: false, message: result?.message || 'No se pudo Guardar la foto.' };
+				return { ok: false, message: result?.message || 'No se pudo guardar la foto.', errors: result?.errors || [] };
 			}
-			return { ok: true, message: result?.message || 'Foto Guardada' };
+			return { ok: true, message: result?.message || 'Foto guardada', foto: result?.foto, warnings: result?.warnings || [] };
 		} catch (error) {
 			console.error('_create_foto_API:: Error Guardando foto del Salon:', error);
 			return { ok: false, message: 'Error inesperado al GUARDAR la foto. 🎞️​' };
@@ -4266,9 +4273,7 @@ class Foto_CRUD{
 			if(!slug_candidato || typeof slug_candidato != "string" || slug_candidato.trim() === '') return false;					
 			if(!token || typeof token != "string" || token.trim() === '') return false;
 			// Asignación del payload(datos a enviar al servidor)
-			const payload = {
-				slug_publico: slug_candidato
-			};
+			const payload = { slug: slug_candidato };
 			// REALIZO LA PETICIÓN POST AL SERVIDOR
 			const response = await fetch(`/api/fotos/check-existing`, {
 				method: 'POST',
@@ -4283,10 +4288,10 @@ class Foto_CRUD{
 			
 			// ■ Leer JSON, hay que parsear la respuesta JSON 
 			// (el Servidor me responde con texto plano que hay que convertir a diccioannrio con JSON)
-			const foto = await response.json();
+			const resultado = await response.json();
 
-			// ■ El backend devuelve { foto(*) o false }
-			return foto; 
+			// ■ El backend sólo informa de disponibilidad; no expone una foto privada.
+			return Boolean(resultado?.exists);
 		
 		} catch (error) {
             // console.error("_is_slug_on__BDD() - Error al verificar slug:", error);
@@ -4319,7 +4324,7 @@ class Foto_CRUD{
 			
 			// ┌•• Tenemos datos  ✔️
 			const dimensiones = await response.json();						
-			if(!dimensiones || dimensiones.ok === false)
+			if(!dimensiones || !Number.isInteger(dimensiones.filas) || !Number.isInteger(dimensiones.columnas))
 				throw "Lanzado ::: Error Lógico, No tenemos dimensiones !!! "
 			
 			// ┌•• LOG 
@@ -4346,7 +4351,7 @@ class Foto_CRUD{
 		
 		// ┌■■ Le hace una foto al salón en este momento
 		const dicc_api_foto = this.Salon?.api_foto();
-		const dimension = this.Salon.dimension;		
+		const dimension = { filas: this.Salon.filas, columnas: this.Salon.columnas };
 		
 		// ┌■■ Cacho los rangos de las reservas de la foto.
 		const rangos_reservas = RAN._reservas_a_rangos(dicc_api_foto.reservas || [], dicc_api_foto.indices, dimension || null);
@@ -4358,46 +4363,28 @@ class Foto_CRUD{
 		// ┌■■ Plantas, decoración, estructura, ... cualquier 'player' NO[central o cliente]
 		const rangos_otros = this._crear_rangos_otros(RAN, rango_matriz?.values);
 
-		const rango_tot = {
-			reservas: rangos_reservas,
-			otros: rangos_otros,
-			matriz: rango_matriz,
-		};
-		
 		const CFG = dicc_api_foto.configuracion || this.dicc_config || {};
-		return {
-			salon: {
-				nombre: this.Salon?.family,
-				columnas: this.Salon?.columnas,
-				filas: 	 this.Salon?.filas,
-				family: CFG.salon.family || '',
-				configuracion_json: CFG,
-				clases_json: CFG.salon.clases_css || {},
-				rutas_json:  CFG.salon.rutas || {},
-				tipos_json:  CFG.salon.tipos || {}
-			},
-			foto: {
-				titulo: valores_offcanvas.titulo,
-				dicc_reservas: 	dicc_api_foto.reservas || [],
-				dicc_indices: 	dicc_api_foto.indices || {},
-				dicc_mensajes: 	dicc_api_foto.mensajes || {},
-				dicc_alergias:  dicc_api_foto.alergias || {},
-				dicc_configuracion: dicc_api_foto.configuracion || {},
-				es_plantilla: 	valores_offcanvas.es_plantilla,
-				es_publica: 	valores_offcanvas.es_publica,
-				slug_publico: 	valores_offcanvas.slug_publico,
-				mensaje_publico: valores_offcanvas.mensaje_publico,
-				// Las fotos deben guardar el numero de filas y columnas con el que se guardó. 
-				// de esta forma se puede comparar con el numero de columnas y filas de dicc_configuracion. 
-				// columnas y filas de salon es equivalente, pero solo se crea un salon por cada x fotos, hasta que una foto 
-				// guarda un dato nuevo sobre salon y entonces se creará un nuevo salon para que puedan guardarse fotos en Él.
-				columnas: this.Salon.columnas,
-				filas: this.Salon.filas,
-				// ┌■ 🔥 🔥 Añado los rangos generados de las reservas. 🔥 🔥 
-				rangos: rango_tot,
-				// rangos: rangos_reservas,
-			}
-		};
+		return FotoContratoV1.crearDocumento({
+			slug: valores_offcanvas.slug,
+			captured_at: new Date().toISOString(),
+			nombre_salon: CFG.salon?.family || this.Salon?.family || 'Salon',
+			tipo_salon: this.Salon?.modelo_salon || 'limitado',
+			filas: this.Salon?.filas,
+			columnas: this.Salon?.columnas,
+			configuracion: CFG,
+			indices: dicc_api_foto.indices || {},
+			reservas: dicc_api_foto.reservas || [],
+			titulo: valores_offcanvas.titulo,
+			mensaje: valores_offcanvas.mensaje,
+			es_cerrada: valores_offcanvas.es_cerrada,
+			es_favorita: valores_offcanvas.es_favorita,
+			mensajes: dicc_api_foto.mensajes || {},
+			alergias: dicc_api_foto.alergias || {},
+			app_compatible: { contrato_foto: 1 },
+			rango_reservas: rangos_reservas,
+			rango_matriz: rango_matriz || { values: {} },
+			rango_otros: rangos_otros,
+		});
 	}
 
 	/**
@@ -4433,8 +4420,7 @@ class Foto_CRUD{
 	 * ### Normaliza un slug: minúsculas y guiones.
 	 */
 	static _normalizar_slug_CU(valor) {
-		if (!valor) return '';
-		return valor.trim().toLowerCase().replace(/\s+/g, '-');
+		return FotoContratoV1.normalizarSlug(valor);
 	}
 	
 	/**
@@ -4474,8 +4460,8 @@ class Foto_CRUD{
 			// ┌■■ DIMENSIONES
 			// -----------------
 			// ┌■■ Dimension del Salon en BASE DE DATOS.
-			const filas_bdd = foto_bdd.filas;
-			const columnas_bdd = foto_bdd.columnas;
+			const filas_bdd = foto_bdd.salon?.filas;
+			const columnas_bdd = foto_bdd.salon?.columnas;
 			// ┌■■ Dimension del Salon en 'Salon'
 			const filas_salon = Salon.filas;
 			const columnas_salon = Salon.columnas;
@@ -4486,7 +4472,7 @@ class Foto_CRUD{
 				throw(`Dimensiones Distintas:  ■ Dimension Salon: ${filas_salon}x${columnas_salon}  ■ Dimension Foto: ${filas_bdd}x${columnas_bdd}`);
 			}
 
-			console.log( `\n${'█ '.repeat(10)} INICIO CARGA ELEMENTOS ::  id_foto: ${foto_id} | titulo: ${foto_bdd.titulo}`);
+			console.log( `\n${'█ '.repeat(10)} INICIO CARGA ELEMENTOS ::  id_foto: ${foto_id} | titulo: ${foto_bdd.ficha_foto?.titulo}`);
 
 			// ┌■ De Salon a los rangos. 
 			RAN.pull_all();
@@ -4500,8 +4486,12 @@ class Foto_CRUD{
 
 			// 🧩 Cacho los RANGOS desde la Base de datos: la Reserva "no está" o "no tiene pq estar" sobre la mesa.
 			// SIMPLIFICAR CARGANDO rango_matriz. comprobar dimensiones y que hacer cuando cambian.
-			const rango_s_en_BDD = RAN._reservas_a_rangos(foto_bdd?.dicc_reservas, 
-															 foto_bdd?.dicc_indices, 
+			const reservasInternas = (foto_bdd.app?.reservas || []).map((reserva) => ({
+				reservadores: reserva.central || [],
+				clientes: reserva.clientes || [],
+			}));
+			const rango_s_en_BDD = RAN._reservas_a_rangos(reservasInternas,
+															 foto_bdd.app?.d_indices || {},
 															 {filas:filas_bdd, columnas:columnas_bdd});
 			if(rango_s_en_BDD) {				
 				rango_s_en_BDD.forEach(rango =>{					
@@ -4521,12 +4511,12 @@ class Foto_CRUD{
 			}
 
 			// ┌■■ Elementos visuales: cada uno conserva su propia celda en un rango 1x1.
-			this._cargar_rangos_otros(foto_bdd?.rangos?.otros, RAN, Salon);
+			this._cargar_rangos_otros(foto_bdd?.rangos?.rango_otros, RAN, Salon);
 
 			// ┌■■ Cacho los datos de la BDD para representar en el Salon.
 			// const d_indices = foto_bdd.dicc_indices;
-			const d_mensajes = foto_bdd.dicc_mensajes;
-			const d_alergias = foto_bdd.dicc_alergias;
+			const d_mensajes = foto_bdd.motores?.motor_mensajes || {};
+			const d_alergias = foto_bdd.motores?.motor_alergias || {};
 
 			// ┌■ Carga de INDICES en el Salon ( Sustituto seguro de Rangos)
 			// Salon._load_elementos_en_Salon(d_indices);
@@ -4726,10 +4716,10 @@ class Foto_CRUD{
 	_filtros_plantilla_publica_RUD(){
 		const $activarFiltros = document.getElementById('activar-filtros-rud');
 		const $optionsPanel = document.getElementById('opciones-personalizadas');
-		const $es_publica = document.getElementById('check-publica');
-		const $es_plantilla = document.getElementById('check-plantilla');
+		const $es_cerrada = document.getElementById('check-cerrada');
+		const $es_favorita = document.getElementById('check-favorita');
 
-		if (!$activarFiltros || !$optionsPanel || !$es_publica || !$es_plantilla) return;
+		if (!$activarFiltros || !$optionsPanel || !$es_cerrada || !$es_favorita) return;
 
 		const actualizarFiltros = () => {
 			$optionsPanel.classList.toggle('filtros-inactivos-rud', !$activarFiltros.checked);
@@ -4737,8 +4727,8 @@ class Foto_CRUD{
 		};
 
 		$activarFiltros.addEventListener('change', actualizarFiltros);
-		$es_publica.addEventListener('change', actualizarFiltros);
-		$es_plantilla.addEventListener('change', actualizarFiltros);
+		$es_cerrada.addEventListener('change', actualizarFiltros);
+		$es_favorita.addEventListener('change', actualizarFiltros);
 		
 	}
 
@@ -4748,11 +4738,11 @@ class Foto_CRUD{
 		const filtrosActivos = document.getElementById('activar-filtros-rud')?.checked;
 		let lista = this.lista_fotos_RUD;
 		if (filtrosActivos) {
-			const esPublica = document.getElementById('check-publica')?.checked ?? false;
-			const esFavorita = document.getElementById('check-plantilla')?.checked ?? false;
+			const esCerrada = document.getElementById('check-cerrada')?.checked ?? false;
+			const esFavorita = document.getElementById('check-favorita')?.checked ?? false;
 			lista = lista.filter(foto =>
-				Boolean(foto.es_publica) === esPublica &&
-				Boolean(foto.es_plantilla) === esFavorita
+				Boolean(foto.ficha_foto?.es_cerrada) === esCerrada &&
+				Boolean(foto.ficha_foto?.es_favorita) === esFavorita
 			);
 		}
 		this._inyectar_lista_registros_RUD(lista, this.RUD.$contenedor_dinamic);
@@ -4810,20 +4800,21 @@ class Foto_CRUD{
 
 		const FA = registro_info;
 		if (FA) {
-			const titulo = Foto_CRUD._escapar_html_RUD(FA.titulo || '😎');
-			const slug_publico = Foto_CRUD._escapar_html_RUD(FA.slug_publico || '😎');
-			const mensaje_publico = Foto_CRUD._escapar_html_RUD(FA.mensaje_publico || '😎');
+			const fichaFoto = FA.ficha_foto || {};
+			const titulo = Foto_CRUD._escapar_html_RUD(fichaFoto.titulo || '😎');
+			const slug = Foto_CRUD._escapar_html_RUD(FA.slug || '😎');
+			const mensaje = Foto_CRUD._escapar_html_RUD(fichaFoto.mensaje || 'Sin descripción');
 			const captured_at = FA.captured_at  ? new Date(FA.captured_at).toLocaleString('es-ES') : '😎';
-			const es_publica   = Boolean(FA.es_publica)   ? '🟢' : '🔴';
-			const es_plantilla = Boolean(FA.es_plantilla) ? '🟢' : '🔴' ;
+			const es_cerrada = Boolean(fichaFoto.es_cerrada) ? '🟢' : '🔴';
+			const es_favorita = Boolean(fichaFoto.es_favorita) ? '🟢' : '🔴';
 
 			const tooltip_text = [
 				`📜 <b>Titulo:</b> ${titulo}`,
-				`&emsp;┌• slug: ${slug_publico}`,
-				`📩 <b>mensaje:</b> ${mensaje_publico}`,
+				`&emsp;┌• slug: ${slug}`,
+				`📩 <b>mensaje:</b> ${mensaje}`,
 				`🕒 <b>captured_at:</b> ${captured_at}`,
-				`🍞 <b>es_plantilla:</b> ${es_plantilla}`,
-				`🌍 <b>es_publica:</b> ${es_publica}`,
+				`⭐ <b>es_favorita:</b> ${es_favorita}`,
+				`🔐 <b>es_cerrada:</b> ${es_cerrada}`,
 			].join('<br>');
 
 			icono.classList.add('text-success');	// Verde
@@ -4927,19 +4918,20 @@ class Foto_CRUD{
 	 * ### Genera un valor secuencial único si el valor_inicial ya existe en la lista_fotos_RUD. {@link _abrir_ventana_CU}
 	 * @param {string} propiedad - La key (ej: 'titulo', 'slug') 
 	 * @param {string} valor_inicial - El valor inicial (ej: 'baron')
-	 * @example _get_sugerencia_unica('titulo', 'Lunes')  ■ RESULTADO ■ 'Lunes_Copia(1)'
+	 * @example _get_sugerencia_unica('titulo', 'Lunes')  ■ RESULTADO ■ 'Lunes Copia 1'
 	 * 
 	 */
 	_get_sugerencia_unica(propiedad, valor_inicial) {
-		const base = String(valor_inicial || '').replace(/(?:_Copia\(\d+\))+$/i, '');
-		const sufijo = propiedad === 'slug_publico' ? '_copia' : '_Copia';
+		const esSlug = propiedad === 'slug';
+		const base = String(valor_inicial || '').replace(/(?:[_ ]copia[_ ]?\d+)$/i, '');
+		const sufijo = esSlug ? '_copia_' : ' Copia ';
 		let contador = 1;
-		let sugerencia = `${base}${sufijo}(${contador})`;
+		let sugerencia = `${base}${sufijo}${contador}`;
 
 		
 		while (this.__existe_en_lista_registros(propiedad, sugerencia)) {
 			contador++;
-			sugerencia = `${base}${sufijo}(${contador})`;
+			sugerencia = `${base}${sufijo}${contador}`;
 		}
 
 		return sugerencia;
@@ -4955,7 +4947,10 @@ class Foto_CRUD{
 		// Validamos que la lista exista y no esté vacía
 		if (!this.lista_fotos_RUD || this.lista_fotos_RUD.length === 0) return false;
 
-		return this.lista_fotos_RUD.some(objeto => objeto[atributo] === valor);
+		return this.lista_fotos_RUD.some((foto) => {
+			if (atributo === 'titulo') return foto.ficha_foto?.titulo === valor;
+			return foto[atributo] === valor;
+		});
 	}
 	
 	/**
