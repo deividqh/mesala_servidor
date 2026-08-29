@@ -10,8 +10,9 @@ const pool = mysql.createPool({
   port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASS || '',
-  // database: process.env.DB_NAME || 'salon_div_x_div',
   database: process.env.DB_NAME || 'mesala_v2_dev',
+  // ┌•• Fechas de MariaDB <-> JavaScript siempre en UTC.
+  timezone: 'Z',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0

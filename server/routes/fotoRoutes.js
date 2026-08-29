@@ -16,6 +16,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const {
   createFoto,
   updateFoto,
+  updateFichaFoto,
   select_foto_by_slug,
   read_fotos, 
   delete_foto,
@@ -43,8 +44,11 @@ router.post('/', authMiddleware, createFoto);
 // Ruta para verificar si una foto con un slug público ya existe (protegida por authMiddleware)
 router.post('/check-existing', authMiddleware, select_foto_by_slug); 
 
-// Ruta para ACTUALIZAR una foto existente y su ficha(titulo, slug, fecha,...) (protegida por authMiddleware)
-router.put('/update', authMiddleware, updateFoto);
+// Ruta para SOBRESCRIBIR una instantánea completa. Cambia captured_at.
+router.put('/:id', authMiddleware, updateFoto);
+
+// Ruta para EDITAR sólo título, mensaje, slug y marcas. Conserva captured_at.
+router.patch('/:id/ficha', authMiddleware, updateFichaFoto);
 
 // Ruta para eliminar una foto del usuario (protegida por authMiddleware)
 router.delete('/:id', authMiddleware, delete_foto);

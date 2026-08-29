@@ -1,4 +1,4 @@
--- USE mesala_v2_dev;
+USE mesala_v2_dev;
 CREATE TABLE `usuario` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(64) NOT NULL,
@@ -25,8 +25,8 @@ CREATE TABLE foto (
     slug VARCHAR(190) NOT NULL,
     schema_version SMALLINT UNSIGNED NOT NULL DEFAULT 1,
     captured_at TIMESTAMP(3) NOT NULL,
-    `created_at` timestamp(3) NOT NULL DEFAULT current_timestamp(),
-    `updated_at` timestamp(3) NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    `created_at` timestamp(3) NOT NULL DEFAULT current_timestamp(3),
+    `updated_at` timestamp(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
     es_cerrada TINYINT(1) DEFAULT 0,
     es_favorita TINYINT(1) NOT NULL DEFAULT 0,
     salon JSON NOT NULL,

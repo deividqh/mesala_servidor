@@ -37,7 +37,7 @@ const fotoRoutes = require('./routes/fotoRoutes');                // rutas para 
 const app = express();                    
 
 // ┌•• Middleware para parsear JSON  . . . MIDDLEWARES GLOBALES (Se ejecutan en CADA petición)
-app.use(express.json());                  
+app.use(express.json({ limit: '1mb' }));
 
 const PORT = process.env.PORT || 3000;    
 
@@ -70,8 +70,18 @@ app.use((req, res) => {
 
 // ┌•• Middleware para manejar errores
 app.use((err, req, res, next) => {
+  // ┌•• El documento supera el máximo acordado para el contrato v1.
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({ message: 'El JSON supera el límite de 1 MiB.' });
+  }
+
+  // ┌•• Express no ha podido interpretar el cuerpo como JSON.
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ message: 'El cuerpo contiene JSON mal formado.' });
+  }
+
   console.error(err.stack);
-  res.status(500).json({ message: 'Error interno del servidor. ' });
+  return res.status(500).json({ message: 'Error interno del servidor.' });
 });
 
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■

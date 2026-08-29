@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');                    // Para la autenticación JWT.
 
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-// Para proteger las rutas que requieren que el usuario esté logueado (como guardar salones), 
+// Para proteger las rutas que requieren que el usuario esté logueado (como guardar fotos),
 // necesitamos un middleware que verifique el JWT.
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
