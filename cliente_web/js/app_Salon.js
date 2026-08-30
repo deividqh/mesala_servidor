@@ -3330,9 +3330,6 @@ class Foto_CRUD{
 		/** ## Última foto de Salon ┌•abierta• desde offcanvas-RUD. */
 		this.foto_work = null;
 		
-		/** ## El ultimo payload creado tras 'Guardar' */
-		this.last_payload_CU = null;
-		
 		const dCU = this.diccionario_CU;
 		this.CU = {
 			// ┌• Icono disparador de la accion CU.
@@ -3398,10 +3395,9 @@ class Foto_CRUD{
 	// ■■■ C. R. U. D.
 	// ■■■
 	/**  
-	 * ### 💾 Create_R_Update_D  
+	 * ### 💾 C.U.  
 	 * #### Un sólo botón para crear o actualizar una foto del usuario mediante un offcanvas de Bootstrap.
 	 * @see {@link _accion_create} | {@link _inicia_listeners_CU}
-	 * @param {dataForm} form_data valores del formulario(form_data.titulo, form_data.slug...)
 	 */
 	async create(){
 		if(!this.CU) return;	
@@ -3487,9 +3483,6 @@ class Foto_CRUD{
 				const hora = new Date().toLocaleTimeString('es-ES', { hour12: false });
 				const avisos = guardado_bd.warnings?.length ? ` Avisos: ${guardado_bd.warnings.length}.` : '';
 				this._feedback_CU(`♻️ Foto '${valores.slug}' ${accion} con éxito. ✔️ ${hora}.${avisos}`, 'success');
-				
-				// ┌•• Me guardo el payload ( para controlar Si cambia datos o NO )
-				this.last_payload_CU = payload;
 				
 				// ┌•••••••••••••••••••••••••••••••••••••
 				// ┌•• Despues de Guardar o Actualizar Ok ► Cambio la lista para que tenga los ultimos cambios.
