@@ -196,22 +196,22 @@ class e_Salon extends Tablero_Touch {
 			items_bi_generales.forEach(item => {
 				const tipo_general = item.getAttribute('data-action-nav');
 				if( tipo_general == 'conn' ){		
-					item.addEventListener("click", this.accion_login.bind(this) );					
+					item.addEventListener("click", this.click_abrir_ventana_login.bind(this) );					
 					
 				}else if (tipo_general == 'info' ){					
-					item.addEventListener("click", this.accion_ver_info.bind(this) );	
+					item.addEventListener("click", this.click_abrir_ventana_ver_info.bind(this) );	
 					
 				}else if (tipo_general == 'save' ){					
-					item.addEventListener("click", this.accion_CU.bind(this) );				
+					item.addEventListener("click", this.click_abrir_ventana_cu.bind(this) );				
 					
 				}else if (tipo_general == 'load' ){					
-					item.addEventListener("click", this.accion_load_photos_RUD.bind(this));				
+					item.addEventListener("click", this.click_abrir_ventana_load_fotos_rud.bind(this));				
 				
 				}else if (tipo_general == 're-init' ){					
-					item.addEventListener("click", this.accion_re_init_salon.bind(this));
+					item.addEventListener("click", this.click_reiniciar_salon.bind(this));
 					
 				}else if (tipo_general == 'pruebas'){
-					item.addEventListener("click", this.accion_re_posicionar.bind(this) );
+					item.addEventListener("click", this.click_reposicionar_elementos.bind(this) );
 				}
 			});
 			console.log('✅ ACCIONES BOTON NAV • • • • • Loaded ✔️');
@@ -980,7 +980,7 @@ class e_Salon extends Tablero_Touch {
 	/**
 	 * ### Reinicia el Salon. Da Opción Previa de Guardar.
 	 */
-	async accion_re_init_salon(){
+	async click_reiniciar_salon(){
 		const mensaje = "¿Seguro que quieres Vaciar este salón? Esta acción no se puede deshacer.";
 		const confirmacion = await Alertas_UI.ConfirM("Confimación Accion Eliminar", mensaje, "warning")
 		if (!confirmacion) return;
@@ -992,7 +992,7 @@ class e_Salon extends Tablero_Touch {
 	 * #### • Abre la ventana que es la que tiene que 'Guardar' una foto.
 	 * #### • Establece un puente con Foto_CRUD. 🌉
 	 */
-	accion_CU(){		
+	click_abrir_ventana_cu(){		
 		if(!this.crud) { return false }
 		
 		this.crud._abrir_ventana_CU();
@@ -1002,15 +1002,16 @@ class e_Salon extends Tablero_Touch {
 	 * ### Abre un Offcanvas bootstrap para realizar acciones RUD sobre las Fotos.
 	 * #### • Establece un puente con Foto_CRUD. 🌉
 	 */ 
-	accion_load_photos_RUD(){
-		if(this.crud) this.crud._accion_read();
+	click_abrir_ventana_load_fotos_rud(){
+		if(this.crud) 
+			this.crud._click_boton_listado_fotos();
 	}	
 	
 	/** 
 	 * ### Click sobre el icono del Nav-Bar para Registro o Login_Modal.
 	 * #### • Establece un puente con Login_Modal. 🌉
 	 */
-	accion_login(){		
+	click_abrir_ventana_login(){		
 		if(this.LogIn) this.LogIn.abrir_ventana('login');
 	}
 	/**
@@ -1021,7 +1022,7 @@ class e_Salon extends Tablero_Touch {
 	 * #### • Diccionario(objeto) de configuracion inicial.
 	 * #### • Establece un puente con Configuración. 🌉
 	 */
-	accion_ver_info(ev) {
+	click_abrir_ventana_ver_info(ev) {
 		this.CFG.api_ver_informacion_Salon();
 	}
 	
@@ -1029,7 +1030,7 @@ class e_Salon extends Tablero_Touch {
 	 * ### click sobre el Boton de Re-Ordenar elementos. Lo quiero quitar o no se.....
 	 * @see {@link e_Salon constructor}
 	*/
-	accion_re_posicionar(){
+	click_reposicionar_elementos(){
 		this.CFG.api_re_posicionar();
 	}
 
@@ -2816,7 +2817,7 @@ class Login_Modal {
         // ​​​​​​​•​​ Esto separa la lógica de la clase de la lógica del salón.
         document.addEventListener('salon:auth-success', (e) => {
             this._when_log_IN(e.detail);			
-			// this.accion_re_init_salon();				// • limpia el salon de contenido y de registro.
+			// this.click_reiniciar_salon();				// • limpia el salon de contenido y de registro.
         });
 
 		// ​👂​👂
@@ -3397,7 +3398,7 @@ class Foto_CRUD{
 	/**  
 	 * ### 💾 C.U.  
 	 * #### Un sólo botón para crear o actualizar una foto del usuario mediante un offcanvas de Bootstrap.
-	 * @see {@link _accion_create} | {@link _inicia_listeners_CU}
+	 * @see {@link _click_boton_submit_cu} | {@link _inicia_listeners_CU}
 	 */
 	async create(){
 		if(!this.CU) return;	
@@ -3561,17 +3562,14 @@ class Foto_CRUD{
 		}
 	}
 	
-	
 	/** 
 	 * ### Elimina una foto guardada del listado en la ventana RUD 
 	 */
 	async delete(foto_id){
 		try {
-			// cd.innerHTML =
 			const mensaje = "¿Seguro que quieres eliminar esta foto? Esta acción no se puede deshacer.";
 			const confirmacion = await Alertas_UI.ConfirM("Confimación Accion Eliminar", mensaje, "warning")
 			if (!confirmacion) return;
-			// this._feedback_RUD('Eliminando photo...', 'warning');
 
 			const token = localStorage.getItem('token');
 			const response = await fetch(`/api/fotos/${foto_id}`, {
@@ -3600,35 +3598,29 @@ class Foto_CRUD{
 	// ■■■  ACCIONES, Clicks sobre botones en las ventanas. Llamadas Listenners al CRUD.
 	// ■■■
 	/** 
-	 * ## Create_R_U_D
-	 * ### Guarda una photo en la Base de Datos 
-	 * {@link _inicia_listeners_CU}
-	 */	
-	_accion_create(){		
+	 * ### Guarda una photo en la Base de Datos desde la ventana cu
+	 * {@link _inicia_listeners_CU}	 */	
+	_click_boton_submit_cu(){		
 		this.create();
 	}
 	/** 
-	 * ## C_Read_U_D
-	 * ### Carga / Load un listado de photos. 
-	 */
-	_accion_read() {
+	 * ### Carga un listado de photos en la ventana rud. 	 */
+	_click_boton_listado_fotos() {
 		this.read();		
 	}
-	/** 
-	 * ## CR_Update_D, 
-	 * ## Abre la ventana de UPDATE de una Photo.
-	 * #### • La accion de la actualización la lleva a cabo el submit del formulario modal_CU.
-	 * #### • La ventana de actualizacion es la misma que la de creacion. 
-	 */
-	_accion_update(foto_id){
-		// console.log(`Init  Update ${foto_id} `)
-		this.update(foto_id);
-	}
+	
 	/** 
 	 * ## CRU_Delete
-	 * ### ■■■ Elimina una foto del usuario y recarga la lista.
-	 */
-	_accion_delete(foto_id) {
+	 * ### ■■■ Elimina una foto del usuario y recarga la lista.	 */
+	_click_boton_delete(foto_id) {
+		const foto = this._get_regitro_from_lista(foto_id);
+		
+		// ■ Si una foto está Cerrada, No se puede eliminar.
+		if (foto && foto.ficha_foto.es_cerrada === true) {
+			this._feedback_RUD('⚠️ No se puede eliminar una foto cerrada.', 'warning');
+			return;
+		}
+		// Elimina de la Base de Datos.
 		this.delete(foto_id);
 	}
 
@@ -3912,6 +3904,45 @@ class Foto_CRUD{
 	}
 
 	/**
+	 * ### Inicializa una sola vez las acciones del listado mediante delegación de eventos.
+	 * #### • Acciones de lectura y borrado del listado.
+	 * {@link _inyectar_lista_registros_RUD}
+	 */
+	_inicializar_acciones_listado_RUD(){
+		const contenedor = this.RUD.$contenedor_dinamic;
+		if (!contenedor) return;
+		contenedor.addEventListener('click', event => {
+			const boton = event.target.closest('[data-rud-action]');
+			if (!boton || !contenedor.contains(boton)) return;
+			const foto_id = Number(boton.dataset.photoId);
+			if (!Number.isFinite(foto_id)) return;
+			switch (boton.dataset.rudAction) {
+				case 'cargar':
+					this._accion_cargar_elementos_en_Salon(foto_id);
+					break;
+				case 'eliminar':
+					this._click_boton_delete(foto_id);
+					break;
+			}
+		});
+		contenedor.addEventListener('dblclick', event => {
+			const info = event.target.closest('[data-rud-field="info"]');
+			if (!info || !contenedor.contains(info)) return;
+			const foto_id = Number(info.dataset.photoId);
+			if (Number.isFinite(foto_id)) this._accion_cargar_elementos_en_Salon(foto_id);
+		});
+	}
+
+	/** UI
+	 * ### Abre el offcanvas de carga de foto.
+	 */
+	_abrir_ventana_lista_registros_RUD() {
+		if (!this.RUD.$offcanvas || !window.bootstrap?.Offcanvas) return;
+		const offcanvas = window.bootstrap.Offcanvas.getOrCreateInstance(this.RUD.$offcanvas);
+		offcanvas.show();		
+	}
+
+	/**
 	 * ### Crea una instancia del objeto Offcanvas de Bootstrap para crear/actualizar que tenemos registrado, si no existe lo crea.
 	 * {@link Foto_CRUD constructor}  */
 	_crear_offcanvas_CU() {
@@ -3923,9 +3954,6 @@ class Foto_CRUD{
 		});
 		return ventana_CU || null;
 	}
-	
-
-	
 
 	// ■■■
 	// ■■■ Inicializo_listeners.
@@ -3944,7 +3972,7 @@ class Foto_CRUD{
 		// 👂​👂​ GUARDAR FOTO 🎞️ SUBMIT SOBRE EL FORMULARIO 
 		cu.$formulario.addEventListener('submit', (event) => {
 			event.preventDefault();			
-			this._accion_create();
+			this._click_boton_submit_cu();
 		});
 
 		// ■■■
@@ -4006,35 +4034,7 @@ class Foto_CRUD{
 	
 	
 
-	/**
-	 * ### Inicializa una sola vez las acciones del listado mediante delegación de eventos.
-	 * #### • Acciones de lectura y borrado del listado.
-	 * {@link _inyectar_lista_registros_RUD}
-	 */
-	_inicializar_acciones_listado_RUD(){
-		const contenedor = this.RUD.$contenedor_dinamic;
-		if (!contenedor) return;
-		contenedor.addEventListener('click', event => {
-			const boton = event.target.closest('[data-rud-action]');
-			if (!boton || !contenedor.contains(boton)) return;
-			const foto_id = Number(boton.dataset.photoId);
-			if (!Number.isFinite(foto_id)) return;
-			switch (boton.dataset.rudAction) {
-				case 'cargar':
-					this._accion_cargar_elementos_en_Salon(foto_id);
-					break;
-				case 'eliminar':
-					this._accion_delete(foto_id);
-					break;
-			}
-		});
-		contenedor.addEventListener('dblclick', event => {
-			const info = event.target.closest('[data-rud-field="info"]');
-			if (!info || !contenedor.contains(info)) return;
-			const foto_id = Number(info.dataset.photoId);
-			if (Number.isFinite(foto_id)) this._accion_cargar_elementos_en_Salon(foto_id);
-		});
-	}
+	
 
 	// ■■■
 	// ■■■ Abro Los objetos BootStrap.	
@@ -4045,7 +4045,7 @@ class Foto_CRUD{
 	
 	/**
 	 * ### Abre el offcanvas de Bootstrap para guardar o actualizar fotos.
-	 * {@link accion_CU}  */
+	 * {@link click_abrir_ventana_cu}  */
 	_abrir_ventana_CU(){
 		this._feedback_CU('👍 Preparado para Guardar la Foto!! ');
 		
@@ -4126,15 +4126,7 @@ class Foto_CRUD{
 		}
 	}
 
-	/** 🎞️	UI 🖼️ 
-	 * ### Abre el offcanvas de carga de foto.
-	 */
-	_abrir_ventana_lista_registros_RUD() {
-		// const $offcanvas = document.getElementById(this.offcanvasId) || null;
-		if (!this.RUD.$offcanvas || !window.bootstrap?.Offcanvas) return;
-		const offcanvas = window.bootstrap.Offcanvas.getOrCreateInstance(this.RUD.$offcanvas);
-		offcanvas.show();		
-	}
+	
 	
 	/**
 	 * ### Actualiza el acordeón de reservas y mensajes en la ventana de crear. 

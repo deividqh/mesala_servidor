@@ -2,7 +2,7 @@
 // ████████████████████████  LOGICA HTTP DE FOTOS
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
-const fotoRepository = require('../repositories/fotoRepository');
+const fotoSQL = require('../repositories/foto_SQL');
 const { mapearFoto, mapearResumenFoto, parsearJson } = require('../mappers/fotoMapper');
 const { validarFotoV1, validarFichaFoto, validarSlug } = require('../domain/fotoValidator');
 
@@ -37,8 +37,8 @@ async function createFoto(req, res) {
   }
 
   try {
-    const fotoId = await fotoRepository.crear(usuarioId, validacion.valor);
-    const row = await fotoRepository.buscarPorIdYUsuario(fotoId, usuarioId);
+    const fotoId = await fotoSQL.crear(usuarioId, validacion.valor);
+    const row = await fotoSQL.buscarPorIdYUsuario(fotoId, usuarioId);
 
     return res.status(201).json({
       message: 'Foto guardada correctamente.',
@@ -56,7 +56,7 @@ async function read_fotos(req, res) {
   if (!usuarioId) return res.status(401).json({ message: 'Usuario no autenticado.' });
 
   try {
-    const rows = await fotoRepository.listarPorUsuario(usuarioId);
+    const rows = await fotoSQL.listarPorUsuario(usuarioId);
     return res.json(rows.map(mapearResumenFoto));
   } catch (error) {
     return responderErrorBdd(error, res, 'read_fotos');
@@ -72,7 +72,7 @@ async function get_foto_by_id(req, res) {
   if (!fotoId) return res.status(400).json({ message: 'ID de foto inválido.' });
 
   try {
-    const row = await fotoRepository.buscarPorIdYUsuario(fotoId, usuarioId);
+    const row = await fotoSQL.buscarPorIdYUsuario(fotoId, usuarioId);
     if (!row) return res.status(404).json({ message: 'Foto no encontrada.' });
     return res.json(mapearFoto(row));
   } catch (error) {
@@ -98,11 +98,11 @@ async function updateFoto(req, res) {
   }
 
   try {
-    const existe = await fotoRepository.buscarPorIdYUsuario(fotoId, usuarioId);
+    const existe = await fotoSQL.buscarPorIdYUsuario(fotoId, usuarioId);
     if (!existe) return res.status(404).json({ message: 'Foto no encontrada.' });
 
-    await fotoRepository.actualizarCompleta(fotoId, usuarioId, validacion.valor);
-    const row = await fotoRepository.buscarPorIdYUsuario(fotoId, usuarioId);
+    await fotoSQL.actualizarCompleta(fotoId, usuarioId, validacion.valor);
+    const row = await fotoSQL.buscarPorIdYUsuario(fotoId, usuarioId);
 
     return res.json({
       message: 'Instantánea actualizada correctamente.',
@@ -131,11 +131,11 @@ async function updateFichaFoto(req, res) {
   }
 
   try {
-    const existe = await fotoRepository.buscarPorIdYUsuario(fotoId, usuarioId);
+    const existe = await fotoSQL.buscarPorIdYUsuario(fotoId, usuarioId);
     if (!existe) return res.status(404).json({ message: 'Foto no encontrada.' });
 
-    await fotoRepository.actualizarFicha(fotoId, usuarioId, validacion.valor);
-    const row = await fotoRepository.buscarPorIdYUsuario(fotoId, usuarioId);
+    await fotoSQL.actualizarFicha(fotoId, usuarioId, validacion.valor);
+    const row = await fotoSQL.buscarPorIdYUsuario(fotoId, usuarioId);
 
     return res.json({
       message: 'Ficha actualizada correctamente.',
@@ -155,7 +155,7 @@ async function delete_foto(req, res) {
   if (!fotoId) return res.status(400).json({ message: 'ID de foto inválido.' });
 
   try {
-    const affectedRows = await fotoRepository.eliminar(fotoId, usuarioId);
+    const affectedRows = await fotoSQL.eliminar(fotoId, usuarioId);
     if (!affectedRows) return res.status(404).json({ message: 'Foto no encontrada.' });
     return res.json({ message: 'Foto eliminada correctamente.' });
   } catch (error) {
@@ -172,7 +172,7 @@ async function select_foto_by_slug(req, res) {
   if (!resultadoSlug.ok) return res.status(400).json({ message: resultadoSlug.error });
 
   try {
-    const exists = await fotoRepository.existeSlug(resultadoSlug.valor);
+    const exists = await fotoSQL.existeSlug(resultadoSlug.valor);
     return res.json({ slug: resultadoSlug.valor, exists });
   } catch (error) {
     return responderErrorBdd(error, res, 'select_foto_by_slug');
@@ -188,7 +188,7 @@ async function get_dimension_foto(req, res) {
   if (!fotoId) return res.status(400).json({ message: 'ID de foto inválido.' });
 
   try {
-    const row = await fotoRepository.buscarPorIdYUsuario(fotoId, usuarioId);
+    const row = await fotoSQL.buscarPorIdYUsuario(fotoId, usuarioId);
     if (!row) return res.status(404).json({ message: 'Foto no encontrada.' });
 
     const salon = parsearJson(row.salon);
