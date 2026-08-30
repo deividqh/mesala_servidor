@@ -49,9 +49,6 @@ function crearFotoValida() {
       motor_alergias: {
         silla_0: ['pescado'],
       },
-      app_compatible: {
-        min_version: '1.0.0',
-      },
     },
     rangos: {
       rango_reservas: [],

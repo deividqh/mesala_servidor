@@ -47,6 +47,17 @@
 		}));
 	}
 
+	/** ### Conserva en la matriz únicamente las celdas que contienen un identificador. */
+	function normalizarRangoMatriz(rangoMatriz = {}) {
+		const rango = esObjeto(rangoMatriz) ? rangoMatriz : {};
+		const values = esObjeto(rango.values) ? rango.values : {};
+		const valuesConId = Object.fromEntries(
+			Object.entries(values).filter(([, idElemento]) => typeof idElemento === 'string' && idElemento.trim() !== ''),
+		);
+
+		return { ...rango, values: valuesConId };
+	}
+
 	/** ### Construye exclusivamente las propiedades del contrato JSON v1. */
 	function crearDocumento(datos = {}) {
 		const configuracion = datos.configuracion || {};
@@ -81,11 +92,10 @@
 			motores: {
 				motor_mensajes: datos.mensajes || {},
 				motor_alergias: datos.alergias || {},
-				app_compatible: datos.app_compatible || { contrato_foto: 1 },
 			},
 			rangos: {
 				rango_reservas: datos.rango_reservas || [],
-				rango_matriz: datos.rango_matriz || { values: {} },
+				rango_matriz: normalizarRangoMatriz(datos.rango_matriz),
 				rango_otros: datos.rango_otros || [],
 			},
 		};
@@ -116,7 +126,7 @@
 		return errores;
 	}
 
-	const api = Object.freeze({ LIMITES, crearDocumento, normalizarMensaje, normalizarReservas, normalizarSlug, validarDocumento });
+	const api = Object.freeze({ LIMITES, crearDocumento, normalizarMensaje, normalizarRangoMatriz, normalizarReservas, normalizarSlug, validarDocumento });
 	globalScope.FotoContratoV1 = api;
 	if (typeof module !== 'undefined' && module.exports) module.exports = api;
 }(typeof globalThis !== 'undefined' ? globalThis : window));

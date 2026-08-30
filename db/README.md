@@ -14,6 +14,6 @@ La relación persistente es `usuario (1) -> (N) foto`. No existe una tabla `salo
 
 ## Contrato JSON
 
-`schema_version = 1` identifica el contrato actual. Antes de insertar o actualizar, el servidor valida forma, límites y referencias cruzadas. `motores.app_compatible` contiene la compatibilidad de aplicación.
+`schema_version = 1` identifica el contrato actual. Antes de insertar o actualizar, el servidor valida forma, límites y referencias cruzadas.
 
 Los scripts `schema.sql` y `crear_mesala_dev.sql` representan el modelo reproducible. La aplicación no crea ni altera tablas durante el arranque.

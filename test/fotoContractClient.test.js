@@ -16,7 +16,7 @@ function crearDatosCliente() {
 		configuracion: {
 			salon: {
 				family: 'Gran_Salon',
-				contenedor: 'salon_app',
+				contenedor: '',
 				clases_css: { baldosas: 'estiloBaldosas', contenedor: 'estiloSalon' },
 			},
 		},
@@ -49,4 +49,15 @@ test('detecta una contradicción entre índices y rango matriz antes de enviar',
 	const foto = FotoContratoV1.crearDocumento(datos);
 
 	assert.ok(FotoContratoV1.validarDocumento(foto).some((error) => error.includes('rango matriz')));
+});
+
+test('no envía las celdas vacías del rango matriz al servidor', () => {
+	const datos = crearDatosCliente();
+	datos.rango_matriz.values.A0 = false;
+	datos.rango_matriz.values.D1 = null;
+	datos.rango_matriz.values.E2 = '';
+	const foto = FotoContratoV1.crearDocumento(datos);
+
+	assert.deepEqual(foto.rangos.rango_matriz.values, { B1: 'mesa_0', C1: 'silla_0' });
+	assert.equal(validarFotoV1(foto).ok, true);
 });

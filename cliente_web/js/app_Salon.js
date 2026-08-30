@@ -3317,12 +3317,12 @@ class Foto_CRUD{
 			$contenedor_dinamic:  e_Salon._to_element(dRUD.contenedor_dinamic) ||  e_Salon._to_element('[data-rud="contenedor_lista"]') || null, 
 		};
 
-		/** ## Antes de _load__lista_registros = false , Despues de _load__lista_registros = true. Ver {@link create} - {@link read} - {@link delete} */
 		this.is_lista_registros_completa = false;
-		/** ## JSON de metadatos(titulo/slug...) de fotos. 
+
+		/** ### JSON de metadatos(titulo/slug...) de fotos. 
 		 * #### Se Carga ► {@link _get_lista_fotos_from_bbdd} - Se Usa ► {@link _get_regitro_from_lista} | {@link update} 
 		 * ```javascript
-		 * ejemplo = {id: 45, titulo:'Lunes', slug_publico:'lunes', mensaje_publico:'', es_plantilla:false, es_publica=true , captured_at:"2026-01-21T22:22:29.119Z" , dicc_config: [Object] }
+		 * ejemplo = {id: 45, titulo:'Lunes', slug_publico:'lunes', mensaje_publico:'', es_favorita:false, es_cerrada=true , captured_at:"2026-01-21T22:22:29.119Z" , updated_at:"2026-01-21T22:22:29.119Z", created_at:"2026-01-21T22:22:29.119Z" }
 		 * ```
 		 * */		
 		this.lista_fotos_RUD = null		
@@ -3449,14 +3449,6 @@ class Foto_CRUD{
 				return;
 			}
 		
-			// // ┌•• Ha sido Abierto de la lista de registros?
-			// // ┌•• Variable fundamental para la Logica de Guardar.
-			// const FA = this.foto_work;
-			// const lFA = this.lista_fotos_RUD;
-
-			// // const hay_registro = (lFA?lFA:false && FA?FA:false); 	
-			// const hay_registro = this.lista_fotos_RUD.some(item => item.id === FA?.id );			
-
 			// ┌•• Existe el slug en la BDD? :: para saberlo, busco un registro con ese slug en la Base de Datos. 
 			const hay_slug = await this._get_registro_by_slug_API(valores.slug, datos_auth.token);
 			
@@ -3464,35 +3456,6 @@ class Foto_CRUD{
 			// ┌•• LOGICA DEL NEGOCIO: 		
 			let guardado_bd = null;
 			let accion = '';
-			// if(hay_registro){
-			// 	if(this.marca_plantilla){
-			// 		if (hay_slug){
-			// 			// PLANTILLA ✔️ -  SLUG en BD ✔️ ► notificar y salir
-			// 			this._feedback_CU('⚠️ Una Plantilla NO se puede Guardar\n... Cambia el Slug para crear una Copia', 'warning');
-			// 			cu.$slug_publico?.focus();
-			// 			return;
-			// 		}else{
-			// 			// PLANTILLA ✔️ -  SLUG en BD ❌  ► Guardar 
-			// 			guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
-			// 			accion = 'Guardada';
-			// 		}
-			// 	}else{
-			// 		// REGISTRO ✔️ -  PLANTILLA ❌  ► Actualizar
-			// 		guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
-			// 		accion = 'Actualizada';
-			// 	}
-			// }else{
-			// 	if(registro_BDD){
-			// 		// REGISTRO ❌ -  SLUG ✔️  ► Actualizar
-			// 		guardado_bd = await this._update_foto_API(payload, datos_auth.token, `/api/fotos/update`);
-			// 		accion = 'Actualizada';					
-			// 	}else{
-			// 		// REGISTRO ❌ -  SLUG ❌  ► Guardar
-			// 		guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
-			// 		accion = 'Guardada';
-			// 	}
-			// }
-
 
 			if (this.modo_CU === 'actualizar') {
 				if (!this.foto_work?.id) {
@@ -3518,7 +3481,6 @@ class Foto_CRUD{
 				guardado_bd = await this._create_foto_API(payload, datos_auth.token, `/api/fotos`);
 				accion = 'Guardada';
 			}
-
 		
 			// Guardado OK ✔️
 			if (guardado_bd?.ok) {
@@ -3531,18 +3493,15 @@ class Foto_CRUD{
 				
 				// ┌•••••••••••••••••••••••••••••••••••••
 				// ┌•• Despues de Guardar o Actualizar Ok ► Cambio la lista para que tenga los ultimos cambios.
-				const ok = await this._get_lista_fotos_from_bbdd();
-				if(!ok) 
+				const lista_fotos_rud = await this._get_lista_fotos_from_bbdd();
+				if(!lista_fotos_rud) 
 					throw `❌ Error ::: Guardado Ok, pero Error Recargando la lista de registros.`;
-				
-				// // ┌•• En caso de Guardar una foto como plantilla this.marca_plantilla = true y  funciona ok.
-				// // ┌•• En caso de Guardar NO plantilla, si está marca_plantilla a true entraría la siguiente por plantilla aunque no lo sea.
-				// if(payload.foto.es_plantilla === false) 
-				// 	this.marca_plantilla = false;
+				else
+					this.is_lista_registros_completa = true;
 
 				// ┌•• Buscar en la lista de registros recien actualizada con la BDD...con el payload(sanitizado en _set_payload_create_())
 				const fotoGuardada = guardado_bd.foto;
-				const reg_recien_guardado = this.lista_fotos_RUD.find((item) => item.id === fotoGuardada?.id);
+				const reg_recien_guardado = lista_fotos_rud.find((item) => item.id === fotoGuardada?.id);
 				if(!reg_recien_guardado) 
 					throw `❌ Error ::: No encuentro el registro que acabo de guardar. Reinicia.`;
 				
@@ -3569,7 +3528,7 @@ class Foto_CRUD{
 	
 	/** 
 	 * ### Read/Delete (ventana RUD)
-	 * #### - Lista las fotos del Usuario en un offcanvas bootstrap. 1 registro por foto.
+	 * #### - Lista las fotos del Usuario en un offcanvas bootstrap ► 1 registro por foto.
 	 * #### {@link ./../server/fotoController. read_fotos}
 	 */
 	async read(){
@@ -3631,9 +3590,9 @@ class Foto_CRUD{
 			if (!response.ok)  throw new Error('Error al eliminar');				
 
 			// ► IF todo Ok ✔️  Volvemos a cargar las fotos del salon en el offcanvas
-			const ok = await this._get_lista_fotos_from_bbdd();
+			const lista_fotos_rud = await this._get_lista_fotos_from_bbdd();
 			// ┌•• Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
-			if(ok) this._inyectar_lista_registros_RUD(this.lista_fotos_RUD, this.RUD.$contenedor_dinamic);
+			if(lista_fotos_rud) this._inyectar_lista_registros_RUD(lista_fotos_rud, this.RUD.$contenedor_dinamic);
 
 			this._feedback_RUD('Foto eliminada correctamente. ✔️', 'success');
 				
@@ -3757,19 +3716,6 @@ class Foto_CRUD{
 		}
 		return {titulo:titulo, icono:icono};		
 	}
-	
-	/**
-	 * ### Crea una instancia del objeto Offcanvas de Bootstrap para crear/actualizar que tenemos registrado, si no existe lo crea.
-	 * {@link Foto_CRUD constructor}  */
-	_crear_offcanvas_CU() {
-		if (!this.CU.$offcanvas || !window.bootstrap?.Offcanvas) return null;
-		const ventana_CU = window.bootstrap.Offcanvas.getOrCreateInstance(this.CU.$offcanvas, {
-			backdrop: true,
-			keyboard: true,
-			scroll: false,
-		});
-		return ventana_CU || null;
-	}
 	/**
 	 * ### Crea una instancia de un objeto Offcanvas de BootStrap para crear/actualizar que tenemos registrado, si no existe lo crea.
 	 * ### {@link Foto_CRUD constructor}  */
@@ -3884,6 +3830,110 @@ class Foto_CRUD{
 		});
 	}	
 
+	// show (El inicio) Ideal para validaciones. Cuándo ocurre: En el instante exacto en que pulsas el botón o llamas a .show()
+	// shown (El final) Cuándo ocurre: Cuando la animación de apertura ha terminado por completo
+	// hide (El inicio) Cuándo ocurre: En cuanto se pulsa el botón de cerrar o la tecla ESC.
+	// hidden (El final) Cuándo ocurre: Cuando el componente ya no es visible y la animación terminó
+	// Truco Si alguna vez necesitas que el menú no se abra bajo cierta condición, usa el evento show y añade event.preventDefault(). Bootstrap detendrá la apertura antes de que empiece la animación.
+	_inicia_listeners_RUD(){
+		if (!this.RUD.$offcanvas) return;
+		const $offcanvas = this.RUD.$offcanvas;
+		// ■ Salta Cuando el offcanvas se ha cargado completamente
+		$offcanvas.addEventListener('shown.bs.offcanvas',async () => {
+			const lista_fotos = await this._get_lista_fotos_from_bbdd();
+			if(lista_fotos) this._renderizar_lista_filtrada_RUD();
+
+		});
+	}
+
+	/**  UI 
+	 * ### Muestra un MENSAJE en el offcanvas de carga.
+	 * @param {string} mensaje Mensaje a mostrar.
+	 * @param {string} tipo Tipo de mensaje: 'success', 'danger', 'warning'.
+	 */
+	_feedback_RUD(mensaje, tipo = 'success') {
+		const $feedback = document.querySelector('[data-rud="feedback"]');
+		if (!$feedback) return;
+		$feedback.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
+		// si se envía mensaje = '', borra el mensaje del feedback
+		if (!mensaje) {
+			$feedback.classList.add('d-none');
+			$feedback.textContent = '';
+			return;
+		}
+		// si se envía mensaje != '', escribe el mensaje y el tipo
+		$feedback.classList.add(`alert-${tipo}`);
+		$feedback.textContent = mensaje;
+	}
+
+	/**
+	 * ## Cambia los caracteres html por utf8 (por seguridad)
+	 * @param {string} valor texto que se quiere quitar html (Es un por si acaso)
+	 */
+	static _escapar_html_RUD(valor) {
+		return String(valor)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+	
+	/** ## 👂 PANEL DE FILTROS PLANTILLA / PUBLICA
+	 * ### Actualiza la UI + Pone los Listeners para la visualización que ejecuta la Lógica cuando se Seleccionan los Filtros.
+	 * ### Los controles de filtro están definidos en index.html.
+	*/
+	_filtros_plantilla_publica_RUD(){
+		const $activarFiltros = document.getElementById('activar-filtros-rud');
+		const $optionsPanel = document.getElementById('opciones-personalizadas');
+		const $es_cerrada = document.getElementById('check-cerrada');
+		const $es_favorita = document.getElementById('check-favorita');
+
+		if (!$activarFiltros || !$optionsPanel || !$es_cerrada || !$es_favorita) return;
+
+		const actualizarFiltros = () => {
+			$optionsPanel.classList.toggle('filtros-inactivos-rud', !$activarFiltros.checked);
+			this._renderizar_lista_filtrada_RUD();
+		};
+
+		$activarFiltros.addEventListener('change', actualizarFiltros);
+		$es_cerrada.addEventListener('change', actualizarFiltros);
+		$es_favorita.addEventListener('change', actualizarFiltros);
+		
+	}
+
+	/** Muestra todos los registros o la coincidencia exacta de los filtros activos. */
+	_renderizar_lista_filtrada_RUD(){
+		if (!Array.isArray(this.lista_fotos_RUD)) return;
+		const filtrosActivos = document.getElementById('activar-filtros-rud')?.checked;
+		let lista = this.lista_fotos_RUD;
+		if (filtrosActivos) {
+			const esCerrada = document.getElementById('check-cerrada')?.checked ?? false;
+			const esFavorita = document.getElementById('check-favorita')?.checked ?? false;
+			lista = lista.filter(foto =>
+				Boolean(foto.ficha_foto?.es_cerrada) === esCerrada &&
+				Boolean(foto.ficha_foto?.es_favorita) === esFavorita
+			);
+		}
+		this._inyectar_lista_registros_RUD(lista, this.RUD.$contenedor_dinamic);
+	}
+
+	/**
+	 * ### Crea una instancia del objeto Offcanvas de Bootstrap para crear/actualizar que tenemos registrado, si no existe lo crea.
+	 * {@link Foto_CRUD constructor}  */
+	_crear_offcanvas_CU() {
+		if (!this.CU.$offcanvas || !window.bootstrap?.Offcanvas) return null;
+		const ventana_CU = window.bootstrap.Offcanvas.getOrCreateInstance(this.CU.$offcanvas, {
+			backdrop: true,
+			keyboard: true,
+			scroll: false,
+		});
+		return ventana_CU || null;
+	}
+	
+
+	
+
 	// ■■■
 	// ■■■ Inicializo_listeners.
 	// ■■■
@@ -3961,21 +4011,7 @@ class Foto_CRUD{
 		cu.$ayuda_accion.textContent = 'Se creará una foto nueva. La original no se modificará.';
 	}
 	
-	// show (El inicio) Ideal para validaciones. Cuándo ocurre: En el instante exacto en que pulsas el botón o llamas a .show()
-	// shown (El final) Cuándo ocurre: Cuando la animación de apertura ha terminado por completo
-	// hide (El inicio) Cuándo ocurre: En cuanto se pulsa el botón de cerrar o la tecla ESC.
-	// hidden (El final) Cuándo ocurre: Cuando el componente ya no es visible y la animación terminó
-	// Truco Si alguna vez necesitas que el menú no se abra bajo cierta condición, usa el evento show y añade event.preventDefault(). Bootstrap detendrá la apertura antes de que empiece la animación.
-	_inicia_listeners_RUD(){
-		if (!this.RUD.$offcanvas) return;
-		const $offcanvas = this.RUD.$offcanvas;
-		// ■ Salta Cuando el offcanvas se ha cargado completamente
-		$offcanvas.addEventListener('shown.bs.offcanvas',async () => {
-			const lista_fotos = await this._get_lista_fotos_from_bbdd();
-			if(lista_fotos) this._renderizar_lista_filtrada_RUD();
-
-		});
-	}
+	
 
 	/**
 	 * ### Inicializa una sola vez las acciones del listado mediante delegación de eventos.
@@ -4189,25 +4225,7 @@ class Foto_CRUD{
 		feedback.textContent = mensaje;
 	}
 	
-	/**  UI 
-	 * ### Muestra un MENSAJE en el offcanvas de carga.
-	 * @param {string} mensaje Mensaje a mostrar.
-	 * @param {string} tipo Tipo de mensaje: 'success', 'danger', 'warning'.
-	 */
-	_feedback_RUD(mensaje, tipo = 'success') {
-		const $feedback = document.querySelector('[data-rud="feedback"]');
-		if (!$feedback) return;
-		$feedback.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
-		// si se envía mensaje = '', borra el mensaje del feedback
-		if (!mensaje) {
-			$feedback.classList.add('d-none');
-			$feedback.textContent = '';
-			return;
-		}
-		// si se envía mensaje != '', escribe el mensaje y el tipo
-		$feedback.classList.add(`alert-${tipo}`);
-		$feedback.textContent = mensaje;
-	}
+	
 	
 	/**    
 	 * ### Guarda o Actualiza una Foto 🎞️ del Salon si el usuario está autenticado.
@@ -4356,8 +4374,8 @@ class Foto_CRUD{
 		// ┌■■ Cacho los rangos de las reservas de la foto.
 		const rangos_reservas = RAN._reservas_a_rangos(dicc_api_foto.reservas || [], dicc_api_foto.indices, dimension || null);
 		
-		// ┌■■ Me aseguro de que tenga los ultimos valores.
-		RAN.to_pull('rango_matriz');
+		// ┌■■ Me aseguro de que tenga los últimos valores, sin serializar las celdas vacías.
+		RAN.to_pull('rango_matriz', false);
 		const rango_matriz = RAN?.d_rangos["rango_matriz"];
 		
 		// ┌■■ Plantas, decoración, estructura, ... cualquier 'player' NO[central o cliente]
@@ -4380,7 +4398,6 @@ class Foto_CRUD{
 			es_favorita: valores_offcanvas.es_favorita,
 			mensajes: dicc_api_foto.mensajes || {},
 			alergias: dicc_api_foto.alergias || {},
-			app_compatible: { contrato_foto: 1 },
 			rango_reservas: rangos_reservas,
 			rango_matriz: rango_matriz || { values: {} },
 			rango_otros: rangos_otros,
@@ -4423,18 +4440,7 @@ class Foto_CRUD{
 		return FotoContratoV1.normalizarSlug(valor);
 	}
 	
-	/**
-	 * ## Cambia los caracteres html por utf8 (por seguridad)
-	 * @param {string} valor texto que se quiere quitar html (Es un por si acaso)
-	 */
-	static _escapar_html_RUD(valor) {
-		return String(valor)
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;');
-	}	
+		
 	
 	/** 
 	 * ### Lógica crítica al cargar un salón Guardado.
@@ -4709,87 +4715,50 @@ class Foto_CRUD{
 		return false;
 	}
 
-	/** ## 👂 PANEL DE FILTROS PLANTILLA / PUBLICA
-	 * ### Actualiza la UI + Pone los Listeners para la visualización que ejecuta la Lógica cuando se Seleccionan los Filtros.
-	 * ### Los controles de filtro están definidos en index.html.
-	*/
-	_filtros_plantilla_publica_RUD(){
-		const $activarFiltros = document.getElementById('activar-filtros-rud');
-		const $optionsPanel = document.getElementById('opciones-personalizadas');
-		const $es_cerrada = document.getElementById('check-cerrada');
-		const $es_favorita = document.getElementById('check-favorita');
-
-		if (!$activarFiltros || !$optionsPanel || !$es_cerrada || !$es_favorita) return;
-
-		const actualizarFiltros = () => {
-			$optionsPanel.classList.toggle('filtros-inactivos-rud', !$activarFiltros.checked);
-			this._renderizar_lista_filtrada_RUD();
-		};
-
-		$activarFiltros.addEventListener('change', actualizarFiltros);
-		$es_cerrada.addEventListener('change', actualizarFiltros);
-		$es_favorita.addEventListener('change', actualizarFiltros);
-		
-	}
-
-	/** Muestra todos los registros o la coincidencia exacta de los filtros activos. */
-	_renderizar_lista_filtrada_RUD(){
-		if (!Array.isArray(this.lista_fotos_RUD)) return;
-		const filtrosActivos = document.getElementById('activar-filtros-rud')?.checked;
-		let lista = this.lista_fotos_RUD;
-		if (filtrosActivos) {
-			const esCerrada = document.getElementById('check-cerrada')?.checked ?? false;
-			const esFavorita = document.getElementById('check-favorita')?.checked ?? false;
-			lista = lista.filter(foto =>
-				Boolean(foto.ficha_foto?.es_cerrada) === esCerrada &&
-				Boolean(foto.ficha_foto?.es_favorita) === esFavorita
-			);
-		}
-		this._inyectar_lista_registros_RUD(lista, this.RUD.$contenedor_dinamic);
-	}
+	
 	
 	// ■■■
 	// ■■■ Helpper's
 	// ■■■
 
-	/** 🖼️ UI 🖼️
-	 * ### Cambia el icono de ver-info. Toma los datos de this.registro_abierto_.
-	 */
-	_set_UI_camara(registro_info =  null) {
-		const icono = e_Salon._to_element(this.Salon?.bi_nav?.cu) || null;
-		if (!icono) return;
+	// /** 🖼️ UI 🖼️
+	//  * ### Cambia el icono de ver-info. Toma los datos de this.registro_abierto_.
+	//  */
+	// _set_UI_camara(registro_info =  null) {
+	// 	const icono = e_Salon._to_element(this.Salon?.bi_nav?.cu) || null;
+	// 	if (!icono) return;
 
-		const FA = registro_info;
-		if (FA) {
+	// 	const FA = registro_info;
+	// 	if (FA) {
 
-			icono.classList.add('text-success');	// Verde
-			icono.classList.replace('bi-camera', 'bi-camera-fill'); // Intercambio de clase Bootstrap Icons
+	// 		icono.classList.add('text-success');	// Verde
+	// 		icono.classList.replace('bi-camera', 'bi-camera-fill'); // Intercambio de clase Bootstrap Icons
 
-			icono.setAttribute('title', tooltip_text);
-			icono.setAttribute('data-bs-title', tooltip_text);
-			icono.setAttribute('data-bs-original-title', tooltip_text);
-			icono.setAttribute('data-bs-toggle', 'tooltip');			
-			icono.setAttribute('data-bs-html', 'true');
-			icono.setAttribute('data-bs-custom-class', 'tooltip-wide');
-			// icono.setAttribute('data-bs-custom-class', 'tooltip-left');
-		} else {
-			icono.classList.remove('text-success');			
-			icono.classList.replace('bi-camera-fill', 'bi-camera');
+	// 		icono.setAttribute('title', tooltip_text);
+	// 		icono.setAttribute('data-bs-title', tooltip_text);
+	// 		icono.setAttribute('data-bs-original-title', tooltip_text);
+	// 		icono.setAttribute('data-bs-toggle', 'tooltip');			
+	// 		icono.setAttribute('data-bs-html', 'true');
+	// 		icono.setAttribute('data-bs-custom-class', 'tooltip-wide');
+	// 		// icono.setAttribute('data-bs-custom-class', 'tooltip-left');
+	// 	} else {
+	// 		icono.classList.remove('text-success');			
+	// 		icono.classList.replace('bi-camera-fill', 'bi-camera');
 
-			icono.setAttribute('title', 'Ver Info Salon');
-			icono.removeAttribute('data-bs-title');
-			icono.removeAttribute('data-bs-original-title');
-			icono.removeAttribute('data-bs-toggle');
-			icono.removeAttribute('data-bs-html'); // Limpiamos html.
-			icono.removeAttribute('data-bs-custom-class');
-		}
+	// 		icono.setAttribute('title', 'Ver Info Salon');
+	// 		icono.removeAttribute('data-bs-title');
+	// 		icono.removeAttribute('data-bs-original-title');
+	// 		icono.removeAttribute('data-bs-toggle');
+	// 		icono.removeAttribute('data-bs-html'); // Limpiamos html.
+	// 		icono.removeAttribute('data-bs-custom-class');
+	// 	}
 		
-		if (window.bootstrap?.Tooltip) {
-			const tooltip = window.bootstrap.Tooltip.getInstance(icono);
-			tooltip?.dispose();
-			window.bootstrap.Tooltip.getOrCreateInstance(icono);
-		}
-	}
+	// 	if (window.bootstrap?.Tooltip) {
+	// 		const tooltip = window.bootstrap.Tooltip.getInstance(icono);
+	// 		tooltip?.dispose();
+	// 		window.bootstrap.Tooltip.getOrCreateInstance(icono);
+	// 	}
+	// }
 
 	/** 
 	 * @param {*} activar 
@@ -4901,15 +4870,15 @@ class Foto_CRUD{
 			if (!response.ok) throw new Error('Error de red');
 			const data_json = await response.json();
 			
-			// ┌•• Me Guardo una copia 💾
 			this.lista_fotos_RUD = data_json;
-			this.is_lista_registros_completa = true;			
-
-			return this.lista_fotos_RUD;
+			
+			return data_json;
+		
 		} catch (error) {
 			// 🆕 Aqui tendría que cachar el tipo de error para mandar un mensaje personalizado
 			console.error("Fail al cargar los registros de fotos:", error);
 			this.is_lista_registros_completa = false;			
+			this.lista_fotos_RUD = [];
 			return [];
 		}
 	}

@@ -37,7 +37,7 @@ const CLAVES_SALON = new Set([
 
 const CLAVES_APP = new Set(['d_indices', 'reservas']);
 const CLAVES_FICHA = new Set(['titulo', 'mensaje', 'es_cerrada', 'es_favorita']);
-const CLAVES_MOTORES = new Set(['motor_mensajes', 'motor_alergias', 'app_compatible']);
+const CLAVES_MOTORES = new Set(['motor_mensajes', 'motor_alergias',]);
 const CLAVES_RANGOS = new Set(['rango_reservas', 'rango_matriz', 'rango_otros']);
 
 /** ### Comprueba si un valor es un diccionario JSON ordinario. */
@@ -308,9 +308,7 @@ function sanearMotores(motores, idsValidos, errores, avisos) {
   if (!esObjeto(motores.motor_alergias)) {
     errores.push('/motores/motor_alergias: debe ser un objeto.');
   }
-  if (!esObjeto(motores.app_compatible)) {
-    errores.push('/motores/app_compatible: debe ser un objeto.');
-  }
+  
 
   const mensajes = {};
   for (const [idElemento, mensaje] of Object.entries(motores.motor_mensajes || {})) {
@@ -346,7 +344,6 @@ function sanearMotores(motores, idsValidos, errores, avisos) {
   return {
     motor_mensajes: mensajes,
     motor_alergias: alergias,
-    app_compatible: motores.app_compatible,
   };
 }
 
