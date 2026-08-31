@@ -1639,7 +1639,7 @@ class Configuracion_Salon {
 		let msgs = { reservas:'', clientes:'', alergias:'' };
 		try {
 			// ■■■■■■■■■■■■■■■ DICCIONARIO DE CONFIGURACION 
-			const msg_json_config = `<h6>• DICCIONARIO CONFIGURACION</h6>\n${JSON.stringify(this.diccionario.salon, null, 2)}`;
+			// const msg_json_config = `<h6>• DICCIONARIO CONFIGURACION</h6>\n${JSON.stringify(this.diccionario.salon, null, 2)}`;
 			
 			// ■■■■■■■■■■■■■■■ DICCIONARIO DE RESERVAS			
 			const matriz_reservas_flat = this.Salon._get_array_reservas_flat();   
@@ -1677,7 +1677,7 @@ class Configuracion_Salon {
 			
 			// ■ ■ ■ ■ ■ ■ ■ ■  MOSTRAMOS LOS DATOS DE LA APP EN UN OBJETO BOOTSTRAP 'MODAL'
 			// this.ver_info_salon(msg_data_salon + '\n\n' + msg_json_config) ;
-			this.__abrir_ventana_informacion(msg_data_salon + '\n' + msg_json_config) ;
+			this.__abrir_ventana_informacion(msg_data_salon) ;
 			
 		} catch (error) {
 			// console.log('Error al generar el informe del salón:', error);
@@ -3242,6 +3242,7 @@ class Login_Modal {
                                 <span class="input-group-text bg-light"><i class="bi bi-key js-ver-pass"></i></span>
                                 <input type="password" id="register-password" name="password" class="form-control" placeholder="Crea contraseña" required>
                             </div>
+							<!-- 
 							<br>
 							<div class="form-check form-check-inline mb-2">
 								<input class="form-check-input" type="radio" name="grupo_rol" id="radioId1" value="admin">
@@ -3251,12 +3252,15 @@ class Login_Modal {
 								<input class="form-check-input" type="radio" name="grupo_rol" id="radioId2" value="staff" checked>
 								<label class="form-check-label text-black-50" for="radioId2" >Derechos de Staff</label>
 							</div>
-							<br><br>
+							-->
+							<br>
+							
 							<div class="form-check mb-2">
-								<input id="registro_activo" class="form-check-input" type="checkbox" name="activo" checked>
-								<label class="form-check-label text-black-50" for="registro_activo">Usuario Activo</label>
+							<input id="registro_activo" class="form-check-input" type="checkbox" name="activo" checked>
+							<label class="form-check-label text-black-50" for="registro_activo">Usuario Activo</label>
 							</div>
-
+							
+							<br>
 
 							<!-- ■■ BOTON SUBMIT ■■ -->
                             <button type="submit" id="register-submit" class="btn btn-success w-100 fw-bold">Crear Cuenta</button>

@@ -195,6 +195,30 @@ Offcanvas de Bootstrap para crear/actualizar (data-offcanvas-cu)
 [data-offcanvas-cu="titulares"] { color: #353228; font-weight: 700; letter-spacing: -0.5px; font-size: 1.25rem; }
 /* ┌■■ Cuerpo y Formulario --- */
 [data-offcanvas-cu="contenedor-formulario"] { padding: 2rem; background-color: #fdf7df; }
+
+/* ┌■■ Selector de acción con aspecto de pestañas --- */
+[data-offcanvas-cu="selector-accion"] .action-tabs {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));align-items: end; border-bottom: 2px solid #bfb584;}
+[data-offcanvas-cu="selector-accion"] .action-tabs__tab {
+  position: relative; margin: 0 2px -2px; padding: 0.65rem 0.35rem 0.6rem; border: 1px solid transparent;
+  border-bottom: 2px solid #bfb584; border-radius: 9px 9px 0 0; color: #6d674f; 
+  font-size: 0.78rem; font-weight: 700; line-height: 1.2; text-align: center;   cursor: pointer;
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+[data-offcanvas-cu="selector-accion"] .action-tabs__tab:hover {  
+  color: #2f7a3a;  background-color: rgba(232, 223, 184, 0.45);}
+[data-offcanvas-cu="selector-accion"] .btn-check:checked + .action-tabs__tab {  
+  color: #2f7a3a;  background-color: #fffdf3;  border-color: #bfb584 #bfb584 #fffdf3; }
+[data-offcanvas-cu="selector-accion"] .btn-check:focus-visible + .action-tabs__tab {
+  outline: 3px solid rgba(47, 122, 58, 0.25);   outline-offset: 2px;}
+[data-offcanvas-cu="selector-accion"] .btn-check:disabled + .action-tabs__tab {
+  color: #9b9789;
+  background: repeating-linear-gradient(-45deg, #e9e5d8, #e9e5d8 5px, #f4f1e7 5px, #f4f1e7 10px  );
+  border-color: transparent transparent #bfb584; cursor: not-allowed;  opacity: 0.7;
+}
+[data-offcanvas-cu="selector-accion"] .btn-check:disabled + .action-tabs__tab::after {
+  content: " 🔒";   font-size: 0.7rem; 
+}
 /* ┌■■ Inputs de Texto y Textarea */
 [data-offcanvas-cu="titulo"],
 [data-offcanvas-cu="slug"],
