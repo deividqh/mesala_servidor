@@ -155,6 +155,11 @@ DEL OFFCANVAS RUD: filtros del listado
 .filtro-activador-rud input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; background: #6d674f; border-radius: 50%; transition: transform 0.18s ease; }
 .filtro-activador-rud input:checked::after { background: #2f7a3a; transform: translateX(21px); }
 .filtro-activador-rud input:focus-visible { outline: 3px solid rgba(47, 122, 58, 0.25); outline-offset: 2px; }
+
+.estado-filtros-rud { margin-left: auto; color: #6c757d; font-weight: 600; text-align: right; }
+.estado-filtros-rud[data-estado="aplicados"] { color: #2f7a3a; }
+.estado-filtros-rud[data-estado="sin-coincidencias"] { color: #a16207; }
+
 #opciones-personalizadas { transition: opacity 0.18s ease; }
 #opciones-personalizadas.filtros-inactivos-rud { opacity: 0.45; pointer-events: none; }
 

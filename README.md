@@ -58,8 +58,6 @@ El núcleo del proyecto reside en `div_x_div.js` y `Salon.js`. Se ha utilizado u
 4.  **`e_Salon` (Extiende `Tablero_Drop`):**
     * **Clase Principal.** Contiene la lógica de negocio específica del restaurante.
     * Gestiona las **Reservas** (agrupación de mesas).
-    * Maneja los **PopOvers** y la interacción con la API (Guardar/Cargar).
-    * Controla el reconocimiento de voz y la lógica de colores por reserva.
 
 ---
 

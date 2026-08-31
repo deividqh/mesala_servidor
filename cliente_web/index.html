@@ -301,13 +301,14 @@
 -->
     <div id="offcanvas_RUD" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="load_Label" data-rud="offcanvas">
       <div class="offcanvas-header">
-          <h5 class="offcanvas-title" id="load_Label" data-rud="titulares">📝 Listado de •Fichas• de Foto.</h5>
+          <h5 class="offcanvas-title" id="load_Label" data-rud="titulares">📝 Listado de Fotos.</h5>
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" data-rud="cerrar"></button>
       </div>  
       <div class="visibilidad-card-rud p-4 shadow-sm">
       <div class="filtro-activador-rud">
           <label for="activar-filtros-rud">Filtrar:</label>
           <input type="checkbox" id="activar-filtros-rud" role="switch" aria-controls="opciones-personalizadas">
+           <span class="estado-filtros-rud" data-rud="estado-filtros" aria-live="polite">Filtros NO aplicados</span>
       </div>
       <!-- 
       Opciones del filtro personalizado 
@@ -366,7 +367,7 @@
         </template>
 
         <template data-rud-template="vacio">
-            <div class="text-white-50 p-3 text-center">Aún no has guardado ningún salón.</div>
+            <div class="text-white-50 p-3 text-center">No hay fotos que mostrar.</div>
         </template>
     </div>
         
