@@ -3391,7 +3391,11 @@ class Foto_CRUD{
 		this._filtros_plantilla_publica_RUD();
 		this._inicializar_acciones_listado_RUD();
 		Foto_CRUD._inicializar_bootstrap_listado_RUD(this.RUD.$contenedor_dinamic);
-		
+		this.$foto_actual = document.querySelector('[data-config-foto-actual]');
+		document.getElementById('foto-actual-tab')?.addEventListener('shown.bs.tab', () => {
+			this._pintar_foto_actual(this.foto_work);
+		});
+		this._pintar_foto_actual();		
 		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 		// ■ CREAR BS's PERO NO MOSTRAR 
 		this.ventana_CU = this._crear_offcanvas_CU();
@@ -4584,6 +4588,7 @@ class Foto_CRUD{
 	 */
 	_set_UI_ojo(registro_info = null){
 		const icono = e_Salon._to_element(this.Salon?.bi_nav?.rud) || null;
+		this._pintar_foto_actual(registro_info);
 		if (!icono) return;
 
 		const FA = registro_info;
@@ -4634,6 +4639,61 @@ class Foto_CRUD{
 		}
 	}
 
+	/** Muestra la foto cargada o, si aún no existe, los índices que permanecen en memoria. */
+	_pintar_foto_actual(foto = null) {
+		const contenedor = this.$foto_actual || document.querySelector('[data-config-foto-actual]');
+		if (!contenedor) return;
+
+		const ficha = foto?.ficha_foto || {};
+		const estaGuardada = Boolean(ficha.titulo?.trim());
+		const escapar = Foto_CRUD._escapar_html_RUD;
+		const valor = (dato, alternativa = '—') => escapar(String(dato ?? alternativa));
+		const fecha = (dato) => dato ? valor(new Date(dato).toLocaleString('es-ES')) : '—';
+		const estado = (activo) => `<span class="current-photo-status${activo ? ' current-photo-status--yes' : ''}">${activo ? 'Sí' : 'No'}</span>`;
+
+		if (estaGuardada) {
+			const campos = [
+				['Slug', foto.slug],
+				['Tipo de salón', foto.salon?.tipo_salon],
+				['Favorita', estado(Boolean(ficha.es_favorita))],
+				['Cerrada', estado(Boolean(ficha.es_cerrada))],
+				['Capturada', fecha(foto.captured_at)],
+				['Actualizada', fecha(foto.updated_at)],
+				['Creada', fecha(foto.created_at), true],
+			];
+			const detalle = campos.map(([etiqueta, dato, anchoCompleto]) => `
+				<div class="current-photo-field${anchoCompleto ? ' current-photo-field--wide' : ''}">
+					<dt>${etiqueta}</dt><dd>${dato ?? '—'}</dd>
+				</div>`).join('');
+
+			contenedor.innerHTML = `
+				<article class="current-photo-card">
+					<header class="current-photo-card__header">
+						<h3 class="current-photo-card__title">${valor(ficha.titulo)}</h3>
+						<p class="current-photo-card__message">${valor(ficha.mensaje, 'Sin mensaje')}</p>
+					</header>
+					<div class="current-photo-card__body"><dl class="current-photo-fields">${detalle}</dl></div>
+				</article>`;
+			return;
+		}
+
+		const indices = this.Salon?.api_indices?.() || {};
+		const elementos = Object.entries(indices)
+			.sort(([, indiceA], [, indiceB]) => Number(indiceA) - Number(indiceB))
+			.map(([id, indice]) => `<div class="current-photo-index"><strong>${valor(id)}</strong><span>celda ${valor(indice)}</span></div>`)
+			.join('');
+		contenedor.innerHTML = `
+			<article class="current-photo-card">
+				<header class="current-photo-card__header">
+					<h3 class="current-photo-card__title">Foto en Memoria</h3>
+					<p class="current-photo-card__message">Distribución actual del salón, todavía sin guardar.</p>
+				</header>
+				<div class="current-photo-card__body">
+					<h4 class="config-section__title">Índices del salón</h4>
+					${elementos ? `<div class="current-photo-indexes">${elementos}</div>` : '<p class="current-photo-indexes-empty">El salón no contiene elementos.</p>'}
+				</div>
+			</article>`;
+	}
 
 	/** 🎞️🎞️🎞️🎞️🎞️🎞️🎞️🎞️🎞️
 	 * genera un titulo automatico con la fecha y hora actual que se puede cambiar.

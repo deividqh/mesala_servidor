@@ -64,6 +64,24 @@ TABS DEL OFFCANVAS de Configuracion
 [data-tipo-bs="offcanvas-configuracion"] .config-catalog-table td { padding: 0.55rem 0.65rem; text-align: left; vertical-align: top; border-bottom: 1px solid #d8d0ad; }
 [data-tipo-bs="offcanvas-configuracion"] .config-catalog-table th { color: #5b563f; background: #f7efcf; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 [data-tipo-bs="offcanvas-configuracion"] .config-catalog-table tbody tr:hover { background: #fffdf3; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-card { overflow: hidden; background: #fff8dc; border: 1px solid #d8d0ad; border-radius: 10px; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-card__header { padding: 0.85rem; background: #f7efcf; border-bottom: 1px solid #d8d0ad; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-card__title { margin: 0; color: #353228; font-size: 1rem; font-weight: 800; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-card__message { margin: 0.3rem 0 0; color: #6d674f; font-size: 0.82rem; white-space: pre-wrap; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-card__body { padding: 0.85rem; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; margin: 0; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-field { min-width: 0; padding: 0.55rem 0.65rem; background: #fffdf3; border: 1px solid #e8dfb8; border-radius: 8px; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-field--wide { grid-column: 1 / -1; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-field dt { margin-bottom: 0.15rem; color: #5b563f; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-field dd { margin: 0; overflow-wrap: anywhere; color: #353228; font-size: 0.8rem; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-status { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 700; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-status::before { content: ''; width: 0.5rem; height: 0.5rem; background: #a44b3f; border-radius: 50%; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-status--yes::before { background: #2f7a3a; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-indexes { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: 0.45rem; margin-top: 0.75rem; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-index { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.45rem 0.55rem; background: #fffdf3; border: 1px solid #e8dfb8; border-radius: 7px; color: #5b563f; font-size: 0.72rem; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-index strong { overflow-wrap: anywhere; color: #353228; }
+[data-tipo-bs="offcanvas-configuracion"] .current-photo-indexes-empty { margin: 0.75rem 0 0; color: #6d674f; font-size: 0.8rem; text-align: center; }
+
 [data-tipo-bs="offcanvas-configuracion"] .social-icons-container { display: flex; gap: 12px; justify-content: center; border-top: 1px solid #d8d0ad; padding-top: 1.2rem; margin-top: 1.2rem; }
 /* 
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
