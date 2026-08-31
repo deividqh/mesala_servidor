@@ -3325,12 +3325,17 @@ class Foto_CRUD{
 		this.is_lista_registros_completa = false;
 
 		/** ### JSON de metadatos(titulo/slug...) de fotos. 
-		 * #### Se Carga ► {@link _get_lista_fotos_from_bbdd} - Se Usa ► {@link _get_regitro_from_lista} | {@link update} 
+		 * ### Se Carga ► {@link get_lista_fotos} - Se Usa ► {@link _get_regitro_from_lista} | {@link update}
 		 * ```javascript
 		 * ejemplo = {id: 45, titulo:'Lunes', slug_publico:'lunes', mensaje_publico:'', es_favorita:false, es_cerrada=true , captured_at:"2026-01-21T22:22:29.119Z" , updated_at:"2026-01-21T22:22:29.119Z", created_at:"2026-01-21T22:22:29.119Z" }
 		 * ```
 		 * */		
-		this.lista_fotos_RUD = null		
+		this.lista_fotos_RUD = null;		
+		/** Indica si una escritura ha dejado obsoleto el listado en memoria. */
+		this.cambia_lista_foto = true;
+		/** Evita duplicar la consulta si dos eventos solicitan el listado a la vez. */
+		this._carga_lista_fotos_pendiente = null;
+		this._token_lista_fotos = null;
 
 		/** ## Última foto de Salon ┌•abierta• desde offcanvas-RUD. */
 		this.foto_work = null;
@@ -3494,9 +3499,12 @@ class Foto_CRUD{
 				const avisos = guardado_bd.warnings?.length ? ` Avisos: ${guardado_bd.warnings.length}.` : '';
 				this._feedback_CU(`♻️ Foto '${valores.slug}' ${accion} con éxito. ✔️ ${hora}.${avisos}`, 'success');
 				
+				// La creación, copia o actualización invalida el listado almacenado.
+				this.cambia_lista_foto = true;
+
 				// ┌•••••••••••••••••••••••••••••••••••••
 				// ┌•• Despues de Guardar o Actualizar Ok ► Cambio la lista para que tenga los ultimos cambios.
-				const lista_fotos_rud = await this._get_lista_fotos_from_bbdd();
+				const lista_fotos_rud = await this.get_lista_fotos();
 				if(!lista_fotos_rud) 
 					throw `❌ Error ::: Guardado Ok, pero Error Recargando la lista de registros.`;
 				else
@@ -3554,7 +3562,7 @@ class Foto_CRUD{
 			if (this.is_lista_registros_completa === false) {
 				try {
 					// ┌■ Carga la lista de Fotos 
-					const lista_fotos_rud = await this._get_lista_fotos_from_bbdd();					
+					const lista_fotos_rud = await this.get_lista_fotos();
 					// ┌■ Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
 					if(lista_fotos_rud) {
 						// this._inyectar_lista_registros_RUD(lista_fotos_rud, this.RUD.$contenedor_dinamic);
@@ -3591,7 +3599,9 @@ class Foto_CRUD{
 			if (!response.ok)  throw new Error('Error al eliminar');				
 
 			// ► IF todo Ok ✔️  Volvemos a cargar las fotos del salon en el offcanvas
-			const lista_fotos_rud = await this._get_lista_fotos_from_bbdd();
+			this.cambia_lista_foto = true;
+
+			const lista_fotos_rud = await this.get_lista_fotos();
 			// ┌•• Crea la LISTA DINAMICA de Photos de Salones y la Introduce en el OffCanvas.
 			// if(lista_fotos_rud) this._inyectar_lista_registros_RUD(lista_fotos_rud, this.RUD.$contenedor_dinamic);
 			if(lista_fotos_rud) this._renderizar_lista_filtrada_RUD();
@@ -3838,7 +3848,7 @@ class Foto_CRUD{
 		const $offcanvas = this.RUD.$offcanvas;
 		// ■ Salta Cuando el offcanvas se ha cargado completamente
 		$offcanvas.addEventListener('shown.bs.offcanvas',async () => {
-			const lista_fotos = await this._get_lista_fotos_from_bbdd();
+			const lista_fotos = await this.get_lista_fotos();
 			if(lista_fotos) this._renderizar_lista_filtrada_RUD();
 
 		});
@@ -4728,15 +4738,41 @@ class Foto_CRUD{
 		return `foto_${fecha}__${horas}h_${minutos}'_${segundos}"`;
 	}
 
-	/** 
-	 * ## Petición asíncrona para traer las fotos del usuario.
-	 * ### Limpia el contenedor y renderiza de nuevo. Carga dinámica de la Consulta a la BDD.
-	 * {@link _inyectar_lista_registros_RUD}
+	async get_lista_fotos() {
+		const token = localStorage.getItem('token');
+		const cambia_usuario = token !== this._token_lista_fotos;
+
+		if (!this.cambia_lista_foto && !cambia_usuario && Array.isArray(this.lista_fotos_RUD)) {
+			return this.lista_fotos_RUD;
+		}
+
+		if (this._carga_lista_fotos_pendiente) return this._carga_lista_fotos_pendiente;
+
+		this._carga_lista_fotos_pendiente = (async () => {
+			const lista_fotos = await this._get_lista_fotos_from_bbdd();
+
+			if (lista_fotos) {
+				this.lista_fotos_RUD = lista_fotos;
+				this.cambia_lista_foto = false;
+				this.is_lista_registros_completa = true;
+				this._token_lista_fotos = token;
+			} else {
+				this.cambia_lista_foto = true;
+				this.is_lista_registros_completa = false;
+			}
+
+			this._carga_lista_fotos_pendiente = null;
+			return lista_fotos;
+		})();
+
+		return this._carga_lista_fotos_pendiente;
+	}
+
+	/**
+	 * ## Petición asíncrona para obtener las fotos del usuario desde la BDD.
+	 * @returns {Promise<Array|null>} Listado obtenido o null si falla la petición.
 	 */
 	async _get_lista_fotos_from_bbdd() {
-		const cd = this.RUD.$contenedor_dinamic;
-
-		this.lista_fotos_RUD = [];
 		try {
 			const token = localStorage.getItem('token');
 			const response = await fetch('/api/fotos/mis-fotos', {
@@ -4747,17 +4783,12 @@ class Foto_CRUD{
 			});
 
 			if (!response.ok) throw new Error('Error de red');
-			const data_json = await response.json();
-			
-			this.lista_fotos_RUD = data_json;
-			
-			return data_json;
-		
+			const lista_fotos = await response.json();
+			if (!Array.isArray(lista_fotos)) throw new Error('Listado de fotos inválido');
+
+			return lista_fotos;
 		} catch (error) {
-			// 🆕 Aqui tendría que cachar el tipo de error para mandar un mensaje personalizado
-			console.error("Fail al cargar los registros de fotos:", error);
-			this.is_lista_registros_completa = false;			
-			this.lista_fotos_RUD = [];
+			console.error('Fail al cargar los registros de fotos:', error);
 			return [];
 		}
 	}
