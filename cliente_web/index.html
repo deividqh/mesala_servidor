@@ -112,22 +112,21 @@
     </div>
     <div class="offcanvas-body">
 
-      <!-- Tabs personalizadas -->
+      <!-- Pestañas de configuración -->
       <div class="custom-tabs">
           <ul class="nav nav-tabs config-tabs" role="tablist" aria-label="Secciones de configuración">
           <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="config-salon-tab" data-bs-toggle="tab" data-bs-target="#config-salon" type="button" role="tab" aria-controls="config-salon" aria-selected="true">Salón</button>
+            <button class="nav-link active" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab" aria-controls="config" aria-selected="true">Config</button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="config-players-tab" data-bs-toggle="tab" data-bs-target="#config-players" type="button" role="tab" aria-controls="config-players" aria-selected="false">Players</button>
+             <button class="nav-link" id="foto-actual-tab" data-bs-toggle="tab" data-bs-target="#foto-actual" type="button" role="tab" aria-controls="foto-actual" aria-selected="false">Foto Actual</button>
           </li>
         </ul>
 
         <div class="tab-content config-tab-content">
 
 
-          <!-- ■■■■■ Contenido ■■■■■ -->
-          <div class="tab-pane fade show active tab-content-custom" id="config-salon" role="tabpanel" aria-labelledby="config-salon-tab" tabindex="0"></div>
+          <div class="tab-pane fade show active tab-content-custom" id="config" role="tabpanel" aria-labelledby="config-tab" tabindex="0">
             
             <!-- ┌•••••••••••••• -->
             <!-- ┌•• Formulario  -->
@@ -165,9 +164,7 @@
                 </div>
 
               </form>
-          </div>
-
-          <div class="tab-pane fade tab-content-custom" id="config-players" role="tabpanel" aria-labelledby="config-players-tab" tabindex="0">
+          
 
             <section class="config-section config-section--catalogo" aria-labelledby="config_players_catalogo_title">
               <h3 id="config_players_catalogo_title" class="config-section__title">Catálogo de elementos</h3>
@@ -175,6 +172,8 @@
             </section>
 
           </div>
+
+          <div class="tab-pane fade tab-content-custom" id="foto-actual" role="tabpanel" aria-labelledby="foto-actual-tab" tabindex="0"></div>
 
         </div>
 
