@@ -4735,7 +4735,8 @@ class Foto_CRUD{
 		const segundos = ahora.getSeconds().toString().padStart(2, '0');
 		
 		// Construir la cadena final		
-		return `foto_${fecha}__${horas}h_${minutos}'_${segundos}"`;
+		// return `foto_${fecha}__${horas}h_${minutos}'_${segundos}"`;
+		return `${fecha}__${horas}h_${minutos}'_${segundos}"`;
 	}
 
 	async get_lista_fotos() {
