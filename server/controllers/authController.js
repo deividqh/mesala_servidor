@@ -21,7 +21,7 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
  * @param {object} user = {id: string , username: string , email: string , role: string}
  * @returns 
  */
-const set_payload_usuario = (user) => ({
+const set_ficha_usuario = (user) => ({
   id: user.id,
   username: user.username,
   email: user.email,
@@ -36,7 +36,7 @@ const set_payload_usuario = (user) => ({
  */
 const set_response_authentication = (user) => {
   // ■ Genera el "payload" limpio.
-  const payload = set_payload_usuario(user);
+  const payload = set_ficha_usuario(user);
   
   // ■■■■■■■■■■■■■■■■■■■■■■■■■
   // Firma el Token (JWT): Crea la "llave digital" (token) que el usuario usará para futuras peticiones.

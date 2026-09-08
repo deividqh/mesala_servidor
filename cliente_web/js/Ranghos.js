@@ -2374,16 +2374,22 @@ class Rango_Ghost extends Working_Rangos{
  * ### Operaciones Especiales. No operativo de momento.
  *  ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘
 */
-class Wedding_Rangos {
+class Wedding_Rangos extends Rango_Ghost {
 	/**
 	 * ## Trata las operaciones que se pueden hacer con dos rangos. Macro de Trabajo sobre Rangos.
 	 * ### Union, Intersección, _is_continuos, 	 */
-	constructor(instancia_matriz_plana = null) {			
-		if (!instancia_matriz_plana) return null;		
-		// super(instancia_matriz_plana);	
-
-		this.rangos = {app:{}, temp:{}, basic:{}};		
+	constructor(api_rangos = null) {
+		super(api_rangos);
     }	
+
+	/** Devuelve las celdas de un nombre de rango o de una ficha de rango. */
+	_obtener_celdas_rango(rango) {
+		const ficha = this.read_diccionarios(rango);
+		if (!ficha) return null;
+
+		const celdas = Object.keys(ficha.geo || {});
+		return celdas.every(celda => this.is_OK(celda)) ? celdas : null;
+	}
 	
 	/**
 	 * ## Calcula la unión de dos rangos y la devuelve como colección de celdas conectadas.
@@ -2394,10 +2400,8 @@ class Wedding_Rangos {
 	 */
 	_get_union(nombre_rango_a = '', nombre_rango_b = '') {
 		// ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘
-		// const celdas_a__ = obtener_celdas(nombre_rango_a);
-		const celdas_a = this._get_celdas(nombre_rango_a);
-
-		const celdas_b = this._get_celdas(nombre_rango_b);
+		const celdas_a = this._obtener_celdas_rango(nombre_rango_a);
+		const celdas_b = this._obtener_celdas_rango(nombre_rango_b);
 		// ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘
 
 		if (!celdas_a || !celdas_b) return null;
@@ -2437,30 +2441,16 @@ class Wedding_Rangos {
 	_get_interseccion(nombre_rango_a = '', nombre_rango_b = '') {
 
 		// ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘
-		const celdas_a = this._get_celdas(nombre_rango_a);		
-		const celdas_b = this._get_celdas(nombre_rango_b);
+		const celdas_a = this._obtener_celdas_rango(nombre_rango_a);
+		const celdas_b = this._obtener_celdas_rango(nombre_rango_b);
 		// ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘
 
 		if (!celdas_a || !celdas_b) return null;
 
 		const set_b = new Set(celdas_b);
 		const compartidas = celdas_a.filter(celda => set_b.has(celda));
-
-		if (compartidas.length === 0) return null;
-
-		const set_a = new Set(celdas_a);
-		const a_en_b = celdas_a.every(celda => set_b.has(celda));
-		const b_en_a = celdas_b.every(celda => set_a.has(celda));
-
-		if (a_en_b || b_en_a) {
-			const rango_grande = a_en_b ? celdas_b : celdas_a;
-			const rango_pequeno = a_en_b ? celdas_a : celdas_b;
-			const set_pequeno = new Set(rango_pequeno);
-			const diferencia = rango_grande.filter(celda => !set_pequeno.has(celda));
-			return diferencia.map(celda => [celda]);
-		}
-
-		return [compartidas];
+		return compartidas.length > 0 ? [compartidas] : [];
+		
 	}
 
 	/**
@@ -2471,7 +2461,7 @@ class Wedding_Rangos {
 	_is_continuos(array_celdas = []) {
 		if (!Array.isArray(array_celdas) || array_celdas.length === 0) return false;
 
-		const celdas_planas = array_celdas.flat();
+		const celdas_planas = array_celdas.flat(Infinity);
 		if (celdas_planas.length === 0) return false;
 
 		const celdas = celdas_planas.filter(celda => typeof celda === 'string' && this.is_OK(celda));
@@ -2510,15 +2500,14 @@ class Wedding_Rangos {
 
 	/** ### Devuelve celdas_comunes, celdas_no_comunes, celdas_totales(celdas implicadas) de dos rangos */
     _celdas_comunes(rango_a, rango_b) {
-        const a = this.api_read_diccionarios(rango_a);
-        const b = this.api_read_diccionarios(rango_b);
+        const a = this.read_diccionarios(rango_a);
+        const b = this.read_diccionarios(rango_b);
 
         if (!a || !b) return null;
 
-        // const celdas_rango_a = rango_a?.geo ? Object.keys(rango_a.geo) : [];
-        // const celdas_rango_b = rango_b?.geo ? Object.keys(rango_b.geo) : [];
-		const celdas_rango_a = Object.keys(a.geo || {});
-        const celdas_rango_b = Object.keys(b.geo || {});
+        const celdas_rango_a = this._obtener_celdas_rango(a);
+		const celdas_rango_b = this._obtener_celdas_rango(b);
+		if (!celdas_rango_a || !celdas_rango_b) return null;
 
         // Casos base: si un rango no tiene celdas, el resultado es el otro rango
         if (celdas_rango_a.length > 0 && celdas_rango_b.length === 0) {
@@ -2562,8 +2551,8 @@ class Wedding_Rangos {
 	*/
     _get_tipo_relacion(rango_a, rango_b) {
 		
-		const a = this.api_read_diccionarios(rango_a);
-		const b = this.api_read_diccionarios(rango_b);
+		const a = this.read_diccionarios(rango_a);
+		const b = this.read_diccionarios(rango_b);
 		if (!a || !b) return null;
 		
 		const analisis = this._celdas_comunes(rango_a, rango_b);
@@ -2609,12 +2598,12 @@ class Wedding_Rangos {
         };
     }	
 	/** ## Devuelve la ficha rango. Si viene como nombre, Busca por todos los rangos   */
-	api_read_diccionarios(rango){
+	read_diccionarios(rango){
 		// ┌• Viene como ''. Le devuelvo todos los rangos de app.
-		if(!rango) 
-			return this.rangos.app
+		if (!rango) return this.rango_repository.obtener_fuente('rangos');
+
 		if (typeof rango === 'string') {
-			return this.rango_repository.obtener(rango, ['rangos']);
+			return this.rango_repository.obtener(rango);
 		}
 		// ┌• Viene como ficha
 		if(typeof rango === 'object' && rango.celda_inicio && rango.celda_fin && rango.dimension && rango.geo){
@@ -2632,11 +2621,11 @@ class Wedding_Rangos {
 	 * @param {String} celda_inicio_sub Celda dentro del rango base.
 	 * @returns {Object|null} Ficha de rango o null si no es válido.
 	 */
-	sub_rango(nombre_sub_rango = '', dimension_sub = { filas: 1, columnas: 1 }, celda_inicio_sub = 'A0') {
+	sub_rango(nombre_sub_rango = '', dimension_sub = { filas: 1, columnas: 1 }, celda_inicio_sub = 'A0', rango_base = 'rango_matriz') {
+		if (typeof nombre_sub_rango !== 'string' || nombre_sub_rango.trim() === '') return null;
+		nombre_sub_rango = nombre_sub_rango.trim();
+
 		try {
-			if (!nombre_sub_rango || typeof nombre_sub_rango !== 'string') throw Error('Nombre de sub-rango no válido');
-			nombre_sub_rango = nombre_sub_rango.trim();
-			// Who Is sub-rango??? 🔥 🔥 
 			
 			// Cachamos la dimensión.
 			const dimension_fc = this._normalizar_dimension(dimension_sub);
@@ -2649,7 +2638,8 @@ class Wedding_Rangos {
 			
 			// ┌• •••••    ••••• •••••                         •••••••••
 			// ┌• Cacho el Rango-Base Sobre el que devolver el sub-rango. 
-			const r_matriz = this.read_rango('rango_matriz');
+			const r_matriz = this.read_diccionarios(rango_base);
+			if (!r_matriz) throw Error('Rango base no válido');
 			// Convertimos a {fila,columna} 
 			const fc_base_inicio = this._celda_to_fc(r_matriz.celda_inicio);
 			const fc_base_fin = this._celda_to_fc(r_matriz.celda_fin);
@@ -2677,10 +2667,11 @@ class Wedding_Rangos {
 			if (!celda_fin) throw Error('No puedo Calcular celda_fin del sub-rango');
 
 
-			const _sub_rango = this._get_rango_from_cicf(celda_inicio_sub, celda_fin);
+			const ficha_sub_rango = this._get_rango_from_cicf(celda_inicio_sub, celda_fin);
+			if (!ficha_sub_rango) return null;
 
 			// ┌■ Retorno
-			return _sub_rango ? _sub_rango : this._get_ficha_vacia();
+			return this.rango_repository.guardar('rangos', nombre_sub_rango, ficha_sub_rango) || null;
 
 		} catch (error) {
 			console.log(`❌ Error ::: sub_rango() ::: ${error}`);
@@ -2688,46 +2679,10 @@ class Wedding_Rangos {
 		}
 	}	
 
-	// ■ El parametro de entrada puede ser:
-	// 		1- una dimension en formato string '3x4'  o {filas:int, columnas:int}
-	// 		2- nombre_rango(string)  
-	//   	3- un rango anonimo: { celda_inicio:str, celda_fin:str, dimension:{}, geo:{}, items:{}, values:{} }
-	//   	4- un array de rangos (union, pares, nones, interseccion, sillas_ronin)
-	// DEVUELVE SIEMPRE UN RANGO (con su ficha completa) O ficha-vacía. 🔥🔥
-	X_to_rango(argumento){
-		let Ran = null;
-		// ┌■■ Validacion de vacío
-		if(!argumento) 
-			return this._get_ficha_vacia();
-		
-		// ┌■■ Entra un ARRAY de Rangos
-		if (Array.isArray(argumento)) {
-			// ┌•• Puede ser: 'union' / 'pares' / 'nones' / 'sillas_ronin' / 'interseccion'
-			Ran = this._crear_ghost_desde_array(argumento);
-		}else if(typeof argumento === 'string'){
-			
-			const dimension_fc = this._normalizar_dimension(argumento);
+	
 
-			if(dimension_fc) {
-				// ■ dimension '3x4'
-				Ran = this._crear_marco_desde_dimension(dimension_fc.filas, dimension_fc.columnas);
-			} else{
-				// ■ 'nombre_rango' en d_rangos
-				Ran = this._crear_marco_desde_rango(argumento);
-			}
-		}else if(typeof argumento === 'object' && argumento.celda_inicio && argumento.celda_fin && argumento.geo){
-			// ■ Rango Anonimo con ficha completa.
-			Ran = this._crear_marco_desde_rango(argumento);
-		}else{
-			// ■ No se reconoce el formato de entrada.
-			return this._get_ficha_vacia();		
-		}
-
-		return Ran ? Ran : this._get_ficha_vacia();
-	}
-
-	get basics(){return this.rangos.basic;}
-	get app(){return this.rangos.app};
+	get basics(){return this.rango_repository.obtener_fuente('rangos') || {};}
+	get app(){return this.rango_repository.obtener_fuente('rangos') || {};}
 }
 
 
@@ -2867,8 +2822,7 @@ class Reserva_Range_Mapper {
 
 
 /** ## Clase para trabajar con Rangos especificamente de salon(reservas_a_rangos__ por ejemplo) */
-// class El_Rango_del_Salon extends Wedding_Rangos{
-class El_Rango_del_Salon extends Rango_Ghost{
+class El_Rango_del_Salon extends Wedding_Rangos{
 	constructor(api_rangos = null){
 		if (!api_rangos) return null;
 		// ┌■ Llamamos al padre.
@@ -2952,8 +2906,8 @@ class El_Rango_del_Salon extends Rango_Ghost{
 	}
 
 	
-	/** ## Sobre-Escribe el método de la clase 'Wedding_Rangos' añadiendo el diccionario de reservas   */
-	api_read_diccionarios(rango){
+	/** ## el diccionario de reservas   */
+	read_diccionarios(rango){
 		// ┌■ Viene como ''. 
 		if(!rango) return null;
 		// ┌■ Viene como nombre de rango. 

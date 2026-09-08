@@ -289,36 +289,59 @@ class e_Salon extends Tablero_Touch {
 		}
 
 		// 🟥 ┌•••  🟥🟥🟥🟥🟥🟥🟥			
-
+		const PRUEBAS_RAN = this.eRdS;
 		// 🧩 Crea un ghost a partir de una dimension string desde A0.
-		const rango_dim = this.eRdS.crear_marco('3x4');
-		this.eRdS.informe_marco_consola("Creo un Marco 3x4 desde A0 Sobre el Salon ... de pruebas");
+		const rango_dim = PRUEBAS_RAN.crear_marco('3x4');
+		PRUEBAS_RAN.informe_marco_consola("Creo un Marco 3x4 desde A0 Sobre el Salon ... de pruebas");
 		// 🧩 Ahora ghost va a cambiar a una dimension de 5x6 desde A0.
-		const marco_reasig = this.eRdS.crear_marco({filas:5, columnas:6});					
-		this.eRdS.informe_marco_consola("Creo un Marco 5x6 desde A0 Sobre el Salon ... de pruebas");
+		const marco_reasig = PRUEBAS_RAN.crear_marco({filas:5, columnas:6});					
+		PRUEBAS_RAN.informe_marco_consola("Creo un Marco 5x6 desde A0 Sobre el Salon ... de pruebas");
 		// 🧩 (Cuando le paso un rango nombrado hace un previo pull de los elementos).
 		// 🧩 Trabaja con arrays de Rangos formando un rango que lo engloba y values e items de cada uno de ellos sin mas info.
-		const marco_columna = this.eRdS.crear_marco('rango_fila_2');
-		this.eRdS.informe_marco_consola("Creo un Marco sobre un rango fixed: rango_fila_2");
+		const marco_columna = PRUEBAS_RAN.crear_marco('rango_fila_2');
+		PRUEBAS_RAN.informe_marco_consola("Creo un Marco sobre un rango fixed: rango_fila_2");
 
 		// 🧩 Prueba de copia de un rango nombrado.
-		// const copia = this.eRdS.copy_en_d_rangos('rango_columna_0', 'rango_colum_one');
+		// const copia = PRUEBAS_RAN.copy_en_d_rangos('rango_columna_0', 'rango_colum_one');
 		// 🧩 Creo un marco de rango_matriz.
-		const marco_matriz = this.eRdS.crear_marco('rango_matriz');			
+		const marco_matriz = PRUEBAS_RAN.crear_marco('rango_matriz');			
 		// 🧩 Informe de lo que contiene el rango_matriz recien creado.
-		this.eRdS.informe_marco_consola("Informe rango_matriz", 3);
+		PRUEBAS_RAN.informe_marco_consola("Informe rango_matriz", 3);
 		// 🧩 Combinaciones de acciones, copy-paste y cut-paste
-		// this.eRdS.crear_marco('A0', '3x4');	
+		// PRUEBAS_RAN.crear_marco('A0', '3x4');	
 		// let ok_g = null;
-		// ok_g = this.eRdS.comb_copy_paste('A3' , 'B5');
-		// ok_g=this.eRdS.mover_cursor('A1');
-		// ok_g=this.eRdS.comb_cut_paste('D3' , 'F6');
-		// ok_g=this.eRdS.mover_cursor('E11');
-		// ok_g=this.eRdS.pegar_marco();						
+		// ok_g = PRUEBAS_RAN.comb_copy_paste('A3' , 'B5');
+		// ok_g=PRUEBAS_RAN.mover_cursor('A1');
+		// ok_g=PRUEBAS_RAN.comb_cut_paste('D3' , 'F6');
+		// ok_g=PRUEBAS_RAN.mover_cursor('E11');
+		// ok_g=PRUEBAS_RAN.pegar_marco();						
+		
 		// 🧩 La prueba consiste en coger la Letra que me ha pasado el Usuario en may, calcular la columna, 
 		// 🧩 hacer un sub-rango desde esa letra cuenta la dimension actual(8/16/24) según donde estemos(movil)		
 		// 🧩 ahora hay que adaptar sub-rango para que pueda cachar rangos directamente???
-		// const sub_r = this.eRdS.sub_rango("new", {filas:3, columnas:4}, 'C2');
+		const sub_r = PRUEBAS_RAN.sub_rango("new", {filas:3, columnas:4}, 'C2');
+		console.log("Sub-Rango desde C2 con dimension 3x4", JSON.parse(JSON.stringify(sub_r)));
+
+		const a = PRUEBAS_RAN._crear_ficha_rango('A0', '2x2');
+		const b = PRUEBAS_RAN._crear_ficha_rango('B0', '2x2');
+		const contenido = PRUEBAS_RAN._crear_ficha_rango('A0', '1x1');
+
+		const union = PRUEBAS_RAN._get_union(a, b);
+		const interseccion = PRUEBAS_RAN._get_interseccion(a, b);
+		const interseccion_contenido = PRUEBAS_RAN._get_interseccion(a, contenido);
+		const interseccion_otro = PRUEBAS_RAN._get_interseccion(a, PRUEBAS_RAN._crear_ficha_rango('E0', '1x1'));
+		const union_no_existe = PRUEBAS_RAN._get_union('no_existe', b);
+		const is_continuo = PRUEBAS_RAN._is_continuos([['A0', 'B0'], ['A1', 'B1']]);
+		
+		const c = PRUEBAS_RAN._crear_ficha_rango('A0', '2x2');
+		const solapado = PRUEBAS_RAN._crear_ficha_rango('B1', '2x2');
+		const adyacente = PRUEBAS_RAN._crear_ficha_rango('C0', '1x1');
+		const separado = PRUEBAS_RAN._crear_ficha_rango('E4', '1x1');
+		const celdas_comunes = PRUEBAS_RAN._celdas_comunes(c, solapado);
+		const relacion = PRUEBAS_RAN._get_tipo_relacion(c, solapado);
+		const relacion_adyacente = PRUEBAS_RAN._get_tipo_relacion(c, adyacente);
+		const relacion_separado = PRUEBAS_RAN._get_tipo_relacion(c, separado);
+		const relacion_otro = PRUEBAS_RAN._get_tipo_relacion(c, PRUEBAS_RAN._crear_ficha_rango('A0', '1x1'));
 
 		// 🟥 ┌••• FINAL DEL PUENTE DE PRUEBAS 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 		

@@ -5,15 +5,12 @@ const { register, login } = require('../controllers/authController');
 
 // Hay que importar las funciones que se van a usar aqui de puente hacia ../middleware/authController
 const authMiddleware = require('../middleware/authMiddleware');
-
-
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 // Este archivo mapea las URLs a las funciones del controlador
 // • Cuando alguien intenta acceder a /registro mediante una solicitud POST, el servidor sabe exactamente 
 // qué bloque de código debe ejecutar para manejar esa solicitud, gracias a este "mapeo" o enrutamiento (routing).
 // • En resumen, "mapear" es el proceso de definir qué hace el servidor con cada solicitud web que recibe.
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-
 const router = express.Router();
 
 // Ruta para registrar un nuevo usuario
