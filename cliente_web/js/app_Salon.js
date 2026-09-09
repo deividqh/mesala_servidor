@@ -517,7 +517,6 @@ class e_Salon extends Tablero_Touch {
 		
 		// ┌■ ■ ■ Lógica: la selección visual solo vive mientras el offcanvas de lógica está abierto.
 		const logica = ctlg_el.logica;
-		// if(logica?.motor_mensajes || logica?.motor_alergias){
 		if(logica){
 			const ids_reserva = Object.values(this.reservas[index_reserva] || {}).flat();
 			
@@ -1767,7 +1766,7 @@ class Configuracion_Salon {
 
 		try {
 			// ┌■ AÑADE O QUITA BALDOSAS
-			const ok_total = this.Salon.set_total_baldosas( new_numero_filas * columnas );
+			const ok_total = Salon.set_total_baldosas( new_numero_filas * columnas );
 			if(ok_total){
 				Salon.filas = filas;
 				Salon.columnas = columnas;
@@ -1775,7 +1774,7 @@ class Configuracion_Salon {
 			}	
 			
 			// ┌■ RE-POSICIONA LAS RESERVAS EN EL SALON
-			const ok_re = this.api_re_posicionar();
+			// const ok_re = this.api_re_posicionar();
 		} catch (error) {
 			console.log( `❌ Error:: api_update_filas:: msg:: ${error.message}`  );			
 			return false;			
@@ -1841,7 +1840,7 @@ class Configuracion_Salon {
 			// ┌•• MONTAJE (Fase CURSOR con BUCLE DE CONFLICTO)
 			for (const ficha_geo of fichas_geo_x_reserva) {
 				// ┌•• dimension de la ficha_geo actual, . . .parametros de  _busca_dimension_free()
-				const dim_ficha = `${ficha_geo.num_rows}x${ficha_geo.num_cols}`;
+				const dimension_reserva = `${ficha_geo.num_rows}x${ficha_geo.num_cols}`;
 				// ┌•• Cacha los ids de 'cada' reserva
 				const ids_reserva = ficha_geo.items.map(item => item.id);
 
@@ -1855,14 +1854,14 @@ class Configuracion_Salon {
 				const MAX_INTENTOS = 500;  
 				while (!is_colocado && intentos < MAX_INTENTOS) {
 					intentos++;
-					let rango_free = RAN._busca_dimension_free(dim_ficha, cursor);					
+					let rango_free = RAN._busca_dimension_free(dimension_reserva, cursor);					
 					// Si no hay hueco desde el cursor, RE-INTENTO desde A0
 					if (!rango_free) {
 						if (cursor !== 'A0') {
 							cursor = 'A0';
 							continue; 
 						} else {
-							// throw new Error(`No cabe la reserva ${ficha_geo.nombre_rango} (${dim_ficha})`);
+							// throw new Error(`No cabe la reserva ${ficha_geo.nombre_rango} (${dimension_reserva})`);
 						}
 					}					
 					// ┌•••••••••••••••••••••••••••••••• 
@@ -4467,9 +4466,7 @@ class Foto_CRUD{
 	static _normalizar_slug_CU(valor) {
 		return FotoContratoV1.normalizarSlug(valor);
 	}
-	
 		
-	
 	/** 
 	 * ### Lógica crítica al cargar un salón Guardado.
 	 * */

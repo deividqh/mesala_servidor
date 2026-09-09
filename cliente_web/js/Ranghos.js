@@ -2842,8 +2842,8 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 		});
 	}
 
+	/** ### Registra de forma explícita rangos ya construidos para una reserva. */
 	registrar_rangos_reservas(rangos, prefijo = 'reserva') {
-	/** Registra de forma explícita rangos ya construidos para una reserva. */
 		if (!Array.isArray(rangos)) return [];
 		const nombres = [];
 		for (const rango of rangos.flat()) {
@@ -2870,40 +2870,7 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 		}
 	}
 
-	// Este metodo es de pruebas y tiene que ser borrado. aquí voy a poner todos los metodos llamados desde 
-	// cargar_elementos_salon 
-	__pruebas_union_interseccion(){
-		
-		// 👀 Quiero convertir la union en un rango.
-		const celdas_union = this._get_union('rango_fila_0','rango_fila_1');
-
-		celdas_union.forEach(ele =>{
-			const ci_cf = this.__get_cicf_from_celdas(ele);
-			if(ci_cf){
-				const union_range = this._get_rango_from_cicf(ci_cf.celda_inicio , ci_cf.celda_fin);
-				if(union_range){
-					const union_name = this._get_nombre_rango('union');
-					this.registrar_ficha(union_name , union_range);
-				}
-			}
-		});
-
-		// 👀 ┌• interseccion fila - columna = 'Celda'
-		const celdas_intersección = this._get_interseccion('rango_columna_1','rango_fila_0');
-		// 👀 ┌• rangos que no tienen en comun = null
-		const celdas_intersección_2 = this._get_interseccion('rango_columna_1','rango_columna_2');
-		// 👀 ┌• rango con sigo = []
-		const celdas_intersección_3 = this._get_interseccion('rango_columna_1','rango_columna_1');
-		
-		// 👀 ES RANGO CONTINUO.
-		const es_rng_continuous =  this._is_continuos('rango_prueba');
-		// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■	
-		console.log('👀👀👀 PRUEBAS UNION-INTERSECCION 👀👀👀 ')
-		console.log(`• CELDAS-UNION: ${celdas_union} ➿ ${this._is_continuos(celdas_union)} 
-• CELDAS-INTERSECCION-1:${celdas_intersección} ➿ ${this._is_continuos(celdas_intersección)} 
-• CELDAS-INTERSECCION-2 NULL:${celdas_intersección_2} ➿ ${this._is_continuos(celdas_intersección_2)}
-• CELDAS-INTERSECCION-3 []:${celdas_intersección_3} ➿ ${this._is_continuos(celdas_intersección_3)} `);
-	}
+	
 
 	
 	/** ## el diccionario de reservas   */
@@ -2933,8 +2900,149 @@ class El_Rango_del_Salon extends Wedding_Rangos{
 	* ### en el rango.items con los ids de las baldosas */
 	get_baldosas_reserva(id_el){
 	}
+
+	#crear_geometria_compacta(numero_elementos) {
+		const columnas = Math.ceil(Math.sqrt(numero_elementos));
+		return {
+			columnas,
+			filas: Math.ceil(numero_elementos / columnas),
+			posiciones: Array.from({ length: numero_elementos }, (_, indice) => ({
+				delta_y: Math.floor(indice / columnas),
+				delta_x: indice % columnas,
+			})),
+		};
+	}
 	
+	/**
+	 * Reubica una reserva en el primer hueco disponible del salón.
+	 *
+	 * Los elementos que ya están en el salón conservan su posición relativa. Los
+	 * que faltan se crean mediante la función `normalizar_elemento` recibida del
+	 * salón. `gap_reserva` protege las celdas que rodean a la reserva para que no
+	 * quede pegada a ningún otro elemento.
+	 *
+	 * @param {Object} reserva `{ reservadores: string[], clientes: string[] }`.
+	 * @param {number} gap_reserva Número de celdas libres alrededor de la reserva.
+	 * @returns {Object|null} Rango ocupado (`celda_inicio` y `celda_fin`) o null.
+	 */
+	re_posicionar_reserva(reserva, gap_reserva = 0) {
+		const ids = this.#ids_de_reserva(reserva);
+		if (ids.length === 0 || !Number.isInteger(gap_reserva) || gap_reserva < 0) return null;
+
+		const dimension_salon = this._get_dimension_matriz();
+		const matriz = this._get_matriz_plana();
+		const dimension_valida = Number.isInteger(dimension_salon?.filas)
+			&& dimension_salon.filas > 0
+			&& Number.isInteger(dimension_salon?.columnas)
+			&& dimension_salon.columnas > 0;
+		if (!dimension_valida || !Array.isArray(matriz)) return null;
+
+		const geometria = this.#crear_geometria_reserva(ids, dimension_salon, matriz);
+		const destino = this.#buscar_hueco_reserva(geometria, gap_reserva, dimension_salon, matriz, new Set(ids));
+		if (!destino) return null;
+
+		// Se crean los elementos solo después de encontrar sitio para evitar
+		// modificar el salón cuando no hay espacio suficiente.
+		if (typeof this.api_rangos.normalizar_elemento !== 'function') return null;
+		const elementos = ids.map((id) => this.api_rangos.normalizar_elemento(id));
+		if (elementos.some((elemento) => !elemento)) return null;
+
+		for (let i = 0; i < elementos.length; i++) {
+			const posicion = geometria.posiciones[i];
+			const indice = this._get_indice(
+				destino.fila + posicion.delta_y,
+				destino.columna + posicion.delta_x,
+			);
+			const baldosa = indice === false ? null : matriz[indice]?.elemento_div;
+			if (!baldosa) return null;
+			baldosa.appendChild(elementos[i]);
+		}
+
+		return {
+			celda_inicio: this._fc_to_celda(destino.fila, destino.columna),
+			celda_fin: this._fc_to_celda(
+				destino.fila + geometria.filas - 1,
+				destino.columna + geometria.columnas - 1,
+			),
+		};
+	}
+
+	#ids_de_reserva(reserva) {
+		if (!reserva || typeof reserva !== 'object' || Array.isArray(reserva)) return [];
+		const reservadores = Array.isArray(reserva.reservadores) ? reserva.reservadores : [];
+		const clientes = Array.isArray(reserva.clientes) ? reserva.clientes : [];
+		return [...new Set([...reservadores, ...clientes]
+			.filter((id) => typeof id === 'string' && id.trim() !== '')
+			.map((id) => id.trim()))];
+	}
+
+	#crear_geometria_reserva(ids, dimension_salon, matriz) {
+		const posiciones_actuales = new Map();
+		for (let indice = 0; indice < matriz.length; indice++) {
+			const id = matriz[indice]?.elemento_div?.firstElementChild?.id;
+			if (!ids.includes(id)) continue;
+			posiciones_actuales.set(id, this.celda_mapper.indice_a_coordenadas(
+				indice,
+				dimension_salon.columnas,
+				dimension_salon.filas,
+			));
+		}
+
+		if (posiciones_actuales.size === 0) return this.#crear_geometria_compacta(ids.length);
+
+		const filas = [...posiciones_actuales.values()].map(({ fila }) => fila);
+		const columnas = [...posiciones_actuales.values()].map(({ columna }) => columna);
+		const min_fila = Math.min(...filas);
+		const min_columna = Math.min(...columnas);
+		const posiciones = ids.map((id) => {
+			const posicion = posiciones_actuales.get(id);
+			return posicion ? {
+				delta_y: posicion.fila - min_fila,
+				delta_x: posicion.columna - min_columna,
+			} : null;
+		});
+
+		const ancho = Math.max(...columnas) - min_columna + 1;
+		const ocupadas = new Set(posiciones.filter(Boolean).map(({ delta_y, delta_x }) => `${delta_y}:${delta_x}`));
+		for (let i = 0; i < posiciones.length; i++) {
+			if (posiciones[i]) continue;
+			let numero = 0;
+			while (ocupadas.has(`${Math.floor(numero / ancho)}:${numero % ancho}`)) numero++;
+			posiciones[i] = { delta_y: Math.floor(numero / ancho), delta_x: numero % ancho };
+			ocupadas.add(`${posiciones[i].delta_y}:${posiciones[i].delta_x}`);
+		}
+
+		return {
+			posiciones,
+			filas: Math.max(...posiciones.map(({ delta_y }) => delta_y)) + 1,
+			columnas: ancho,
+		};
+	}
 	
+	#buscar_hueco_reserva(geometria, gap, dimension, matriz, ids_reserva) {
+		for (let fila = 0; fila <= dimension.filas - geometria.filas; fila++) {
+			for (let columna = 0; columna <= dimension.columnas - geometria.columnas; columna++) {
+				const inicio_fila = Math.max(0, fila - gap);
+				const fin_fila = Math.min(dimension.filas - 1, fila + geometria.filas - 1 + gap);
+				const inicio_columna = Math.max(0, columna - gap);
+				const fin_columna = Math.min(dimension.columnas - 1, columna + geometria.columnas - 1 + gap);
+				let libre = true;
+
+				for (let f = inicio_fila; libre && f <= fin_fila; f++) {
+					for (let c = inicio_columna; c <= fin_columna; c++) {
+						const indice = f * dimension.columnas + c;
+						const contenido = matriz[indice]?.elemento_div?.firstElementChild;
+						if (contenido && !ids_reserva.has(contenido.id)) {
+							libre = false;
+							break;
+						}
+					}
+				}
+				if (libre) return { fila, columna };
+			}
+		}
+		return null;
+	}
 }
 
 // ◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘◘ FIN CLASE  WORKING_RANGE
